@@ -27,8 +27,7 @@ interface Recognition {
   onresult: ((event: RecognitionEvent) => void) | null;
   onerror: ((event: { error: string }) => void) | null;
   onend: (() => void) | null;
-  /** Newer Chromium accepts the audio track to listen to; older builds ignore the argument. */
-  start(track?: MediaStreamTrack): void;
+  start(): void;
   stop(): void;
   abort(): void;
 }
@@ -109,6 +108,12 @@ export interface RecognizerHealth {
   error: string | null;
 }
 
+/** Errors that will not clear by starting again. */
+const FATAL = new Set(['language-not-supported', 'not-allowed', 'service-not-allowed', 'audio-capture', 'network', 'bad-grammar']);
+/** A session that ends this fast with nothing heard counts as a failed start. */
+const QUICK_END_MS = 1000;
+const MAX_QUICK_ENDS = 3;
+
 export class OnDeviceStream implements HeardStream {
   private recognition: Recognition | null = null;
   private committed: string[] = [];
@@ -120,9 +125,8 @@ export class OnDeviceStream implements HeardStream {
   private t0 = 0;
   private onEnded: (() => void) | null = null;
   private stats: RecognizerHealth = { starts: 0, results: 0, error: null };
-
-  /** `track` is the recording's microphone track; if the recognizer rejects it, it listens on its own. */
-  constructor(private track: MediaStreamTrack | null = null) {}
+  private quickEnds = 0;
+  private failed = false;
 
   health(): RecognizerHealth {
     return { ...this.stats };
@@ -147,7 +151,11 @@ export class OnDeviceStream implements HeardStream {
     if (SR.available) rec.processLocally = true;
     else rec.mode = 'ondevice-only';
 
+    const startedAt = performance.now();
+    let heardThisRun = false;
+
     rec.onresult = (event) => {
+      heardThisRun = true;
       this.stats.results++;
       const words: string[] = [];
       const segments: TranscriptSegment[] = [];
@@ -161,34 +169,39 @@ export class OnDeviceStream implements HeardStream {
       if (import.meta.env.DEV) console.debug('[speech]', segments.map((s) => `${s.final ? '■' : '□'} ${s.text}`).join(' | '));
       onLive(this.tokens());
     };
+    const fail = (code: string) => {
+      if (this.failed) return;
+      this.failed = true;
+      this.active = false;
+      onError(code);
+    };
     rec.onerror = (event) => {
       this.stats.error = event.error;
-      if (import.meta.env.DEV) console.debug('[speech] error', event.error, this.track ? '(with track)' : '');
-      if (event.error === 'no-speech' || event.error === 'aborted') return;
-      // A build that accepts a track but can't use it: try again listening on its own.
-      if (this.track) {
-        this.track = null;
-        return;
-      }
-      this.active = false;
-      onError(event.error);
+      if (import.meta.env.DEV) console.debug('[speech] error', event.error);
+      if (FATAL.has(event.error)) fail(event.error);
     };
-    // Recognition ends on long silences; keep listening until the teacher stops the take.
+    // Recognition ends on long silences; keep listening until the teacher stops the take,
+    // but give up when it keeps ending the moment it starts.
     rec.onend = () => {
       this.committed.push(...this.current);
       this.current = [];
       this.committedSegments.push(...this.currentSegments);
       this.currentSegments = [];
-      if (this.active) this.listen(onLive, onError);
-      else this.onEnded?.();
+      if (!this.active) {
+        this.onEnded?.();
+        return;
+      }
+      const quick = !heardThisRun && performance.now() - startedAt < QUICK_END_MS;
+      this.quickEnds = quick ? this.quickEnds + 1 : 0;
+      if (this.quickEnds >= MAX_QUICK_ENDS) fail(this.stats.error ?? 'aborted');
+      else this.listen(onLive, onError);
     };
     this.stats.starts++;
     try {
-      if (this.track) rec.start(this.track);
-      else rec.start();
-    } catch {
-      this.track = null;
       rec.start();
+    } catch {
+      fail('start-failed');
+      return;
     }
     this.recognition = rec;
   }

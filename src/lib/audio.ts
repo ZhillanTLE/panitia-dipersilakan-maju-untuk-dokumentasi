@@ -17,8 +17,6 @@ export interface Recording {
 }
 
 export interface Capture {
-  /** The microphone track, so the recognizer hears exactly what is recorded. */
-  track: MediaStreamTrack;
   /** Receives each 10 ms frame: band-limited RMS and zero crossings per second. */
   onFrame: ((rms: number, zcr: number) => void) | null;
   /** 0..1 loudness of the last few milliseconds, for the level line. */
@@ -62,7 +60,6 @@ export async function startCapture(): Promise<Capture> {
   };
 
   const handle: Capture = {
-    track: stream.getAudioTracks()[0],
     onFrame: null,
     level() {
       analyser.getFloatTimeDomainData(frame);
