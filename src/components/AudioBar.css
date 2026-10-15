@@ -1,0 +1,122 @@
+.audio {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: var(--space-3) var(--space-4);
+}
+
+.audio__track {
+  --p: 0;
+  position: relative;
+  height: 32px;
+}
+
+/* Hairline track with an ink fill up to the play position */
+.audio__track::before,
+.audio__track::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  height: 1px;
+  pointer-events: none;
+}
+
+.audio__track::before {
+  right: 0;
+  background: var(--neutral-300);
+}
+
+.audio__track::after {
+  width: calc(var(--p) * 100%);
+  height: 2px;
+  margin-top: -0.5px;
+  background: var(--ink);
+}
+
+.audio__range {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  margin: 0;
+  background: none;
+  appearance: none;
+  cursor: pointer;
+}
+
+.audio__range:disabled {
+  cursor: default;
+}
+
+.audio__range::-webkit-slider-runnable-track {
+  height: 32px;
+  background: none;
+}
+
+.audio__range::-moz-range-track {
+  height: 32px;
+  background: none;
+}
+
+.audio__range::-webkit-slider-thumb {
+  width: 12px;
+  height: 12px;
+  margin-top: 10px;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: var(--ink);
+  appearance: none;
+}
+
+.audio__range::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: var(--ink);
+}
+
+.audio__range:disabled::-webkit-slider-thumb {
+  background: var(--neutral-300);
+}
+
+.audio__range:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+  border-radius: var(--r-8);
+}
+
+/* Words flagged for review, as ticks on the timeline */
+.audio__mark {
+  position: absolute;
+  top: 11.5px;
+  z-index: 1;
+  width: 9px;
+  height: 9px;
+  margin-left: -4.5px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: var(--caution-tint);
+  box-shadow: inset 0 0 0 1.5px var(--caution);
+}
+
+.audio__mark:hover {
+  background: var(--caution);
+}
+
+.audio__time {
+  min-width: 76px;
+  color: var(--muted);
+  font-size: var(--fs-9);
+  line-height: var(--lh-9);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.audio__note {
+  grid-column: 1 / -1;
+  color: var(--muted);
+  font-size: var(--fs-9);
+  line-height: var(--lh-9);
+}

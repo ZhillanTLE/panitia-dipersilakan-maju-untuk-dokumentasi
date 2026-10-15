@@ -1,0 +1,105 @@
+.word-menu {
+  --arrow: 50%;
+  position: absolute;
+  z-index: 5;
+  width: min(320px, calc(100% - 16px));
+  padding: var(--space-5);
+  border-radius: var(--r-16);
+  background: var(--neutral-100);
+  box-shadow:
+    var(--ring-shell),
+    var(--shadow-lift);
+  animation: menu-in var(--motion-ui) var(--ease-highlight);
+}
+
+.word-menu::before {
+  content: '';
+  position: absolute;
+  top: -6px;
+  left: var(--arrow);
+  width: 11px;
+  height: 11px;
+  margin-left: -5.5px;
+  border-top: 1px solid var(--black);
+  border-left: 1px solid var(--black);
+  background: var(--neutral-100);
+  transform: rotate(45deg);
+}
+
+@keyframes menu-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+
+.word-menu__word {
+  font-size: var(--fs-6);
+  line-height: var(--lh-6);
+  font-weight: var(--fw-s);
+}
+
+.word-menu__facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-4);
+  margin-top: var(--space-1);
+  font-size: var(--fs-9);
+  line-height: var(--lh-9);
+}
+
+.word-menu__facts div {
+  display: flex;
+  gap: var(--space-1);
+}
+
+.word-menu__facts dt {
+  color: var(--muted);
+}
+
+.word-menu__facts dd {
+  color: var(--ink);
+  font-weight: var(--fw-s);
+}
+
+.word-menu__opts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+}
+
+.word-menu__opts .seg__opt {
+  height: 34px;
+  padding: 0 var(--space-3);
+  font-size: var(--fs-9);
+  line-height: var(--lh-9);
+  text-align: left;
+}
+
+.word-menu__opts .seg__opt[aria-checked='true']:not([data-error]) {
+  background: var(--success-tint);
+  box-shadow: inset 0 0 0 1px var(--success);
+  color: var(--success);
+}
+
+.word-menu__opts .seg__opt[aria-checked='true'][data-error] {
+  background: var(--caution-tint);
+  box-shadow: inset 0 0 0 1px var(--caution);
+  color: var(--caution);
+}
+
+.word-menu__hint {
+  margin-top: var(--space-3);
+  color: var(--neutral-900);
+  font-size: var(--fs-9);
+  line-height: var(--lh-9);
+}
+
+.word-menu__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+}
