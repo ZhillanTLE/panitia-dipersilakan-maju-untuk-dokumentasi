@@ -91,7 +91,8 @@ export const S = {
     install: 'Pasang paket suara',
     installing: 'Memasang…',
     manual:
-      'Ketuk kata yang sedang dibaca, atau tekan Spasi untuk maju. Nilai bacaannya nanti di Tinjau.',
+      'Sorotan mengikuti suara murid, suku kata demi suku kata. Nilai bacaannya nanti di Tinjau.',
+    manualNoMic: 'Tanpa mikrofon: ketuk kata yang sedang dibaca, atau tekan Spasi untuk maju.',
     simulated: 'Pembaca tiruan untuk mencoba alur. Hasilnya ditandai simulasi dan tidak dihitung.',
   },
 
@@ -111,7 +112,12 @@ export const S = {
     micMissing: 'Mikrofon tidak tersedia. Bacaan dilanjutkan dengan Penanda guru, tanpa rekaman.',
     recognizerFailed: 'Pengenal suara berhenti. Lanjutkan dengan Penanda guru.',
     cancelled: 'Bacaan dibatalkan karena halaman ditinggalkan.',
-    transcript: 'Yang didengar pengenal suara (hanya mode pengembang). Abu-abu: tebakan sementara.',
+    transcript: 'Mode pengembang. Abu-abu: tebakan sementara pengenal suara.',
+    tapToFix: 'Bila sorotan tertinggal atau mendahului, ketuk kata yang sedang dibaca.',
+    voiceLine: (syllables: number, total: number) => `Suara: ${syllables} dari ${total} suku kata.`,
+    noVoice: 'Suara: tidak ada mikrofon.',
+    recognizerLine: (h: { starts: number; results: number; error: string | null }) =>
+      `Pengenal suara: ${h.results} hasil, mulai ${h.starts} kali${h.error ? `, galat terakhir ${h.error}` : ''}.`,
     transcriptPosition: (cursor: number, total: number) => `Sorotan di kata ${Math.min(cursor + 1, total)} dari ${total}.`,
     simulatedChip: 'Simulasi',
   },

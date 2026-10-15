@@ -17,6 +17,8 @@ interface ReadingTextProps {
   mode: 'tes' | 'review';
   /** tes: index of the word being read. Words before it are read. */
   cursor?: number;
+  /** tes: 0..1 of the current word's syllables already voiced; omit for a full underline. */
+  progress?: number;
   /** review: word to box during playback. */
   playing?: number;
   review?: ReviewMarks;
@@ -34,7 +36,7 @@ const SIZES: CSSProperties[] = [
  * Card text with the reading highlight. In `tes` the highlight never shows right or
  * wrong (CLAUDE.md rule 5): read words are only dimmed.
  */
-export function ReadingText({ card, words, mode, cursor = 0, playing, review, onWordTap, textSize }: ReadingTextProps) {
+export function ReadingText({ card, words, mode, cursor = 0, progress, playing, review, onWordTap, textSize }: ReadingTextProps) {
   const rootRef = useRef<HTMLDivElement>(null);
   const boxRef = useRef<HTMLSpanElement>(null);
   const target = mode === 'tes' ? (cursor < words.length ? cursor : -1) : (playing ?? -1);
@@ -124,7 +126,12 @@ export function ReadingText({ card, words, mode, cursor = 0, playing, review, on
       className={`reading reading--${card.layout} reading--${mode}${card.level === 'huruf' || card.level === 'suku_kata' ? ' reading--glyphs' : ''}`}
       style={SIZES[textSize]}
     >
-      <span ref={boxRef} className="reading__box" aria-hidden="true" />
+      <span
+        ref={boxRef}
+        className="reading__box"
+        style={{ '--p': mode === 'tes' && progress !== undefined ? progress : 1 } as CSSProperties}
+        aria-hidden="true"
+      />
       {insertionsAfter(-1)}
       {card.layout === 'grid' ? (
         <div className="reading__grid">

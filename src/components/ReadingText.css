@@ -47,7 +47,6 @@
   z-index: 0;
   border-radius: var(--r-8);
   background: var(--word-current-box);
-  box-shadow: inset 0 -2px 0 var(--word-current-line);
   opacity: 0;
   pointer-events: none;
   transition:
@@ -59,6 +58,28 @@
 
 .reading__box[data-shown='1'] {
   opacity: 1;
+}
+
+/* The underline fills syllable by syllable as the reader voices the word */
+.reading__box::before,
+.reading__box::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 4px;
+  height: 2px;
+  border-radius: 2px;
+}
+
+.reading__box::before {
+  right: 4px;
+  background: var(--neutral-300);
+}
+
+.reading__box::after {
+  width: calc((100% - 8px) * var(--p, 1));
+  background: var(--word-current-line);
+  transition: width var(--motion-highlight) var(--ease-highlight);
 }
 
 .w {
