@@ -17,6 +17,10 @@ export interface Recording {
 }
 
 export interface Capture {
+  /** The microphone track, so the recognizer hears exactly what is recorded. */
+  track: MediaStreamTrack;
+  /** Receives each 10 ms frame: band-limited RMS and zero crossings per second. */
+  onFrame: ((rms: number, zcr: number) => void) | null;
   /** 0..1 loudness of the last few milliseconds, for the level line. */
   level(): number;
   stop(): Promise<Recording>;
@@ -47,7 +51,6 @@ export async function startCapture(): Promise<Capture> {
   capture.connect(silent).connect(ctx.destination);
 
   const chunks: Float32Array[] = [];
-  capture.port.onmessage = (event: MessageEvent<Float32Array>) => chunks.push(event.data);
   const frame = new Float32Array(analyser.fftSize);
 
   const teardown = async () => {
@@ -58,7 +61,9 @@ export async function startCapture(): Promise<Capture> {
     if (ctx.state !== 'closed') await ctx.close();
   };
 
-  return {
+  const handle: Capture = {
+    track: stream.getAudioTracks()[0],
+    onFrame: null,
     level() {
       analyser.getFloatTimeDomainData(frame);
       let sum = 0;
@@ -80,6 +85,15 @@ export async function startCapture(): Promise<Capture> {
       void teardown();
     },
   };
+
+  capture.port.onmessage = (event: MessageEvent<{ pcm?: Float32Array; features?: Float32Array }>) => {
+    const { pcm, features } = event.data;
+    if (pcm) chunks.push(pcm);
+    if (features && handle.onFrame) {
+      for (let k = 0; k < features.length; k += 2) handle.onFrame(features[k], features[k + 1]);
+    }
+  };
+  return handle;
 }
 
 function concat(chunks: Float32Array[]): Float32Array {
