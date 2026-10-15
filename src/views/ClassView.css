@@ -1,0 +1,363 @@
+.kelas {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+  max-width: 908px;
+  margin: 0 auto;
+  padding: var(--space-12) var(--space-6) var(--space-16);
+}
+
+.kelas__head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+/* Section title, applied style (node 87:204) */
+.kelas__title {
+  font-size: var(--fs-2);
+  line-height: var(--lh-2);
+  font-weight: var(--fw-s);
+  letter-spacing: var(--tracking-section);
+}
+
+.kelas__section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.kelas__section-head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+/* Groups in the FAQ shell (node 87:494): r28, 1px black, rows divided by 1px #4A4A4A */
+.shell {
+  border-radius: var(--r-28);
+  box-shadow: var(--ring-shell);
+  overflow: hidden;
+}
+
+.shell__row + .shell__row {
+  border-top: 1px solid var(--neutral-900);
+}
+
+.shell__head {
+  display: grid;
+  grid-template-columns: 168px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-4);
+  width: 100%;
+  min-height: 72px;
+  padding: var(--space-4) var(--space-7);
+  border: 0;
+  background: none;
+  text-align: left;
+}
+
+button.shell__head:hover {
+  background: var(--cream);
+}
+
+button.shell__head:focus-visible {
+  outline-offset: -4px;
+}
+
+.shell__row--static .shell__head {
+  grid-template-columns: 168px minmax(0, 1fr);
+}
+
+.shell__name {
+  font-size: var(--fs-7);
+  line-height: var(--lh-7);
+  font-weight: var(--fw-s);
+}
+
+.shell__pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.shell__pills .chip {
+  font-variant-numeric: tabular-nums;
+}
+
+.shell__empty {
+  color: var(--muted);
+  font-size: var(--fs-9);
+  line-height: var(--lh-9);
+}
+
+.shell__toggle {
+  pointer-events: none;
+}
+
+.shell__panel {
+  padding: 0 var(--space-7) var(--space-7);
+}
+
+.acts-bank {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-5);
+}
+
+.acts-bank__item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-6);
+  border-radius: var(--r-24);
+  box-shadow: var(--ring-card);
+}
+
+.acts-bank__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.acts-bank__steps {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin-top: var(--space-1);
+  padding-left: var(--space-5);
+  list-style: decimal;
+  color: var(--neutral-900);
+  font-size: var(--fs-8);
+  line-height: var(--lh-8);
+}
+
+/* Roster */
+.roster {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.roster thead th {
+  padding: 0 var(--space-3) var(--space-2) 0;
+  color: var(--muted);
+  font-size: var(--fs-9);
+  line-height: var(--lh-9);
+  font-weight: var(--fw-b);
+  text-align: left;
+}
+
+.roster tbody tr {
+  border-top: 1px solid var(--neutral-200);
+}
+
+.roster tbody tr:last-child {
+  border-bottom: 1px solid var(--neutral-200);
+}
+
+.roster td,
+.roster tbody th {
+  padding: var(--space-4) var(--space-3) var(--space-4) 0;
+  vertical-align: middle;
+}
+
+.roster__ref {
+  font-size: var(--fs-7);
+  line-height: var(--lh-7);
+  font-weight: var(--fw-s);
+  font-variant-numeric: tabular-nums;
+  text-align: left;
+}
+
+.roster__level {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.roster__actions {
+  white-space: nowrap;
+  text-align: right;
+}
+
+.roster__actions .btn--text {
+  margin-left: var(--space-2);
+}
+
+.consents {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.consent {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  height: 28px;
+  padding: 0 var(--space-3);
+  border: 0;
+  border-radius: var(--r-pill);
+  background: var(--neutral-100);
+  box-shadow: var(--ring-row);
+  color: var(--muted);
+  font-size: var(--fs-9);
+  line-height: var(--lh-9);
+  transition:
+    color var(--motion-ui) ease,
+    box-shadow var(--motion-ui) ease;
+}
+
+.consent:not(:disabled):hover {
+  box-shadow: var(--ring-card);
+}
+
+.consent[aria-pressed='true'] {
+  color: var(--ink);
+  font-weight: var(--fw-s);
+}
+
+.consent:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.consent__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--r-pill);
+  box-shadow: inset 0 0 0 1.5px var(--stroke);
+}
+
+.consent[aria-pressed='true'] .consent__dot {
+  background: var(--success);
+  box-shadow: none;
+}
+
+.add {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.add__label {
+  color: var(--muted);
+  font-size: var(--fs-9);
+  line-height: var(--lh-9);
+}
+
+.add__row {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.add__row .input {
+  width: 180px;
+  text-transform: uppercase;
+}
+
+.add__row .btn {
+  height: 44px;
+}
+
+.add__error {
+  color: var(--caution);
+  font-size: var(--fs-9);
+  line-height: var(--lh-9);
+}
+
+.kelas__foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding-top: var(--space-6);
+  border-top: 1px solid var(--ink);
+}
+
+.kelas__export {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+@media (max-width: 720px) {
+  .kelas {
+    gap: var(--space-10);
+    padding: var(--space-8) var(--space-4) var(--space-16);
+  }
+
+  .kelas__title {
+    font-size: var(--fs-4);
+    line-height: var(--lh-4);
+  }
+
+  .shell {
+    border-radius: var(--r-24);
+  }
+
+  .shell__head,
+  .shell__row--static .shell__head {
+    grid-template-columns: minmax(0, 1fr) auto;
+    padding: var(--space-4) var(--space-5);
+  }
+
+  .shell__head .shell__pills,
+  .shell__head .shell__empty {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+
+  .shell__panel {
+    padding: 0 var(--space-5) var(--space-5);
+  }
+
+  .acts-bank {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .roster thead {
+    display: none;
+  }
+
+  .roster,
+  .roster tbody,
+  .roster tr,
+  .roster td,
+  .roster tbody th {
+    display: block;
+  }
+
+  .roster tbody tr {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: var(--space-2);
+    padding: var(--space-4) 0;
+  }
+
+  .roster td,
+  .roster tbody th {
+    padding: 0;
+  }
+
+  .roster td:nth-child(2) {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+
+  .roster td:nth-child(3) {
+    grid-column: 2;
+    grid-row: 1;
+    justify-self: end;
+  }
+
+  .roster__actions {
+    grid-column: 1 / -1;
+    text-align: left;
+  }
+}
