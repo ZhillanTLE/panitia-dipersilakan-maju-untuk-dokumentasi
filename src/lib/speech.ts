@@ -91,12 +91,21 @@ export interface HeardStream {
   level?(): number;
   /** Resolves when a scripted stream has nothing left to say. */
   finished?: Promise<void>;
+  /** The recognizer's raw output, for the developer readout. */
+  segments?(): TranscriptSegment[];
+}
+
+export interface TranscriptSegment {
+  text: string;
+  final: boolean;
 }
 
 export class OnDeviceStream implements HeardStream {
   private recognition: Recognition | null = null;
   private committed: string[] = [];
   private current: string[] = [];
+  private committedSegments: TranscriptSegment[] = [];
+  private currentSegments: TranscriptSegment[] = [];
   private firstHeard: number[] = [];
   private active = false;
   private t0 = 0;
@@ -123,10 +132,15 @@ export class OnDeviceStream implements HeardStream {
 
     rec.onresult = (event) => {
       const words: string[] = [];
+      const segments: TranscriptSegment[] = [];
       for (let k = 0; k < event.results.length; k++) {
-        words.push(...event.results[k][0].transcript.trim().split(/\s+/).filter(Boolean));
+        const text = event.results[k][0].transcript.trim();
+        segments.push({ text, final: event.results[k].isFinal });
+        words.push(...text.split(/\s+/).filter(Boolean));
       }
       this.current = words;
+      this.currentSegments = segments;
+      if (import.meta.env.DEV) console.debug('[speech]', segments.map((s) => `${s.final ? '■' : '□'} ${s.text}`).join(' | '));
       onLive(this.tokens());
     };
     rec.onerror = (event) => {
@@ -138,11 +152,17 @@ export class OnDeviceStream implements HeardStream {
     rec.onend = () => {
       this.committed.push(...this.current);
       this.current = [];
+      this.committedSegments.push(...this.currentSegments);
+      this.currentSegments = [];
       if (this.active) this.listen(onLive, onError);
       else this.onEnded?.();
     };
     rec.start();
     this.recognition = rec;
+  }
+
+  segments(): TranscriptSegment[] {
+    return [...this.committedSegments, ...this.currentSegments];
   }
 
   private tokens(): HeardToken[] {

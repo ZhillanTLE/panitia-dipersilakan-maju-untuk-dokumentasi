@@ -11,7 +11,15 @@ import { navigate, useRoute } from '../lib/route';
 import { CARD_ORDER, RUBRIC, RUBRIC_VERSION, cardOutcome, nextCard } from '../lib/rubric';
 import { ENGINE_VERSION, liveCursor, manualTake, normalize, scoreTake, type HeardToken } from '../lib/scoring';
 import { simulationScript, SimulatedStream } from '../lib/simulate';
-import { ManualStream, OnDeviceStream, installOnDevice, onDeviceStatus, type HeardStream, type OnDeviceStatus } from '../lib/speech';
+import {
+  ManualStream,
+  OnDeviceStream,
+  installOnDevice,
+  onDeviceStatus,
+  type HeardStream,
+  type OnDeviceStatus,
+  type TranscriptSegment,
+} from '../lib/speech';
 import { addTake, endSession, newId, useApp } from '../lib/store';
 import { CARD, S, SOURCE } from '../strings';
 import type { CardLevel, LiveEvent, Session, Source, Take } from '../types';
@@ -24,6 +32,8 @@ type Phase =
 
 const STALL_MS = 3000;
 const AUTO_FINISH_MS = 1400;
+/** The box steps through words the recognizer delivers in one burst, instead of jumping. */
+const CATCH_UP_MS = 70;
 
 const MODEL: Record<Source, string> = {
   ondevice: 'webspeech-ondevice-id',
@@ -76,6 +86,8 @@ export function ReadView({ active }: { active: boolean }) {
   const [startLevel, setStartLevel] = useState<CardLevel>(RUBRIC.start);
   const [phase, setPhase] = useState<Phase>({ kind: 'ready' });
   const [cursor, setCursor] = useState(0);
+  const [shownCursor, setShownCursor] = useState(0);
+  const [transcript, setTranscript] = useState<TranscriptSegment[]>([]);
   const [stall, setStall] = useState<number | null>(null);
   const [elapsed, setElapsed] = useState(0);
   const [notice, setNotice] = useState<string | null>(null);
@@ -93,6 +105,19 @@ export function ReadView({ active }: { active: boolean }) {
   const words = useMemo(() => (card ? cardWords(card) : []), [card]);
   const norms = useMemo(() => words.map((w) => w.norm), [words]);
   const listening = phase.kind === 'card' && phase.step === 'listening';
+  // Raw recognizer output under the book: always in `npm run dev`, or with ?debug=1.
+  const debug = import.meta.env.DEV || route.params.get('debug') === '1';
+
+  useEffect(() => {
+    if (shownCursor > cursor) {
+      setShownCursor(cursor);
+      return;
+    }
+    if (shownCursor === cursor) return;
+    const behind = cursor - shownCursor;
+    const id = window.setTimeout(() => setShownCursor((s) => Math.min(s + 1, cursor)), Math.max(30, CATCH_UP_MS - 8 * behind));
+    return () => window.clearTimeout(id);
+  }, [cursor, shownCursor]);
 
   // Recognizer availability, checked once.
   useEffect(() => {
@@ -159,9 +184,11 @@ export function ReadView({ active }: { active: boolean }) {
       const l = live.current;
       l.tokens = tokens;
       const heard = tokens.map((t) => normalize(t.text)).filter(Boolean);
-      moveCursor(liveCursor(norms, heard, l.supplied));
+      // The recognizer revises its guesses; the highlight only ever moves forward on them.
+      moveCursor(Math.max(l.cursor, liveCursor(norms, heard, l.supplied)));
+      if (debug) setTranscript(l.stream?.segments?.() ?? [{ text: tokens.map((t) => t.text).join(' '), final: true }]);
     },
-    [moveCursor, norms],
+    [debug, moveCursor, norms],
   );
 
   const openCard = useCallback(
@@ -182,6 +209,7 @@ export function ReadView({ active }: { active: boolean }) {
       }
       live.current = freshLive(run.current.source);
       setCursor(0);
+      setTranscript([]);
       setStall(null);
       setElapsed(0);
       setNotice(null);
@@ -196,6 +224,7 @@ export function ReadView({ active }: { active: boolean }) {
     if (!r || !student || !card) return;
     const l = freshLive(r.source);
     live.current = l;
+    setTranscript([]);
     const record = r.source !== 'simulated' && student.consents.assessment;
     if (record) {
       try {
@@ -397,7 +426,7 @@ export function ReadView({ active }: { active: boolean }) {
                 card={card}
                 words={words}
                 mode="tes"
-                cursor={cursor}
+                cursor={shownCursor}
                 textSize={textSize}
                 onWordTap={listening && live.current.source === 'manual' ? moveCursor : undefined}
               />
@@ -472,6 +501,19 @@ export function ReadView({ active }: { active: boolean }) {
               </div>
             )}
             {notice && <p className="desk__notice">{notice}</p>}
+            {debug && transcript.length > 0 && (
+              <div className="transcript">
+                <p className="transcript__label">{S.reading.transcript}</p>
+                <p className="transcript__text">
+                  {transcript.map((seg, k) => (
+                    <span key={k} className={seg.final ? undefined : 'is-interim'}>
+                      {seg.text}{' '}
+                    </span>
+                  ))}
+                </p>
+                <p className="transcript__label">{S.reading.transcriptPosition(cursor, words.length)}</p>
+              </div>
+            )}
             {phase.step !== 'saving' && (
               <p className="desk__hint">
                 {run.current?.session.simulated && <span className="chip chip--ink">{S.reading.simulatedChip}</span>}

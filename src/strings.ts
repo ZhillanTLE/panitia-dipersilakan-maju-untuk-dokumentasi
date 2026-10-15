@@ -111,6 +111,8 @@ export const S = {
     micMissing: 'Mikrofon tidak tersedia. Bacaan dilanjutkan dengan Penanda guru, tanpa rekaman.',
     recognizerFailed: 'Pengenal suara berhenti. Lanjutkan dengan Penanda guru.',
     cancelled: 'Bacaan dibatalkan karena halaman ditinggalkan.',
+    transcript: 'Yang didengar pengenal suara (hanya mode pengembang). Abu-abu: tebakan sementara.',
+    transcriptPosition: (cursor: number, total: number) => `Sorotan di kata ${Math.min(cursor + 1, total)} dari ${total}.`,
     simulatedChip: 'Simulasi',
   },
 
