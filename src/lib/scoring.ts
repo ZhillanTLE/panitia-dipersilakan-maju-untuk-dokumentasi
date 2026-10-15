@@ -3,7 +3,7 @@ import type { CardWord, Confidence, Fluency, Insertion, WordResult } from '../ty
 // Deterministic scoring engine for the web prototype: word alignment, text-level
 // substitution check, decision table and fluency (CLAUDE.md slow-path steps 6, 8, 9, 10).
 // No randomness. Changing any output here means bumping ENGINE_VERSION.
-export const ENGINE_VERSION = 'scoring-web@0.1';
+export const ENGINE_VERSION = 'scoring-web@0.2';
 
 export interface HeardToken {
   text: string;
@@ -79,31 +79,79 @@ export function misreadings(word: string): Set<string> {
   return out;
 }
 
-/** Letter-similarity cost. Very different words cost more than an insertion, so fillers don't pull the cursor forward. */
-function substitutionCost(expected: string, heard: string): number {
-  const sim = similarity(expected, heard);
-  return sim >= 0.5 ? 1 - sim : 1.2;
+// Fillers are never a reading of a card word; they are always insertions.
+const FILLERS = new Set(['e', 'ee', 'eee', 'eh', 'ehm', 'em', 'emm', 'hm', 'hmm', 'ah', 'aa', 'anu']);
+const JOIN_PENALTY = 0.05;
+
+interface CostModel {
+  sub(expected: string, heard: string): number;
+  insert(heard: string): number;
+}
+
+/**
+ * Scoring: a very different word costs more than an insertion, so stray words stay
+ * insertions instead of pushing card words out of place.
+ */
+const SCORING: CostModel = {
+  sub(expected, heard) {
+    if (FILLERS.has(heard)) return 2;
+    const sim = similarity(expected, heard);
+    return sim >= 0.5 ? 1 - sim : 1.2;
+  },
+  insert: () => GAP,
+};
+
+/**
+ * Live highlight: a heard word is taken as the reader's attempt at the next card word,
+ * even when the recognizer gets it wrong, so the highlight keeps moving. Fillers are
+ * skipped almost for free. UI only; it never feeds a score (CLAUDE.md rule 4).
+ */
+const TRACKING: CostModel = {
+  sub(expected, heard) {
+    if (FILLERS.has(heard)) return 2;
+    if (expected === heard) return 0;
+    const sim = similarity(expected, heard);
+    return sim >= 0.5 ? (1 - sim) * 0.8 : 0.75;
+  },
+  insert: (heard) => (FILLERS.has(heard) ? 0.1 : GAP),
+};
+
+/**
+ * Recognizers sometimes join two words ("di belakang" → "dibelakang") or split one
+ * ("pisang" → "pi sang"). A close match across the word boundary is allowed for a
+ * small penalty; anything looser is not a join or split.
+ */
+function joinCost(a: string, b: string): number {
+  const sim = similarity(a, b);
+  return sim >= NEAR ? 1 - sim + JOIN_PENALTY : Infinity;
 }
 
 export type AlignOp =
   | { kind: 'match'; e: number; h: number }
+  /** Two card words heard as one token. */
+  | { kind: 'joined'; e: number; h: number }
+  /** One card word heard as two tokens. */
+  | { kind: 'split'; e: number; h: number }
   | { kind: 'omit'; e: number }
   | { kind: 'insert'; h: number };
 
-function costTable(expected: string[], heard: string[], free: ReadonlySet<number>): number[][] {
+function costTable(expected: string[], heard: string[], free: ReadonlySet<number>, model: CostModel): number[][] {
   const n = expected.length;
   const m = heard.length;
   const omit = (i: number) => (free.has(i) ? 0 : GAP);
   const D = Array.from({ length: n + 1 }, () => new Array<number>(m + 1).fill(0));
   for (let i = 1; i <= n; i++) D[i][0] = D[i - 1][0] + omit(i - 1);
-  for (let j = 1; j <= m; j++) D[0][j] = j * GAP;
+  for (let j = 1; j <= m; j++) D[0][j] = D[0][j - 1] + model.insert(heard[j - 1]);
   for (let i = 1; i <= n; i++) {
     for (let j = 1; j <= m; j++) {
-      D[i][j] = Math.min(
-        D[i - 1][j - 1] + substitutionCost(expected[i - 1], heard[j - 1]),
+      let best = Math.min(
+        D[i - 1][j - 1] + model.sub(expected[i - 1], heard[j - 1]),
         D[i - 1][j] + omit(i - 1),
-        D[i][j - 1] + GAP,
+        D[i][j - 1] + model.insert(heard[j - 1]),
       );
+      if (i >= 2) best = Math.min(best, D[i - 2][j - 1] + joinCost(expected[i - 2] + expected[i - 1], heard[j - 1]));
+      if (j >= 2) best = Math.min(best, D[i - 1][j - 2] + joinCost(expected[i - 1], heard[j - 2] + heard[j - 1]));
+      D[i][j] = best;
     }
   }
   return D;
@@ -114,16 +162,24 @@ function costTable(expected: string[], heard: string[], free: ReadonlySet<number
  * supplied: skipping them costs nothing.
  */
 export function align(expected: string[], heard: string[], free: ReadonlySet<number> = new Set()): AlignOp[] {
-  const D = costTable(expected, heard, free);
+  const D = costTable(expected, heard, free, SCORING);
   const ops: AlignOp[] = [];
   const eq = (a: number, b: number) => Math.abs(a - b) < 1e-9;
   let i = expected.length;
   let j = heard.length;
   while (i > 0 || j > 0) {
-    if (i > 0 && j > 0 && eq(D[i][j], D[i - 1][j - 1] + substitutionCost(expected[i - 1], heard[j - 1]))) {
+    if (i > 0 && j > 0 && eq(D[i][j], D[i - 1][j - 1] + SCORING.sub(expected[i - 1], heard[j - 1]))) {
       ops.push({ kind: 'match', e: i - 1, h: j - 1 });
       i--;
       j--;
+    } else if (i >= 2 && j > 0 && eq(D[i][j], D[i - 2][j - 1] + joinCost(expected[i - 2] + expected[i - 1], heard[j - 1]))) {
+      ops.push({ kind: 'joined', e: i - 2, h: j - 1 });
+      i -= 2;
+      j--;
+    } else if (i > 0 && j >= 2 && eq(D[i][j], D[i - 1][j - 2] + joinCost(expected[i - 1], heard[j - 2] + heard[j - 1]))) {
+      ops.push({ kind: 'split', e: i - 1, h: j - 2 });
+      i--;
+      j -= 2;
     } else if (i > 0 && eq(D[i][j], D[i - 1][j] + (free.has(i - 1) ? 0 : GAP))) {
       ops.push({ kind: 'omit', e: i - 1 });
       i--;
@@ -143,7 +199,7 @@ export function align(expected: string[], heard: string[], free: ReadonlySet<num
 export function liveCursor(expected: string[], heard: string[], free: ReadonlySet<number> = new Set()): number {
   let best = 0;
   if (heard.length) {
-    const D = costTable(expected, heard, free);
+    const D = costTable(expected, heard, free, TRACKING);
     const m = heard.length;
     for (let i = 1; i <= expected.length; i++) {
       if (D[i][m] < D[best][m] - 1e-9) best = i;
@@ -201,12 +257,31 @@ export function scoreTake({ words, heard, supplied }: ScoreInput): ScoreOutput {
     }
     const token = tokens[op.h];
     if (lastHeardAt !== null && token.t_ms - lastHeardAt > LONG_PAUSE_MS) {
-      long_pauses.push({ before_i: op.kind === 'match' ? op.e : lastExpected + 1, ms: token.t_ms - lastHeardAt });
+      long_pauses.push({ before_i: op.kind === 'insert' ? lastExpected + 1 : op.e, ms: token.t_ms - lastHeardAt });
     }
-    lastHeardAt = token.t_ms;
+    lastHeardAt = op.kind === 'split' ? tokens[op.h + 1].t_ms : token.t_ms;
     if (op.kind === 'match') {
       lastExpected = op.e;
       results[op.e] = decide(words[op.e], token, token.norm);
+    } else if (op.kind === 'joined') {
+      // Both card words share the one token. An exact join is a recognizer quirk, not a misreading.
+      const exact = token.norm === words[op.e].norm + words[op.e + 1].norm;
+      for (const i of [op.e, op.e + 1]) {
+        results[i] = {
+          i,
+          expected: words[i].text,
+          heard: token.text,
+          start_ms: token.t_ms,
+          status: exact ? 'correct' : 'uncertain',
+          confidence: exact ? 'medium' : 'low',
+        };
+      }
+      lastExpected = op.e + 1;
+    } else if (op.kind === 'split') {
+      const second = tokens[op.h + 1];
+      const joined = { text: `${token.text} ${second.text}`, t_ms: token.t_ms };
+      results[op.e] = decide(words[op.e], joined, token.norm + second.norm);
+      lastExpected = op.e;
     } else {
       insertions.push({ after_i: lastExpected, heard: token.text, start_ms: token.t_ms });
     }

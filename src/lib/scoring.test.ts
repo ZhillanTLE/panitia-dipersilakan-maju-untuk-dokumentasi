@@ -80,6 +80,24 @@ describe('scoreTake', () => {
     expect(result.insertions).toEqual([{ after_i: 0, heard: 'eh', start_ms: 900 }]);
   });
 
+  it('accepts two words the recognizer joined into one', () => {
+    const result = scoreTake({ words, heard: heard('ibu pergi kepasar rumah nenek dekat sawah'), supplied: new Set() });
+    expect(result.words.map((w) => w.status)).toEqual(Array(8).fill('correct'));
+    expect(result.words[2]).toMatchObject({ heard: 'kepasar', confidence: 'medium' });
+    expect(result.insertions).toEqual([]);
+  });
+
+  it('accepts one word the recognizer split in two', () => {
+    const result = scoreTake({ words, heard: heard('ibu per gi ke pasar rumah nenek dekat sawah'), supplied: new Set() });
+    expect(result.words.map((w) => w.status)).toEqual(Array(8).fill('correct'));
+    expect(result.words[1].heard).toBe('per gi');
+  });
+
+  it('does not treat a repeated word as a split', () => {
+    const result = scoreTake({ words, heard: heard('ibu pergi ke pasar rumah rumah nenek dekat sawah'), supplied: new Set() });
+    expect(result.words[4].status).toBe('repeated');
+  });
+
   it('marks words the teacher supplied, whether or not the child said them', () => {
     expect(statuses('ibu pergi ke pasar rumah nenek sawah', [6])[6]).toBe('supplied');
     expect(statuses('ibu pergi ke pasar rumah nenek dekat sawah', [6])[6]).toBe('supplied');
@@ -114,9 +132,18 @@ describe('liveCursor', () => {
     expect(liveCursor(norms, ['ibu', 'eh'])).toBe(1);
   });
 
-  it('catches up one word after a skip', () => {
-    expect(liveCursor(norms, ['ibu', 'pergi', 'pasar'])).toBe(2);
+  it('keeps moving when a word is skipped, then lines up again', () => {
+    expect(liveCursor(norms, ['ibu', 'pergi', 'pasar'])).toBe(3);
     expect(liveCursor(norms, ['ibu', 'pergi', 'pasar', 'rumah'])).toBe(5);
+  });
+
+  it('keeps moving when the recognizer mishears every word', () => {
+    expect(liveCursor(norms, ['ibu', 'berkata', 'kemana', 'lapar'])).toBe(4);
+    expect(liveCursor(norms, ['ibu', 'berkata', 'kemana', 'lapar', 'rumah'])).toBe(5);
+  });
+
+  it('moves two words for a joined token', () => {
+    expect(liveCursor(norms, ['ibu', 'pergi', 'kepasar'])).toBe(4);
   });
 
   it('steps over words the teacher supplied', () => {
