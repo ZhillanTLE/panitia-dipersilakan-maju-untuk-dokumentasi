@@ -1,0 +1,67 @@
+{
+  "bank": "kartu-id",
+  "version": 1,
+  "status": "draft",
+  "cards": [
+    {
+      "id": "PAR-01",
+      "version": 1,
+      "level": "paragraf",
+      "title": "Kebun Nenek",
+      "layout": "prose",
+      "blocks": [
+        "Setiap hari Minggu, Dina pergi ke rumah nenek. Rumah nenek ada di dekat sawah. Di belakang rumah ada kebun kecil.",
+        "Nenek menanam cabai, tomat, dan bayam. Dina senang membantu nenek menyiram tanaman. Sore hari, mereka makan pisang goreng bersama."
+      ]
+    },
+    {
+      "id": "KAL-01",
+      "version": 1,
+      "level": "kalimat",
+      "title": "Empat kalimat",
+      "layout": "lines",
+      "blocks": [
+        "Ibu membeli sayur di pasar.",
+        "Adik bermain bola di halaman.",
+        "Burung itu terbang tinggi.",
+        "Kami belajar membaca bersama."
+      ]
+    },
+    {
+      "id": "KAT-01",
+      "version": 1,
+      "level": "kata",
+      "title": "Sepuluh kata",
+      "layout": "grid",
+      "blocks": ["buku", "meja", "sapi", "rumah", "bola", "kaki", "topi", "jalan", "ikan", "pintu"],
+      "syllables": {
+        "buku": "bu-ku",
+        "meja": "me-ja",
+        "sapi": "sa-pi",
+        "rumah": "ru-mah",
+        "bola": "bo-la",
+        "kaki": "ka-ki",
+        "topi": "to-pi",
+        "jalan": "ja-lan",
+        "ikan": "i-kan",
+        "pintu": "pin-tu"
+      }
+    },
+    {
+      "id": "SUK-01",
+      "version": 1,
+      "level": "suku_kata",
+      "title": "Suku kata",
+      "layout": "grid",
+      "blocks": ["ba", "ki", "mu", "de", "so", "la", "pi", "ne", "tu", "ga"]
+    },
+    {
+      "id": "HUR-01",
+      "version": 1,
+      "level": "huruf",
+      "title": "Huruf",
+      "layout": "grid",
+      "blocks": ["a", "m", "s", "b", "i", "k", "u", "t", "e", "r"]
+    }
+  ]
+}

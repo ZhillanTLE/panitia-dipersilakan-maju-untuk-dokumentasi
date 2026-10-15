@@ -1,0 +1,17 @@
+{
+  "id": "tarl-id",
+  "version": 1,
+  "status": "draft",
+  "note": "Draft thresholds for the web prototype. They need team sign-off and a docs/decisions record before use with children.",
+  "order": ["paragraf", "kalimat", "kata", "suku_kata", "huruf"],
+  "start": "paragraf",
+  "error_statuses": ["substituted", "omitted", "supplied", "uncertain"],
+  "cards": {
+    "paragraf": { "rule": "R-PAR", "min_accuracy": 0.9 },
+    "kalimat": { "rule": "R-KAL", "min_accuracy": 0.85 },
+    "kata": { "rule": "R-KAT", "min_accuracy": 0.8 },
+    "suku_kata": { "rule": "R-SUK", "min_accuracy": 0.8 },
+    "huruf": { "rule": "R-HUR", "min_accuracy": 0.8 }
+  },
+  "beginner_rule": "R-PEM"
+}

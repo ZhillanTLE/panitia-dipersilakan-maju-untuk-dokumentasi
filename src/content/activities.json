@@ -1,0 +1,152 @@
+{
+  "bank": "aktivitas-id",
+  "version": 1,
+  "status": "draft",
+  "note": "Draft activities written for the prototype. Not yet reviewed by an educator.",
+  "activities": [
+    {
+      "id": "ACT-PEM-01",
+      "level": "pemula",
+      "title": "Kartu huruf bersuara",
+      "minutes": 10,
+      "materials": "Kartu huruf a, i, u, m, s",
+      "steps": [
+        "Angkat satu kartu, ucapkan bunyinya, lalu murid menirukan bersama.",
+        "Sebut satu benda di kelas yang berawal bunyi itu.",
+        "Ganti kartu. Ulangi lima huruf yang sama besok."
+      ]
+    },
+    {
+      "id": "ACT-PEM-02",
+      "level": "pemula",
+      "title": "Huruf di sekitar kelas",
+      "minutes": 10,
+      "materials": "Poster, papan tulis, buku murid",
+      "steps": [
+        "Tulis satu huruf besar di papan.",
+        "Murid berkeliling mencari huruf yang sama di poster atau buku.",
+        "Setiap murid menunjuk dan membunyikan huruf yang ditemukan."
+      ]
+    },
+    {
+      "id": "ACT-HUR-01",
+      "level": "huruf",
+      "title": "Gabung bunyi",
+      "minutes": 15,
+      "materials": "Kartu konsonan dan kartu vokal",
+      "steps": [
+        "Letakkan kartu b di kiri dan kartu a di kanan.",
+        "Geser keduanya hingga bertemu sambil membaca b… a… ba.",
+        "Ganti vokalnya: ba, bi, bu, be, bo."
+      ]
+    },
+    {
+      "id": "ACT-HUR-02",
+      "level": "huruf",
+      "title": "Tebak bunyi awal",
+      "minutes": 10,
+      "materials": "Kartu huruf",
+      "steps": [
+        "Ucapkan satu kata, misalnya meja.",
+        "Murid mengangkat kartu huruf awalnya.",
+        "Bacakan kata lain dengan huruf awal yang sama."
+      ]
+    },
+    {
+      "id": "ACT-SUK-01",
+      "level": "suku_kata",
+      "title": "Rantai suku kata",
+      "minutes": 15,
+      "materials": "Kartu suku kata",
+      "steps": [
+        "Bagikan dua kartu suku kata kepada setiap pasangan.",
+        "Pasangan menyusunnya menjadi kata, misalnya bu + ku = buku.",
+        "Baca kata itu bersama, lalu tukar kartu dengan pasangan lain."
+      ]
+    },
+    {
+      "id": "ACT-SUK-02",
+      "level": "suku_kata",
+      "title": "Tepuk suku kata",
+      "minutes": 10,
+      "materials": "Daftar kata dua suku",
+      "steps": [
+        "Ucapkan kata, misalnya sapi.",
+        "Murid menepuk satu kali untuk setiap suku kata: sa (tepuk) pi (tepuk).",
+        "Tunjukkan tulisan katanya dan baca per suku kata."
+      ]
+    },
+    {
+      "id": "ACT-KAT-01",
+      "level": "kata",
+      "title": "Kata jadi kalimat",
+      "minutes": 15,
+      "materials": "Kartu kata",
+      "steps": [
+        "Murid membaca satu kata, misalnya bola.",
+        "Murid berikutnya menambah satu kata: bola merah.",
+        "Teruskan hingga menjadi kalimat pendek, lalu baca bersama."
+      ]
+    },
+    {
+      "id": "ACT-KAT-02",
+      "level": "kata",
+      "title": "Bingo kata",
+      "minutes": 15,
+      "materials": "Lembar bingo 3 × 3 berisi kata dari kartu bacaan",
+      "steps": [
+        "Bacakan satu kata dengan jelas.",
+        "Murid mencari dan menandai kata itu di lembarnya.",
+        "Murid yang mendapat satu baris membacakan ketiga katanya."
+      ]
+    },
+    {
+      "id": "ACT-KAL-01",
+      "level": "kalimat",
+      "title": "Baca bergantian",
+      "minutes": 15,
+      "materials": "Satu kartu kalimat untuk dua murid",
+      "steps": [
+        "Murid duduk berpasangan dengan satu kartu.",
+        "Bergiliran membaca satu kalimat sambil menunjuk setiap kata.",
+        "Pasangan mendengarkan dan membantu bila ada kata yang sulit."
+      ]
+    },
+    {
+      "id": "ACT-KAL-02",
+      "level": "kalimat",
+      "title": "Kalimat acak",
+      "minutes": 15,
+      "materials": "Potongan kata dari satu kalimat",
+      "steps": [
+        "Berikan potongan kata yang diacak, misalnya: pasar / ibu / ke / pergi.",
+        "Murid menyusun potongan itu menjadi kalimat.",
+        "Murid membaca kalimatnya keras-keras."
+      ]
+    },
+    {
+      "id": "ACT-PAR-01",
+      "level": "paragraf",
+      "title": "Baca lalu ceritakan",
+      "minutes": 20,
+      "materials": "Paragraf pendek",
+      "steps": [
+        "Murid membaca paragraf dalam hati, lalu keras-keras.",
+        "Murid menceritakan kembali isinya dengan kata-kata sendiri.",
+        "Teman sekelompok menambahkan bagian yang terlewat."
+      ]
+    },
+    {
+      "id": "ACT-PAR-02",
+      "level": "paragraf",
+      "title": "Apa, siapa, di mana",
+      "minutes": 15,
+      "materials": "Paragraf pendek dan tiga kartu tanya",
+      "steps": [
+        "Murid membaca paragraf bersama kelompoknya.",
+        "Setiap murid mengambil satu kartu tanya: apa, siapa, atau di mana.",
+        "Murid menjawab dengan menunjuk kalimat yang tepat di bacaan."
+      ]
+    }
+  ]
+}
