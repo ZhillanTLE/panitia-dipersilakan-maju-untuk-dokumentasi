@@ -1,0 +1,330 @@
+.read {
+  padding: var(--space-12) var(--space-4) var(--space-16);
+  overflow-x: clip;
+}
+
+/* Teacher controls under the book, aligned with the page's left edge */
+.desk {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-4);
+  width: var(--book-w, min(580px, calc(100vw - 64px)));
+  max-width: min(580px, calc(100vw - 64px));
+  margin: var(--space-8) auto 0;
+}
+
+.desk__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.desk__row--split {
+  justify-content: space-between;
+  width: 100%;
+}
+
+.desk__hint {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  max-width: 52ch;
+  color: var(--neutral-900);
+  font-size: var(--fs-8);
+  line-height: var(--lh-8);
+}
+
+.desk__aside {
+  color: var(--muted);
+}
+
+.desk__lead {
+  font-size: var(--fs-7);
+  line-height: var(--lh-7);
+  font-weight: var(--fw-s);
+}
+
+.desk__label {
+  color: var(--muted);
+  font-weight: var(--fw-b);
+}
+
+.desk__notice {
+  max-width: 52ch;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--r-12);
+  background: var(--caution-tint);
+  color: var(--caution);
+  font-size: var(--fs-8);
+  line-height: var(--lh-8);
+}
+
+.desk__timer {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 150px;
+  font-size: var(--fs-8);
+  line-height: var(--lh-8);
+  font-variant-numeric: tabular-nums;
+}
+
+.desk__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--r-pill);
+  background: var(--ink);
+  animation: listen-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes listen-pulse {
+  50% {
+    opacity: 0.25;
+  }
+}
+
+.desk__other .select {
+  height: 36px;
+  border-radius: var(--r-10);
+}
+
+.desk__why summary {
+  color: var(--neutral-900);
+  font-size: var(--fs-8);
+  line-height: var(--lh-8);
+  cursor: pointer;
+}
+
+.desk__why p {
+  max-width: 52ch;
+  margin-top: var(--space-2);
+  color: var(--neutral-900);
+  font-size: var(--fs-8);
+  line-height: var(--lh-8);
+}
+
+.mic-line {
+  display: block;
+  width: 100%;
+  height: 28px;
+}
+
+/* Stall: teacher-only prompt, outside the page */
+.stall {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-3) var(--space-3) var(--space-5);
+  border-radius: var(--r-14);
+  background: var(--stall-prompt-surface);
+  box-shadow: var(--ring-card);
+  color: var(--stall-prompt-ink);
+  font-size: var(--fs-7);
+  line-height: var(--lh-7);
+  font-weight: var(--fw-s);
+  animation: menu-in var(--motion-ui) var(--ease-highlight);
+}
+
+.text-size {
+  gap: var(--space-2);
+  padding: 0 var(--space-3);
+}
+
+.text-size__steps {
+  display: inline-flex;
+  gap: 3px;
+}
+
+.text-size__steps span {
+  width: 4px;
+  height: 4px;
+  border-radius: var(--r-pill);
+  background: var(--neutral-300);
+}
+
+.text-size__steps .is-on {
+  background: var(--ink);
+}
+
+/* Cover: Siap membaca */
+.cover {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  color: var(--paper);
+}
+
+.cover__brand {
+  color: var(--neutral-400);
+  font-size: var(--fs-8);
+  line-height: var(--lh-8);
+  font-weight: var(--fw-s);
+}
+
+.cover__title {
+  margin-top: calc(var(--space-4) * -1);
+  font-size: var(--fs-2);
+  line-height: var(--lh-2);
+  font-weight: var(--fw-s);
+  letter-spacing: var(--tracking-section);
+}
+
+.cover__group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.cover__label {
+  color: var(--neutral-400);
+  font-size: var(--fs-9);
+  line-height: var(--lh-9);
+}
+
+.cover__students {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+/* On-dark pill (node 87:329): white when chosen, outlined otherwise */
+.cover__student {
+  height: 44px;
+  padding: 0 var(--space-5);
+  border: 0;
+  border-radius: var(--r-pill);
+  background: transparent;
+  box-shadow: var(--ring-dark);
+  color: var(--paper);
+  font-size: var(--fs-8);
+  line-height: var(--lh-8);
+  font-variant-numeric: tabular-nums;
+  transition:
+    background-color var(--motion-ui) ease,
+    color var(--motion-ui) ease,
+    box-shadow var(--motion-ui) ease;
+}
+
+.cover__student:hover {
+  box-shadow: inset 0 0 0 2px var(--stroke);
+}
+
+.cover__student[aria-checked='true'] {
+  background: var(--neutral-100);
+  box-shadow: none;
+  color: var(--navy-text);
+  font-weight: var(--fw-s);
+}
+
+.cover__empty {
+  color: var(--neutral-400);
+}
+
+.cover__link {
+  color: var(--paper);
+}
+
+/* Contents: the cards in the order the assessment steps through them */
+.cover__toc {
+  display: flex;
+  flex-direction: column;
+}
+
+.cover__entry {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  width: 100%;
+  padding: var(--space-2) 0;
+  border: 0;
+  background: none;
+  color: var(--neutral-400);
+  font-size: var(--fs-8);
+  line-height: var(--lh-8);
+  text-align: left;
+  transition: color var(--motion-ui) ease;
+}
+
+.cover__entry:hover,
+.cover__entry[aria-checked='true'] {
+  color: var(--paper);
+}
+
+.cover__entry[aria-checked='true'] .cover__name {
+  font-weight: var(--fw-s);
+}
+
+.cover__num {
+  width: 1.2em;
+  font-variant-numeric: tabular-nums;
+}
+
+.cover__leader {
+  flex: 1;
+  min-width: var(--space-4);
+  border-bottom: 1px dotted var(--neutral-900);
+  transform: translateY(-4px);
+}
+
+.cover__entry[aria-checked='true'] .cover__leader {
+  border-bottom-color: var(--stroke);
+}
+
+.cover__card {
+  font-size: var(--fs-9);
+  line-height: var(--lh-9);
+}
+
+/* Terima kasih: the same page for every child */
+.thanks {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--space-4);
+}
+
+.thanks__title {
+  font-size: var(--fs-1);
+  line-height: var(--lh-1);
+  font-weight: var(--fw-s);
+  letter-spacing: var(--tracking-display);
+}
+
+.thanks__body {
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--ink);
+  color: var(--neutral-900);
+  font-size: var(--fs-6);
+  line-height: var(--lh-6);
+}
+
+@media (max-width: 640px) {
+  .read {
+    padding-top: var(--space-8);
+  }
+
+  .desk {
+    width: auto;
+    max-width: none;
+    margin-inline: var(--space-4);
+  }
+
+  .cover__title {
+    font-size: var(--fs-4);
+    line-height: var(--lh-4);
+  }
+
+  .thanks__title {
+    font-size: var(--fs-2);
+    line-height: var(--lh-2);
+  }
+
+  .cover__student {
+    height: 40px;
+    padding: 0 var(--space-4);
+  }
+}
