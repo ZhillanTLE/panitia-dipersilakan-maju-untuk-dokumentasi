@@ -1,0 +1,193 @@
+.reading {
+  --rs: var(--fs-5);
+  position: relative;
+  max-width: 34em;
+  color: var(--word-upcoming);
+  font-size: var(--rs);
+  line-height: 1.66;
+}
+
+.reading__block + .reading__block {
+  margin-top: calc(var(--rs) * 1.1);
+}
+
+.reading--lines .reading__block + .reading__block {
+  margin-top: calc(var(--rs) * 0.55);
+}
+
+.reading__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: calc(var(--rs) * 0.7) var(--space-6);
+}
+
+.reading--glyphs .reading__grid {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: calc(var(--rs) * 0.8) var(--space-3);
+  text-align: center;
+}
+
+.reading--grid .w {
+  font-size: calc(var(--rs) * 1.25);
+}
+
+.reading--glyphs .w {
+  font-size: calc(var(--rs) * 1.6);
+}
+
+.reading__cell {
+  position: relative;
+}
+
+/* The current word: soft box + underline, gliding between words */
+.reading__box {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 0;
+  border-radius: var(--r-8);
+  background: var(--word-current-box);
+  box-shadow: inset 0 -2px 0 var(--word-current-line);
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    transform var(--motion-highlight) var(--ease-highlight),
+    width var(--motion-highlight) var(--ease-highlight),
+    height var(--motion-highlight) var(--ease-highlight),
+    opacity var(--motion-highlight) ease;
+}
+
+.reading__box[data-shown='1'] {
+  opacity: 1;
+}
+
+.w {
+  position: relative;
+  z-index: 1;
+  transition: color var(--motion-highlight) var(--ease-highlight);
+}
+
+button.w {
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: none;
+  font-family: inherit;
+  font-weight: inherit;
+  line-height: inherit;
+  color: inherit;
+  text-align: inherit;
+}
+
+.reading:not(.reading--grid) button.w {
+  font-size: inherit;
+}
+
+/* tes: read words are dimmed, never marked right or wrong */
+.w[data-state='read'] {
+  color: var(--word-read);
+}
+
+.w[data-state='later'] {
+  color: var(--word-later);
+}
+
+.w[data-state='upcoming'],
+.w[data-state='current'] {
+  color: var(--word-upcoming);
+}
+
+.reading--tes button.w:hover {
+  text-decoration: underline 1px var(--stroke);
+  text-underline-offset: 0.3em;
+}
+
+.syl-gap {
+  display: inline-block;
+  width: 0;
+  height: 0.8em;
+  margin: 0 0.14em;
+  border-left: 1px solid var(--stroke);
+  vertical-align: -0.08em;
+}
+
+/* Review: one role per word status (designsystem.md §7) */
+.reading--review button.w {
+  margin: 0 -1px;
+  padding: 0 1px;
+}
+
+.reading--review button.w:hover {
+  background: var(--cream);
+}
+
+.w[data-state='repeated'] {
+  text-decoration: underline dotted 2px var(--neutral-400);
+  text-underline-offset: 0.28em;
+}
+
+.w[data-state='self_corrected'] {
+  text-decoration: underline dotted 2px var(--success);
+  text-underline-offset: 0.28em;
+}
+
+.reading--review .w[data-state='substituted'] {
+  background: var(--caution-tint);
+  box-shadow: 0 0 0 2px var(--caution-tint);
+  color: var(--caution);
+}
+
+.w[data-state='omitted'] {
+  color: var(--muted);
+  text-decoration: line-through 1.5px var(--muted);
+}
+
+.reading--review .w[data-state='supplied'] {
+  background: var(--paper);
+  box-shadow: 0 0 0 2px var(--paper);
+  color: var(--neutral-900);
+  text-decoration: underline dashed 1.5px var(--neutral-900);
+  text-underline-offset: 0.28em;
+}
+
+.reading--review .w[data-state='uncertain'] {
+  margin: 0 -2px;
+  padding: 0 1px;
+  border: 1px dashed var(--stroke);
+  color: var(--needs-review);
+}
+
+/* Teacher edit: a dot above the word; the engine's status stays in the record */
+.w[data-edited]::before {
+  content: '';
+  position: absolute;
+  top: 0.05em;
+  left: 50%;
+  width: 5px;
+  height: 5px;
+  margin-left: -2.5px;
+  border-radius: var(--r-pill);
+  background: var(--ink);
+}
+
+.reading--review button.w[aria-pressed='true'] {
+  outline: 2px solid var(--ink);
+  outline-offset: 3px;
+}
+
+.ins {
+  position: relative;
+  z-index: 1;
+  margin: 0 0.12em;
+  color: var(--caution);
+  font-size: 0.5em;
+  font-weight: var(--fw-s);
+  line-height: 1;
+  vertical-align: super;
+}
+
+.reading--grid .ins {
+  display: block;
+  font-size: var(--fs-9);
+  vertical-align: baseline;
+}
