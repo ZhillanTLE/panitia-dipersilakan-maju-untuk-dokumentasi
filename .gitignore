@@ -18,3 +18,10 @@ Thumbs.db
 # Logs
 *.log
 npm-debug.log*
+
+# Model packs and research data are never committed (CLAUDE.md, "Model pack")
+modelpack/
+harness/data/
+harness/.venv/
+__pycache__/
+*.onnx
