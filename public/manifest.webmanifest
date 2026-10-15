@@ -1,0 +1,12 @@
+{
+  "name": "DengarBaca",
+  "short_name": "DengarBaca",
+  "description": "Asesmen membaca awal Bahasa Indonesia, luring.",
+  "lang": "id",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#FFFFFF",
+  "theme_color": "#FFFFFF",
+  "icons": [{ "src": "favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
+}
