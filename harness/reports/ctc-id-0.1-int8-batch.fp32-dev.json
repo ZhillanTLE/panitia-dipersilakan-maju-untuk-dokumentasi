@@ -1,0 +1,41 @@
+{
+  "pack": "ctc-id@0.1-int8",
+  "file": "batch.fp32.onnx",
+  "split": "dev",
+  "data": "FLEURS id_id dev (first 43 utterances without digits)",
+  "utterances": 43,
+  "audio_seconds": 499.9,
+  "wer": 0.3897,
+  "cer": 0.1058,
+  "speed": {
+    "threads": 4,
+    "real_time_factor": 0.263,
+    "window_2s_ms": 450,
+    "window_4s_ms": 843,
+    "load_s": 2.7
+  },
+  "memory_mb": {
+    "peak_rss": 1793,
+    "model_delta": 1740
+  },
+  "model_mb": 1262,
+  "examples": [
+    {
+      "reference": "telepon satelit biasanya bukan merupakan pengganti telepon seluler karena anda harus berada di luar ruangan dengan jarak pandang yang jelas ke satelit untuk menelepon",
+      "heard": "telepon satuit biasanya bukan merupakan penggadi telepon selulan karena anda harus berada di luar ruangan dengan jarah pandang yang jelas kesatoit untuk menelpon"
+    },
+    {
+      "reference": "alat ini memanfaatkan teknologi berbasis satelit alih alih teknologi tua berbasis radar di darat untuk memudahkan pengontrol lalu lintas udara menemukan lokasi tepat pesawat dengan presisi yang lebih baik dan memberikan informasi yang lebih akurat kepada pilot",
+      "heard": "alat ini mengomfatkan teknologi tepati satelit alehalek tegaluki tua terpasi serataditarat untuk memitahkan pengontral lalu lintas utara menemukan lokasi tepat pesawat tenanlerafiki yang leptaiktammemberitan inpemati yan leti akurat kepata tilot"
+    },
+    {
+      "reference": "pasal pasal tersebut memerlukan kesepakatan suara yang bulat dari semua negara bagian sebelum dapat diubah sedangkan negara negara bagian tidak mengindahkan pemerintah pusat sehingga perwakilan mereka sering tidak hadir",
+      "heard": "pasal pasal tersebut memperlukan kesepakatan suara yang bulat dari semua negara bagian sebelum dapat di ubah sedangkan negara negara bagian tidak mengindahkan pemerintah pusat sehingga perwakilan mereka sering tidak adir"
+    },
+    {
+      "reference": "pasal pasal tersebut memerlukan kesepakatan suara yang bulat dari semua negara bagian sebelum dapat diubah sedangkan negara negara bagian tidak mengindahkan pemerintah pusat sehingga perwakilan mereka sering tidak hadir",
+      "heard": "pasal pasal tersebut memperlukan kesepakatan suara yang gulat dari semua negara pagiansebelum tapat kiubah sedahkan akal negara bagian tidak mengindahkan peorangtah kusat sehingga prwakilan mereka sering kita adir"
+    }
+  ],
+  "run_at": "2026-10-15T14:23:37+00:00"
+}

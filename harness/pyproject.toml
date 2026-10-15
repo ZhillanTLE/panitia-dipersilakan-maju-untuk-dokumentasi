@@ -1,0 +1,38 @@
+[project]
+name = "harness"
+version = "0.1.0"
+description = "DengarBaca research harness: model export, int8 quantisation and evaluation."
+requires-python = ">=3.11,<3.12"
+dependencies = [
+  "torch>=2.4",
+  "transformers>=4.44,<5",
+  "onnx>=1.16",
+  "onnxscript>=0.1",
+  "onnxruntime>=1.19",
+  "numpy>=1.26",
+  "soundfile>=0.12",
+  "jiwer>=3.0",
+  "psutil>=5.9",
+]
+
+[dependency-groups]
+dev = ["pytest>=8"]
+
+# CPU-only PyTorch: export and evaluation never need a GPU, and the CUDA wheels are large.
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[tool.uv.sources]
+torch = { index = "pytorch-cpu" }
+
+[tool.uv]
+package = true
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["harness"]
