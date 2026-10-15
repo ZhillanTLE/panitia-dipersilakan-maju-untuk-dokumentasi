@@ -21,7 +21,7 @@ import {
   type RecognizerHealth,
   type TranscriptSegment,
 } from '../lib/speech';
-import { NucleusDetector, SyllableMap } from '../lib/syllables';
+import { NucleusDetector, syllableCount } from '../lib/syllables';
 import { addTake, endSession, newId, useApp } from '../lib/store';
 import { CARD, S, SOURCE } from '../strings';
 import type { CardLevel, LiveEvent, Session, Source, Take } from '../types';
@@ -34,12 +34,10 @@ type Phase =
 
 const STALL_MS = 3000;
 const AUTO_FINISH_MS = 1400;
+/** Syllables voiced with no recognized word before the teacher is told the recognizer is silent. */
+const SILENT_RECOGNIZER_SYLLABLES = 8;
 /** The box steps through words the recognizer delivers in one burst, instead of jumping. */
 const CATCH_UP_MS = 70;
-/** While the recognizer is producing words, the voice count may lead it by this many words. */
-const VOICE_LEAD_WORDS = 3;
-/** Quiet after voicing part of the last word ends the reading. */
-const END_QUIET_MS = 1500;
 
 const MODEL: Record<Source, string> = {
   ondevice: 'webspeech-ondevice-id',
@@ -61,13 +59,14 @@ interface Live {
   /** Word the stall prompt was raised for, so it is logged once. */
   stalledOn: number | null;
   finishTimer: number;
-  /** Voice-paced tracking from the microphone signal; null without a microphone. */
+  /** Voice activity from the microphone signal; null without a microphone. It never moves the highlight. */
   detector: NucleusDetector | null;
+  voiced: boolean;
   syllables: number;
-  lastSyllableAt: number;
-  /** Where the recognizer last placed the reader, and how many words it has heard. */
-  asrCursor: number;
+  /** Words the recognizer has heard so far. */
   asrHeard: number;
+  /** The teacher was told the recognizer hears nothing, so it is said once. */
+  silentWarned: boolean;
 }
 
 function freshLive(source: Source): Live {
@@ -85,10 +84,10 @@ function freshLive(source: Source): Live {
     stalledOn: null,
     finishTimer: 0,
     detector: null,
+    voiced: false,
     syllables: 0,
-    lastSyllableAt: 0,
-    asrCursor: 0,
     asrHeard: 0,
+    silentWarned: false,
   };
 }
 
@@ -106,7 +105,6 @@ export function ReadView({ active }: { active: boolean }) {
   const [cursor, setCursor] = useState(0);
   const [shownCursor, setShownCursor] = useState(0);
   const [transcript, setTranscript] = useState<TranscriptSegment[]>([]);
-  const [wordProgress, setWordProgress] = useState<number | undefined>(undefined);
   const [tracking, setTracking] = useState<{ syllables: number; health: RecognizerHealth | null } | null>(null);
   const [stall, setStall] = useState<number | null>(null);
   const [elapsed, setElapsed] = useState(0);
@@ -124,7 +122,7 @@ export function ReadView({ active }: { active: boolean }) {
   const card = level ? cardFor(level) : null;
   const words = useMemo(() => (card ? cardWords(card) : []), [card]);
   const norms = useMemo(() => words.map((w) => w.norm), [words]);
-  const syllableMap = useMemo(() => new SyllableMap(words), [words]);
+  const totalSyllables = useMemo(() => words.reduce((n, w) => n + syllableCount(w.norm), 0), [words]);
   const listening = phase.kind === 'card' && phase.step === 'listening';
   // Raw recognizer output under the book: always in `npm run dev`, or with ?debug=1.
   const debug = import.meta.env.DEV || route.params.get('debug') === '1';
@@ -200,62 +198,43 @@ export function ReadView({ active }: { active: boolean }) {
     [words.length],
   );
 
-  /** Moves the highlight forward to `target`, never back, and updates the syllable underline. */
+  /** Moves the highlight forward to `target`, never back. */
   const advance = useCallback(
     (target: number) => {
-      const l = live.current;
-      const next = Math.max(l.cursor, Math.min(target, words.length));
-      if (next !== l.cursor) moveCursor(next);
-      setWordProgress(
-        l.detector ? (syllableMap.wordsDone(l.syllables) === next ? syllableMap.progressIn(l.syllables) : 0) : undefined,
-      );
+      const next = Math.max(live.current.cursor, Math.min(target, words.length));
+      if (next !== live.current.cursor) moveCursor(next);
     },
-    [moveCursor, syllableMap, words.length],
+    [moveCursor, words.length],
   );
 
   /** The teacher puts the highlight on word `i` (tap, Space or arrow keys). */
-  const placeAt = useCallback(
-    (i: number) => {
-      const l = live.current;
-      const next = Math.max(0, Math.min(i, words.length));
-      l.syllables = syllableMap.startOf(next);
-      moveCursor(next);
-      setWordProgress(l.detector ? 0 : undefined);
-    },
-    [moveCursor, syllableMap, words.length],
-  );
+  const placeAt = useCallback((i: number) => moveCursor(Math.max(0, Math.min(i, words.length))), [moveCursor, words.length]);
 
-  /** Every 10 ms of microphone signal. Each syllable the reader voices moves the highlight on. */
-  const onFrame = useCallback(
-    (rms: number, zcr: number) => {
-      const l = live.current;
-      if (!l.detector || l.detector.push(rms, zcr).nucleusAt === null) return;
-      l.syllables++;
-      l.lastSyllableAt = performance.now();
-      let target = syllableMap.wordsDone(l.syllables);
-      if (l.asrHeard > 0 && target > l.asrCursor + VOICE_LEAD_WORDS) {
-        target = l.asrCursor + VOICE_LEAD_WORDS;
-        l.syllables = syllableMap.startOf(target + 1) - 1;
-      }
-      advance(target);
-    },
-    [advance, syllableMap],
-  );
+  /** Every 10 ms of microphone signal: voice activity only. It never moves the highlight. */
+  const onFrame = useCallback((rms: number, zcr: number) => {
+    const l = live.current;
+    if (!l.detector) return;
+    const { voiced, nucleusAt } = l.detector.push(rms, zcr);
+    if (voiced && !l.voiced) {
+      // The reader has started; the stall clock starts now, not when the teacher pressed Mulai.
+      l.voiced = true;
+      l.lastAdvance = performance.now();
+    }
+    if (nucleusAt !== null) l.syllables++;
+  }, []);
 
-  /** Recognized words. The recognizer corrects the voice count forward when it is ahead. */
+  /** Recognized words move the highlight. Nothing else does. */
   const onLive = useCallback(
     (tokens: HeardToken[]) => {
       const l = live.current;
       l.tokens = tokens;
       const heard = tokens.map((t) => normalize(t.text)).filter(Boolean);
-      const position = liveCursor(norms, heard, l.supplied);
       l.asrHeard = heard.length;
-      l.asrCursor = Math.max(l.asrCursor, position);
-      if (syllableMap.startOf(position) > l.syllables) l.syllables = syllableMap.startOf(position);
-      advance(position);
+      // The recognizer revises its guesses; the highlight only ever moves forward on them.
+      advance(liveCursor(norms, heard, l.supplied));
       if (debug) setTranscript(l.stream?.segments?.() ?? [{ text: tokens.map((t) => t.text).join(' '), final: true }]);
     },
-    [advance, debug, norms, syllableMap],
+    [advance, debug, norms],
   );
 
   const openCard = useCallback(
@@ -278,7 +257,6 @@ export function ReadView({ active }: { active: boolean }) {
       setCursor(0);
       setTranscript([]);
       setTracking(null);
-      setWordProgress(undefined);
       setStall(null);
       setElapsed(0);
       setNotice(null);
@@ -301,14 +279,13 @@ export function ReadView({ active }: { active: boolean }) {
         l.capture = await startCapture();
         l.detector = new NucleusDetector();
         l.capture.onFrame = onFrame;
-        setWordProgress(0);
       } catch (error) {
         const denied = error instanceof DOMException && error.name === 'NotAllowedError';
         setNotice(denied ? S.reading.micDenied : S.reading.micMissing);
         l.source = 'manual';
       }
     }
-    if (l.source === 'ondevice') l.stream = new OnDeviceStream(l.capture?.track ?? null);
+    if (l.source === 'ondevice') l.stream = new OnDeviceStream();
     else if (l.source === 'simulated') {
       const seed = `${r.session.session_id}:${card.id}:${r.session.take_ids.length}`;
       const sim = new SimulatedStream(simulationScript(words, seed));
@@ -321,9 +298,11 @@ export function ReadView({ active }: { active: boolean }) {
 
     l.t0 = performance.now();
     l.lastAdvance = l.t0;
-    l.stream.start(onLive, () => {
-      setNotice(S.reading.recognizerFailed);
+    l.stream.start(onLive, (code) => {
+      setNotice(code === 'language-not-supported' ? S.reading.recognizerLanguage : S.reading.recognizerFailed(code));
       live.current.source = 'manual';
+      setStall(null);
+      void onDeviceStatus().then(setOnDevice);
     });
     setPhase({ kind: 'card', level: card.level, step: 'listening' });
   }, [card, onFrame, onLive, student, words]);
@@ -395,21 +374,20 @@ export function ReadView({ active }: { active: boolean }) {
       setElapsed(performance.now() - l.t0);
       if (debug) setTracking({ syllables: l.syllables, health: l.stream?.health?.() ?? null });
       if (l.cursor >= words.length) return;
-      // On the last word, part of it voiced, then quiet: the reader has finished.
-      const last = words.length - 1;
-      if (
-        l.detector &&
-        l.cursor === last &&
-        l.syllables > syllableMap.startOf(last) &&
-        performance.now() - l.lastSyllableAt > END_QUIET_MS
-      ) {
-        advance(words.length);
+      // In Penanda guru the teacher moves the highlight, so there is no stall to prompt.
+      if (l.source === 'manual') return;
+      // The microphone hears the reader but the recognizer has produced nothing: say so once,
+      // and don't prompt for stalls it cannot see.
+      if (l.source === 'ondevice' && l.asrHeard === 0) {
+        if (l.syllables >= SILENT_RECOGNIZER_SYLLABLES && !l.silentWarned) {
+          l.silentWarned = true;
+          setNotice(S.reading.recognizerSilent);
+        }
         return;
       }
-      // Only once the reader has started, and only when something is listening for them.
-      if (l.source === 'manual' && !l.detector) return;
-      if (l.cursor === 0 && l.syllables === 0 && l.asrHeard === 0) return;
-      const quiet = performance.now() - Math.max(l.lastAdvance, l.lastSyllableAt);
+      // Only once the reader has started.
+      if (l.cursor === 0 && !l.voiced && l.asrHeard === 0) return;
+      const quiet = performance.now() - l.lastAdvance;
       if (quiet > STALL_MS && l.stalledOn !== l.cursor) {
         l.stalledOn = l.cursor;
         l.events.push({ t_ms: Math.round(performance.now() - l.t0), type: 'stalled', i: l.cursor, ms: Math.round(quiet) });
@@ -417,7 +395,7 @@ export function ReadView({ active }: { active: boolean }) {
       }
     }, 250);
     return () => window.clearInterval(id);
-  }, [advance, debug, listening, syllableMap, words.length]);
+  }, [debug, listening, words.length]);
 
   // The teacher corrects the highlight: Space or → moves it on, ← moves it back.
   useEffect(() => {
@@ -516,7 +494,6 @@ export function ReadView({ active }: { active: boolean }) {
                 words={words}
                 mode="tes"
                 cursor={shownCursor}
-                progress={shownCursor === cursor ? wordProgress : 0}
                 textSize={textSize}
                 onWordTap={listening && live.current.source !== 'simulated' ? placeAt : undefined}
               />
@@ -571,7 +548,7 @@ export function ReadView({ active }: { active: boolean }) {
               <div className="desk__row">
                 <span className="desk__timer" aria-live="off">
                   <span className="desk__dot" aria-hidden="true" />
-                  {live.current.detector || live.current.source !== 'manual' ? S.reading.listening : S.reading.marking}{' '}
+                  {live.current.source === 'manual' ? S.reading.marking : S.reading.listening}{' '}
                   {formatClock(elapsed)}
                 </span>
                 <button type="button" className="btn btn--action" onClick={() => void finish()}>
@@ -596,7 +573,7 @@ export function ReadView({ active }: { active: boolean }) {
                 <p className="transcript__label">{S.reading.transcript}</p>
                 {tracking && (
                   <p className="transcript__label">
-                    {live.current.detector ? S.reading.voiceLine(tracking.syllables, syllableMap.total) : S.reading.noVoice}{' '}
+                    {live.current.detector ? S.reading.voiceLine(tracking.syllables, totalSyllables) : S.reading.noVoice}{' '}
                     {tracking.health ? S.reading.recognizerLine(tracking.health) : null}
                   </p>
                 )}
@@ -615,15 +592,13 @@ export function ReadView({ active }: { active: boolean }) {
             {phase.step !== 'saving' && (
               <p className="desk__hint">
                 {run.current?.session.simulated && <span className="chip chip--ink">{S.reading.simulatedChip}</span>}
-                {phase.step === 'armed'
-                  ? live.current.source === 'manual' && !student?.consents.assessment
-                    ? S.engine.manualNoMic
-                    : S.reading.armedHint
-                  : live.current.source === 'simulated'
-                    ? null
-                    : live.current.detector
+                {live.current.source === 'manual'
+                  ? S.engine.manual
+                  : phase.step === 'armed'
+                    ? S.reading.armedHint
+                    : live.current.source === 'ondevice'
                       ? S.reading.tapToFix
-                      : S.engine.manualNoMic}
+                      : null}
               </p>
             )}
           </>

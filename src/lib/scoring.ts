@@ -83,38 +83,12 @@ export function misreadings(word: string): Set<string> {
 const FILLERS = new Set(['e', 'ee', 'eee', 'eh', 'ehm', 'em', 'emm', 'hm', 'hmm', 'ah', 'aa', 'anu']);
 const JOIN_PENALTY = 0.05;
 
-interface CostModel {
-  sub(expected: string, heard: string): number;
-  insert(heard: string): number;
+/** A very different word costs more than an insertion, so stray words stay insertions instead of pushing card words out of place. */
+function substitutionCost(expected: string, heard: string): number {
+  if (FILLERS.has(heard)) return 2;
+  const sim = similarity(expected, heard);
+  return sim >= 0.5 ? 1 - sim : 1.2;
 }
-
-/**
- * Scoring: a very different word costs more than an insertion, so stray words stay
- * insertions instead of pushing card words out of place.
- */
-const SCORING: CostModel = {
-  sub(expected, heard) {
-    if (FILLERS.has(heard)) return 2;
-    const sim = similarity(expected, heard);
-    return sim >= 0.5 ? 1 - sim : 1.2;
-  },
-  insert: () => GAP,
-};
-
-/**
- * Live highlight: a heard word is taken as the reader's attempt at the next card word,
- * even when the recognizer gets it wrong, so the highlight keeps moving. Fillers are
- * skipped almost for free. UI only; it never feeds a score (CLAUDE.md rule 4).
- */
-const TRACKING: CostModel = {
-  sub(expected, heard) {
-    if (FILLERS.has(heard)) return 2;
-    if (expected === heard) return 0;
-    const sim = similarity(expected, heard);
-    return sim >= 0.5 ? (1 - sim) * 0.8 : 0.75;
-  },
-  insert: (heard) => (FILLERS.has(heard) ? 0.1 : GAP),
-};
 
 /**
  * Recognizers sometimes join two words ("di belakang" → "dibelakang") or split one
@@ -135,19 +109,19 @@ export type AlignOp =
   | { kind: 'omit'; e: number }
   | { kind: 'insert'; h: number };
 
-function costTable(expected: string[], heard: string[], free: ReadonlySet<number>, model: CostModel): number[][] {
+function costTable(expected: string[], heard: string[], free: ReadonlySet<number>): number[][] {
   const n = expected.length;
   const m = heard.length;
   const omit = (i: number) => (free.has(i) ? 0 : GAP);
   const D = Array.from({ length: n + 1 }, () => new Array<number>(m + 1).fill(0));
   for (let i = 1; i <= n; i++) D[i][0] = D[i - 1][0] + omit(i - 1);
-  for (let j = 1; j <= m; j++) D[0][j] = D[0][j - 1] + model.insert(heard[j - 1]);
+  for (let j = 1; j <= m; j++) D[0][j] = j * GAP;
   for (let i = 1; i <= n; i++) {
     for (let j = 1; j <= m; j++) {
       let best = Math.min(
-        D[i - 1][j - 1] + model.sub(expected[i - 1], heard[j - 1]),
+        D[i - 1][j - 1] + substitutionCost(expected[i - 1], heard[j - 1]),
         D[i - 1][j] + omit(i - 1),
-        D[i][j - 1] + model.insert(heard[j - 1]),
+        D[i][j - 1] + GAP,
       );
       if (i >= 2) best = Math.min(best, D[i - 2][j - 1] + joinCost(expected[i - 2] + expected[i - 1], heard[j - 1]));
       if (j >= 2) best = Math.min(best, D[i - 1][j - 2] + joinCost(expected[i - 1], heard[j - 2] + heard[j - 1]));
@@ -157,18 +131,12 @@ function costTable(expected: string[], heard: string[], free: ReadonlySet<number
   return D;
 }
 
-/**
- * Global alignment of heard words to card words. `free` marks card words the teacher
- * supplied: skipping them costs nothing.
- */
-export function align(expected: string[], heard: string[], free: ReadonlySet<number> = new Set()): AlignOp[] {
-  const D = costTable(expected, heard, free, SCORING);
+/** Walks the cost table back from cell (i, j) to the start. */
+function traceback(D: number[][], expected: string[], heard: string[], free: ReadonlySet<number>, i: number, j: number): AlignOp[] {
   const ops: AlignOp[] = [];
   const eq = (a: number, b: number) => Math.abs(a - b) < 1e-9;
-  let i = expected.length;
-  let j = heard.length;
   while (i > 0 || j > 0) {
-    if (i > 0 && j > 0 && eq(D[i][j], D[i - 1][j - 1] + SCORING.sub(expected[i - 1], heard[j - 1]))) {
+    if (i > 0 && j > 0 && eq(D[i][j], D[i - 1][j - 1] + substitutionCost(expected[i - 1], heard[j - 1]))) {
       ops.push({ kind: 'match', e: i - 1, h: j - 1 });
       i--;
       j--;
@@ -192,21 +160,37 @@ export function align(expected: string[], heard: string[], free: ReadonlySet<num
 }
 
 /**
- * Live cursor for the highlight (fast path): how many card words the heard prefix covers.
- * On a tie it keeps the smaller position, so the cursor never runs ahead of the reader.
+ * Global alignment of heard words to card words. `free` marks card words the teacher
+ * supplied: skipping them costs nothing.
+ */
+export function align(expected: string[], heard: string[], free: ReadonlySet<number> = new Set()): AlignOp[] {
+  return traceback(costTable(expected, heard, free), expected, heard, free, expected.length, heard.length);
+}
+
+/**
+ * Live cursor for the highlight (fast path): the position just after the last card word
+ * the recognizer heard clearly (exactly, or within NEAR similarity). A wrong or extra word
+ * never moves it; the next clear word brings it back in line. On a tie it keeps the
+ * smaller position, so the cursor never runs ahead of the reader.
  * UI only. It never feeds a score (CLAUDE.md rule 4).
  */
 export function liveCursor(expected: string[], heard: string[], free: ReadonlySet<number> = new Set()): number {
-  let best = 0;
+  let cursor = 0;
   if (heard.length) {
-    const D = costTable(expected, heard, free, TRACKING);
+    const D = costTable(expected, heard, free);
     const m = heard.length;
+    let end = 0;
     for (let i = 1; i <= expected.length; i++) {
-      if (D[i][m] < D[best][m] - 1e-9) best = i;
+      if (D[i][m] < D[end][m] - 1e-9) end = i;
+    }
+    for (const op of traceback(D, expected, heard, free, end, m)) {
+      if (op.kind === 'match' && similarity(expected[op.e], heard[op.h]) >= NEAR) cursor = op.e + 1;
+      else if (op.kind === 'joined') cursor = op.e + 2;
+      else if (op.kind === 'split') cursor = op.e + 1;
     }
   }
-  while (best < expected.length && free.has(best)) best++;
-  return best;
+  while (cursor < expected.length && free.has(cursor)) cursor++;
+  return cursor;
 }
 
 function decide(word: CardWord, heard: HeardToken, heardNorm: string): WordResult {

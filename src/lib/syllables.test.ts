@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { cardFor, cardWords } from './cards';
-import { frameFeatures, NucleusDetector, SyllableMap, syllableCount } from './syllables';
+import { frameFeatures, NucleusDetector, syllableCount } from './syllables';
 
 describe('syllableCount', () => {
   it('counts Indonesian syllables from vowels', () => {
@@ -19,23 +18,6 @@ describe('syllableCount', () => {
       ['m', 1],
     ];
     for (const [word, n] of cases) expect(syllableCount(word), word).toBe(n);
-  });
-});
-
-describe('SyllableMap', () => {
-  const map = new SyllableMap(cardWords(cardFor('kalimat')));
-  // Ibu(2) membeli(3) sayur(2) di(1) pasar(2) ...
-
-  it('finishes a word on its last syllable', () => {
-    expect(map.wordsDone(0)).toBe(0);
-    expect(map.wordsDone(1)).toBe(0);
-    expect(map.wordsDone(2)).toBe(1);
-    expect(map.wordsDone(5)).toBe(2);
-  });
-
-  it('reports progress inside the current word', () => {
-    expect(map.progressIn(3)).toBeCloseTo(1 / 3);
-    expect(map.startOf(2)).toBe(5);
   });
 });
 

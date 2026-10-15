@@ -1,9 +1,8 @@
-import type { CardWord } from '../types';
-
-// Voice-paced highlight: the highlight steps through the card syllable by syllable as the
-// reader speaks, straight from the microphone signal, with no recognizer and no network.
+// Voice activity from the microphone signal: whether someone is speaking, and how many
+// syllables they have voiced. It cannot tell which words were said, so it never moves the
+// highlight; only recognized words do. It tells the teacher the microphone hears the reader
+// and keeps the stall prompt quiet until the reader has started.
 // Indonesian spelling is regular, so a word's syllable count comes from its vowels.
-// UI only: this never feeds a score (CLAUDE.md rule 4).
 
 const VOWELS = 'aiueo';
 
@@ -17,40 +16,6 @@ export function syllableCount(norm: string): number {
     if (k + 2 === norm.length && ['ai', 'au', 'oi', 'ei'].includes(norm.slice(k, k + 2))) break;
   }
   return Math.max(1, count);
-}
-
-/** Maps a running syllable count onto card words. */
-export class SyllableMap {
-  private readonly ends: number[];
-
-  constructor(words: CardWord[]) {
-    let total = 0;
-    this.ends = words.map((w) => (total += syllableCount(w.norm)));
-  }
-
-  get total(): number {
-    return this.ends[this.ends.length - 1] ?? 0;
-  }
-
-  /** Words fully spoken after `syllables` syllables. */
-  wordsDone(syllables: number): number {
-    let done = 0;
-    while (done < this.ends.length && this.ends[done] <= syllables) done++;
-    return done;
-  }
-
-  /** Syllables before word `i`. */
-  startOf(i: number): number {
-    return i <= 0 ? 0 : (this.ends[Math.min(i, this.ends.length) - 1] ?? 0);
-  }
-
-  /** 0..1 progress through the current word. */
-  progressIn(syllables: number): number {
-    const word = this.wordsDone(syllables);
-    if (word >= this.ends.length) return 1;
-    const start = this.startOf(word);
-    return (syllables - start) / (this.ends[word] - start);
-  }
 }
 
 export interface FrameResult {

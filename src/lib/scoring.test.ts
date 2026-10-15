@@ -132,14 +132,23 @@ describe('liveCursor', () => {
     expect(liveCursor(norms, ['ibu', 'eh'])).toBe(1);
   });
 
-  it('keeps moving when a word is skipped, then lines up again', () => {
-    expect(liveCursor(norms, ['ibu', 'pergi', 'pasar'])).toBe(3);
+  it('catches up one word after a skip', () => {
+    expect(liveCursor(norms, ['ibu', 'pergi', 'pasar'])).toBe(2);
     expect(liveCursor(norms, ['ibu', 'pergi', 'pasar', 'rumah'])).toBe(5);
   });
 
-  it('keeps moving when the recognizer mishears every word', () => {
-    expect(liveCursor(norms, ['ibu', 'berkata', 'kemana', 'lapar'])).toBe(4);
+  it('never moves on a word that is not the card word', () => {
+    expect(liveCursor(norms, ['ibu', 'bola'])).toBe(1);
+    expect(liveCursor(norms, ['ibu', 'berkata', 'kemana', 'lapar'])).toBe(1);
+    expect(liveCursor(norms, ['halo', 'apa', 'kabar', 'semua', 'orang'])).toBe(0);
+  });
+
+  it('lines up again on the next clear word after misreadings', () => {
     expect(liveCursor(norms, ['ibu', 'berkata', 'kemana', 'lapar', 'rumah'])).toBe(5);
+  });
+
+  it('accepts a near reading of the word', () => {
+    expect(liveCursor(norms, ['ibu', 'pergi', 'ke', 'pasar', 'rumah', 'nenek', 'dekat', 'sawan'])).toBe(8);
   });
 
   it('moves two words for a joined token', () => {

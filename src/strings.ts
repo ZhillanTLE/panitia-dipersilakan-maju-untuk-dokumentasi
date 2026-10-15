@@ -91,8 +91,7 @@ export const S = {
     install: 'Pasang paket suara',
     installing: 'Memasang…',
     manual:
-      'Sorotan mengikuti suara murid, suku kata demi suku kata. Nilai bacaannya nanti di Tinjau.',
-    manualNoMic: 'Tanpa mikrofon: ketuk kata yang sedang dibaca, atau tekan Spasi untuk maju.',
+      'Ketuk kata yang sedang dibaca, atau tekan Spasi untuk maju. Nilai bacaannya nanti di Tinjau.',
     simulated: 'Pembaca tiruan untuk mencoba alur. Hasilnya ditandai simulasi dan tidak dihitung.',
   },
 
@@ -110,12 +109,17 @@ export const S = {
     textSize: 'Ukuran huruf',
     micDenied: 'Mikrofon tidak diizinkan. Bacaan dilanjutkan dengan Penanda guru, tanpa rekaman.',
     micMissing: 'Mikrofon tidak tersedia. Bacaan dilanjutkan dengan Penanda guru, tanpa rekaman.',
-    recognizerFailed: 'Pengenal suara berhenti. Lanjutkan dengan Penanda guru.',
+    recognizerFailed: (code: string) =>
+      `Pengenal suara berhenti (${code}). Lanjutkan dengan mengetuk kata yang sedang dibaca, atau tekan Spasi.`,
+    recognizerSilent:
+      'Mikrofon mendengar suara, tetapi pengenal suara belum mengenali satu kata pun, jadi sorotan tidak bergerak. Ketuk kata yang sedang dibaca, atau tekan Spasi.',
+    recognizerLanguage:
+      'Chrome menolak paket suara Bahasa Indonesia (language-not-supported) walau melaporkannya siap. Lanjutkan dengan mengetuk kata yang sedang dibaca, atau tekan Spasi.',
     cancelled: 'Bacaan dibatalkan karena halaman ditinggalkan.',
     transcript: 'Mode pengembang. Abu-abu: tebakan sementara pengenal suara.',
-    tapToFix: 'Bila sorotan tertinggal atau mendahului, ketuk kata yang sedang dibaca.',
-    voiceLine: (syllables: number, total: number) => `Suara: ${syllables} dari ${total} suku kata.`,
-    noVoice: 'Suara: tidak ada mikrofon.',
+    tapToFix: 'Sorotan pindah saat kata dikenali. Bila tertinggal, ketuk kata yang sedang dibaca.',
+    voiceLine: (syllables: number, total: number) => `Mikrofon: ${syllables} dari ${total} suku kata terdengar.`,
+    noVoice: 'Mikrofon: tidak dipakai.',
     recognizerLine: (h: { starts: number; results: number; error: string | null }) =>
       `Pengenal suara: ${h.results} hasil, mulai ${h.starts} kali${h.error ? `, galat terakhir ${h.error}` : ''}.`,
     transcriptPosition: (cursor: number, total: number) => `Sorotan di kata ${Math.min(cursor + 1, total)} dari ${total}.`,
