@@ -27,7 +27,8 @@ interface Recognition {
   onresult: ((event: RecognitionEvent) => void) | null;
   onerror: ((event: { error: string }) => void) | null;
   onend: (() => void) | null;
-  start(): void;
+  /** Newer Chromium accepts the audio track to listen to; older builds ignore the argument. */
+  start(track?: MediaStreamTrack): void;
   stop(): void;
   abort(): void;
 }
@@ -93,11 +94,19 @@ export interface HeardStream {
   finished?: Promise<void>;
   /** The recognizer's raw output, for the developer readout. */
   segments?(): TranscriptSegment[];
+  health?(): RecognizerHealth;
 }
 
 export interface TranscriptSegment {
   text: string;
   final: boolean;
+}
+
+/** Recognizer lifecycle counts, for the developer readout. */
+export interface RecognizerHealth {
+  starts: number;
+  results: number;
+  error: string | null;
 }
 
 export class OnDeviceStream implements HeardStream {
@@ -110,6 +119,14 @@ export class OnDeviceStream implements HeardStream {
   private active = false;
   private t0 = 0;
   private onEnded: (() => void) | null = null;
+  private stats: RecognizerHealth = { starts: 0, results: 0, error: null };
+
+  /** `track` is the recording's microphone track; if the recognizer rejects it, it listens on its own. */
+  constructor(private track: MediaStreamTrack | null = null) {}
+
+  health(): RecognizerHealth {
+    return { ...this.stats };
+  }
 
   start(onLive: (tokens: HeardToken[]) => void, onError: (code: string) => void): void {
     this.t0 = performance.now();
@@ -131,6 +148,7 @@ export class OnDeviceStream implements HeardStream {
     else rec.mode = 'ondevice-only';
 
     rec.onresult = (event) => {
+      this.stats.results++;
       const words: string[] = [];
       const segments: TranscriptSegment[] = [];
       for (let k = 0; k < event.results.length; k++) {
@@ -144,7 +162,14 @@ export class OnDeviceStream implements HeardStream {
       onLive(this.tokens());
     };
     rec.onerror = (event) => {
+      this.stats.error = event.error;
+      if (import.meta.env.DEV) console.debug('[speech] error', event.error, this.track ? '(with track)' : '');
       if (event.error === 'no-speech' || event.error === 'aborted') return;
+      // A build that accepts a track but can't use it: try again listening on its own.
+      if (this.track) {
+        this.track = null;
+        return;
+      }
       this.active = false;
       onError(event.error);
     };
@@ -157,7 +182,14 @@ export class OnDeviceStream implements HeardStream {
       if (this.active) this.listen(onLive, onError);
       else this.onEnded?.();
     };
-    rec.start();
+    this.stats.starts++;
+    try {
+      if (this.track) rec.start(this.track);
+      else rec.start();
+    } catch {
+      this.track = null;
+      rec.start();
+    }
     this.recognition = rec;
   }
 
