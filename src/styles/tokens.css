@@ -1,0 +1,123 @@
+/* Design tokens from the team's Figma design system (see designsystem.md).
+   Components use these custom properties only, never raw values. */
+
+:root {
+  /* Typography: Poppins ramp, node 87:122 */
+  --font-sans: 'Poppins', ui-sans-serif, system-ui, sans-serif;
+  --fw-h: 700;
+  --fw-s: 600;
+  --fw-b: 400;
+  --fs-1: 60px;
+  --lh-1: 60px;
+  --fs-2: 42px;
+  --lh-2: 48px;
+  --fs-3: 36px;
+  --lh-3: 40px;
+  --fs-4: 30px;
+  --lh-4: 36px;
+  --fs-5: 24px;
+  --lh-5: 32px;
+  --fs-6: 20px;
+  --lh-6: 28px;
+  --fs-7: 16px;
+  --lh-7: 24px;
+  --fs-8: 14px;
+  --lh-8: 20px;
+  --fs-9: 12px;
+  --lh-9: 18px;
+  --tracking-display: -1.12px;
+  --tracking-section: -0.84px;
+
+  /* Colour: neutral, node 87:20 */
+  --neutral-100: #ffffff;
+  --neutral-200: #e8e8e8;
+  --neutral-300: #d2d2d2;
+  --neutral-400: #bbbbbb;
+  --neutral-900: #4a4a4a;
+  --neutral-1000: #333333;
+
+  /* Colour: surfaces, ink and accents, node 87:47 */
+  --ink: #1f1f1f;
+  --slate: #363e4a;
+  --midnight: #170f35;
+  --navy-text: #0f1235;
+  --paper: #efeeea;
+  --cream: #f8f7f4;
+  --stroke: #818181;
+  --muted: #7f7f7f;
+  --success-tint: #e9f1eb;
+  --success: #3f7d55;
+  --caution-tint: #f1f1e9;
+  --caution: #7d763f;
+  --black: #000000;
+
+  /* Gradients, nodes 87:110 and 87:115 */
+  --grad-hero: linear-gradient(180deg, rgba(217, 217, 217, 0) 0%, #363e4a 100%);
+  --grad-footer: linear-gradient(180deg, rgba(217, 217, 217, 0) 0%, #1f1f1f 100%);
+
+  /* Radius, node 87:235 */
+  --r-8: 8px;
+  --r-10: 10px;
+  --r-12: 12px;
+  --r-14: 14px;
+  --r-16: 16px;
+  --r-20: 20px;
+  --r-24: 24px;
+  --r-28: 28px;
+  --r-32: 32px;
+  --r-100: 100px;
+  --r-pill: 999px;
+
+  /* Stroke, node 87:281 (inset, so strokes never change an element's size) */
+  --ring-card: inset 0 0 0 1px var(--stroke);
+  --ring-row: inset 0 0 0 1px var(--neutral-200);
+  --ring-shell: inset 0 0 0 1px var(--black);
+  --ring-dark: inset 0 0 0 2px var(--neutral-900);
+
+  /* Elevation, nodes 87:292, 87:297, 87:302 */
+  --shadow-cta: 0 10px 24px 0 rgba(15, 18, 53, 0.25);
+  --shadow-lift: 0 12px 32px 0 rgba(0, 0, 0, 0.25);
+  --shadow-hairline: 0 1px 2px 0 rgba(0, 0, 0, 0.07);
+
+  /* TODO(design-system): motion tokens are not in Figma yet (designsystem.md §8.1). */
+  --motion-highlight: 180ms;
+  --ease-highlight: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --motion-page: 760ms;
+  --ease-page: cubic-bezier(0.645, 0.045, 0.355, 1);
+  --motion-ui: 160ms;
+
+  /* TODO(design-system): no spacing scale in Figma (designsystem.md §8.5). 4px grid. */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-7: 28px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+
+  /* Semantic roles from CLAUDE.md, mapped to tokens (designsystem.md §7) */
+  --word-upcoming: var(--ink);
+  --word-later: var(--muted); /* TODO(design-system): wireframe role, designsystem.md §8.3 */
+  --word-read: var(--neutral-400);
+  --word-current-box: var(--paper);
+  --word-current-line: var(--ink);
+  --syllable-current: var(--paper);
+  --stall-prompt-ink: var(--slate);
+  --stall-prompt-surface: var(--cream);
+  --needs-review: var(--caution);
+  --level-pending-bg: var(--caution-tint);
+  --level-pending-ink: var(--caution);
+  --level-confirmed-bg: var(--success-tint);
+  --level-confirmed-ink: var(--success);
+
+  /* Reading text: fixed minimum size, wide line spacing (designsystem.md §8.2) */
+  --reading-size: var(--fs-5);
+  --reading-line: var(--lh-3);
+
+  /* TODO(design-system): focus ring not defined (designsystem.md §8.4) */
+  --focus-ring: 2px solid var(--ink);
+}
