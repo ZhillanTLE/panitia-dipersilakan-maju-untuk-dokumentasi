@@ -1,0 +1,20 @@
+# Local agent and design notes
+claude.md
+CLAUDE.md
+designsystem.md
+
+# Dependencies and build output
+node_modules/
+dist/
+*.local
+
+# Editor and OS
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
