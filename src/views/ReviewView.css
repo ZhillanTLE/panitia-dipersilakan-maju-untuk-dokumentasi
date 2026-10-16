@@ -670,3 +670,232 @@
     margin-left: 0;
   }
 }
+
+/* Representative Reading Summary Card */
+.rsummary {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-5);
+  border-radius: var(--r-20);
+  background: var(--card);
+  box-shadow: var(--ring-row);
+  border: 1px solid var(--neutral-200);
+}
+
+.rsummary__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+.rsummary__title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink);
+  margin: 0;
+}
+
+.rsummary__subtitle {
+  font-size: 11.5px;
+  color: var(--muted);
+  margin: 2px 0 0;
+}
+
+.rsummary__tier {
+  padding: 3px 10px;
+  border-radius: var(--r-pill);
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.rsummary__tier--good {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.rsummary__tier--warn {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.rsummary__tier--alert {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.rsummary__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.rsummary__stat {
+  padding: 8px 10px;
+  border-radius: var(--r-12);
+  background: var(--neutral-100);
+  border: 1px solid var(--neutral-200);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.rsummary__stat-label {
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.rsummary__stat-val-row {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+}
+
+.rsummary__stat-val {
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+
+.rsummary__stat-sub {
+  font-size: 11px;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.rsummary__stat-empty {
+  font-size: 14px;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.rsummary__progress-bar {
+  height: 4px;
+  width: 100%;
+  border-radius: var(--r-pill);
+  background: var(--neutral-300);
+  overflow: hidden;
+  margin-top: 3px;
+}
+
+.rsummary__progress-fill {
+  height: 100%;
+  border-radius: var(--r-pill);
+  transition: width 0.3s ease;
+}
+
+.rsummary__stat-desc {
+  font-size: 10px;
+  color: var(--muted);
+  line-height: 1.2;
+}
+
+.rsummary__errors,
+.rsummary__cards {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: 8px;
+  border-top: 1px solid var(--neutral-200);
+}
+
+.rsummary__sec-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.rsummary__error-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.rsummary__chip {
+  padding: 3px 8px;
+  border-radius: var(--r-8);
+  font-size: 10.5px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.rsummary__chip--sub {
+  background: #fef2f2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+}
+
+.rsummary__chip--omit {
+  background: #fffbeb;
+  color: #92400e;
+  border: 1px solid #fde68a;
+}
+
+.rsummary__chip--help {
+  background: #f0fdf4;
+  color: #166534;
+  border: 1px solid #bbf7d0;
+}
+
+.rsummary__cards-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.rsummary__card-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1.8fr) auto auto;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: var(--r-8);
+  border: 1px solid var(--neutral-200);
+  background: #ffffff;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.rsummary__card-row:hover {
+  background: var(--neutral-100);
+  border-color: var(--neutral-300);
+}
+
+.rsummary__card-row--active {
+  border-color: var(--ink);
+  background: color-mix(in srgb, var(--ink) 4%, #ffffff);
+}
+
+.rsummary__card-name {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.rsummary__card-acc {
+  font-size: 11px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.rsummary__card-speed {
+  font-size: 10px;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.rsummary__card-chip {
+  height: 20px;
+  font-size: 10px;
+  padding: 0 6px;
+  align-self: center;
+}

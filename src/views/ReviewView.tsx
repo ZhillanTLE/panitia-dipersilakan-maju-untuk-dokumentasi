@@ -9,11 +9,11 @@ import { WordMenu } from '../components/WordMenu';
 import { activitiesFor } from '../lib/activities';
 import { cardById, cardFor, cardWords } from '../lib/cards';
 import { formatDate, formatDateTime } from '../lib/format';
-import { cardMetrics, confirmedWords, earlierResults, LEVEL_CARD, LEVEL_UNIT, patternHits, patternTakes, questionsOf, UNSURE_SHARE, type PatternExample } from '../lib/metrics';
+import { cardMetrics, confirmedWords, earlierResults, LEVEL_CARD, LEVEL_UNIT, patternHits, patternTakes, questionsOf, UNSURE_SHARE, type CardMetrics, type PatternExample, type Unit } from '../lib/metrics';
 import { PATTERN_LABEL } from '../lib/patterns';
 import { loadPrefs } from '../lib/prefs';
 import { href, navigate } from '../lib/route';
-import { CARD_ORDER, RUBRIC, RUBRIC_VERSION, cardOutcome, effectiveStatus, isError, nextCard, suggestLevel } from '../lib/rubric';
+import { CARD_ORDER, RUBRIC, RUBRIC_VERSION, cardOutcome, effectiveStatus, isError, nextCard, suggestLevel, type CardOutcome } from '../lib/rubric';
 import { ENGINE_VERSION, scoreTake } from '../lib/scoring';
 import { simulateTokens } from '../lib/simulate';
 import { addTake, confirmSession, endSession, getAudio, nameOf, newId, setWordEdit, takesOf, useApp } from '../lib/store';
@@ -83,6 +83,9 @@ function SessionList({
           const sTakes = takesOf(s, takes);
           const unresolved = sTakes.reduce((n, t) => n + cardOutcome(t).unresolved, 0);
           const confirmedLevel = s.suggestion?.status === 'confirmed' ? s.suggestion.confirmed?.level : undefined;
+          const totalCor = sTakes.reduce((acc, t) => acc + cardOutcome(t).correct, 0);
+          const totalAtt = sTakes.reduce((acc, t) => acc + cardOutcome(t).total, 0);
+          const accPct = totalAtt > 0 ? Math.round((totalCor / totalAtt) * 100) : null;
           return (
             <li key={s.session_id}>
               <a
@@ -96,13 +99,16 @@ function SessionList({
                   {s.demo && <span className="slist__sim">{S.review.demo}</span>}
                 </span>
                 <span className="slist__meta">
-                  {formatDateTime(s.started_at)}, {S.review.cards(sTakes.length).toLowerCase()}
+                  {formatDateTime(s.started_at)}
+                  {accPct !== null && ` • ${accPct}% akurasi`}
                 </span>
                 <span className="slist__side">
                   {confirmedLevel ? (
                     <span className="chip chip--success">{LEVEL[confirmedLevel]}</span>
                   ) : unresolved > 0 ? (
                     <span className="chip chip--caution">{unresolved}</span>
+                  ) : accPct !== null ? (
+                    <span className="chip chip--neutral">{accPct}%</span>
                   ) : null}
                 </span>
               </a>
@@ -425,6 +431,15 @@ function SessionReview({ session, active }: { session: Session; active: boolean 
           </p>
         </header>
 
+        <StudentReadingSummary
+          session={session}
+          takes={takes}
+          outcomes={outcomes}
+          metrics={metrics}
+          onSelectCard={(k) => go(k)}
+          currentCardIndex={index}
+        />
+
         {!isConfirmed && (unresolved > 0 || poorAudio) && <p className="sreview__flag">{S.review.relisten}</p>}
         {(isConfirmed || (unresolved === 0 && !poorAudio)) && (unsure || poorAudio) && <p className="sreview__flag">{S.review.unsure}</p>}
 
@@ -696,5 +711,196 @@ function Activities({ level }: { level: ChildLevel }) {
         ))}
       </ul>
     </div>
+  );
+}
+
+interface ReadingSummaryProps {
+  session: Session;
+  takes: Take[];
+  outcomes: CardOutcome[];
+  metrics: CardMetrics[];
+  onSelectCard: (index: number) => void;
+  currentCardIndex: number;
+}
+
+function StudentReadingSummary({ takes, outcomes, metrics, onSelectCard, currentCardIndex }: ReadingSummaryProps) {
+  const totalCorrect = outcomes.reduce((sum, o) => sum + o.correct, 0);
+  const totalAttempted = outcomes.reduce((sum, o) => sum + o.total, 0);
+  const accuracyPct = totalAttempted > 0 ? Math.round((totalCorrect / totalAttempted) * 100) : 0;
+
+  // EGRA Reading benchmark levels
+  let tier = {
+    label: 'Mandiri (Mahir)',
+    desc: 'Membaca lancar dengan akurasi sangat baik.',
+    badgeClass: 'rsummary__tier--good',
+    color: '#16a34a',
+  };
+  if (accuracyPct < 80) {
+    tier = {
+      label: 'Perlu Intervensi',
+      desc: 'Memerlukan latihan dan pendampingan intensif.',
+      badgeClass: 'rsummary__tier--alert',
+      color: '#dc2626',
+    };
+  } else if (accuracyPct < 95) {
+    tier = {
+      label: 'Instruksional',
+      desc: 'Mampu membaca dengan bimbingan sesekali.',
+      badgeClass: 'rsummary__tier--warn',
+      color: '#d97706',
+    };
+  }
+
+  // Speed: find word speed (WPM) or syllable speed (CPM)
+  const wordMetrics = metrics.filter((m) => m.correctUnitsPerMinute !== null && m.unit === 'kata');
+  const subwordMetrics = metrics.filter((m) => m.correctUnitsPerMinute !== null && m.unit !== 'kata');
+  const primaryWpm =
+    wordMetrics.length > 0
+      ? Math.round(wordMetrics.reduce((s, m) => s + (m.correctUnitsPerMinute ?? 0), 0) / wordMetrics.length)
+      : null;
+  const primaryCpm =
+    subwordMetrics.length > 0
+      ? Math.round(subwordMetrics.reduce((s, m) => s + (m.correctUnitsPerMinute ?? 0), 0) / subwordMetrics.length)
+      : null;
+
+  // Comprehension
+  const compMetrics = metrics.filter((m) => m.comprehension !== null);
+  const compAsked = compMetrics.reduce((s, m) => s + (m.comprehension?.asked ?? 0), 0);
+  const compCorrect = compMetrics.reduce((s, m) => s + (m.comprehension?.correct ?? 0), 0);
+  const compPct = compAsked > 0 ? Math.round((compCorrect / compAsked) * 100) : null;
+
+  // Diagnostic error counts
+  const totalSubstituted = metrics.reduce((s, m) => s + m.errorCounts.substituted, 0);
+  const totalOmitted = metrics.reduce((s, m) => s + m.errorCounts.omitted, 0);
+  const totalTeacherRead = metrics.reduce((s, m) => s + m.errorCounts.teacherRead, 0);
+  const totalSelfCorrections = metrics.reduce((s, m) => s + m.selfCorrections, 0);
+
+  return (
+    <section className="rsummary" aria-label="Ringkasan Hasil Bacaan">
+      <div className="rsummary__header">
+        <div>
+          <h3 className="rsummary__title">Ringkasan Hasil Bacaan</h3>
+          <p className="rsummary__subtitle">{tier.desc}</p>
+        </div>
+        <span className={`rsummary__tier ${tier.badgeClass}`}>{tier.label}</span>
+      </div>
+
+      <div className="rsummary__grid">
+        <div className="rsummary__stat">
+          <span className="rsummary__stat-label">Akurasi Keseluruhan</span>
+          <div className="rsummary__stat-val-row">
+            <span className="rsummary__stat-val" style={{ color: tier.color }}>
+              {accuracyPct}%
+            </span>
+            <span className="rsummary__stat-sub">
+              {totalCorrect}/{totalAttempted}
+            </span>
+          </div>
+          <div className="rsummary__progress-bar">
+            <div className="rsummary__progress-fill" style={{ width: `${accuracyPct}%`, background: tier.color }} />
+          </div>
+        </div>
+
+        <div className="rsummary__stat">
+          <span className="rsummary__stat-label">Kelancaran Baca</span>
+          <div className="rsummary__stat-val-row">
+            {primaryWpm !== null ? (
+              <>
+                <span className="rsummary__stat-val">{primaryWpm}</span>
+                <span className="rsummary__stat-sub">KPM (Kata/m)</span>
+              </>
+            ) : primaryCpm !== null ? (
+              <>
+                <span className="rsummary__stat-val">{primaryCpm}</span>
+                <span className="rsummary__stat-sub">CPM (Suku/m)</span>
+              </>
+            ) : (
+              <span className="rsummary__stat-empty">-</span>
+            )}
+          </div>
+          <span className="rsummary__stat-desc">
+            {primaryWpm !== null ? 'Kecepatan kata' : primaryCpm !== null ? 'Kecepatan suku kata' : 'Belum tercatat'}
+          </span>
+        </div>
+
+        <div className="rsummary__stat">
+          <span className="rsummary__stat-label">Pemahaman Bacaan</span>
+          <div className="rsummary__stat-val-row">
+            {compPct !== null ? (
+              <>
+                <span className="rsummary__stat-val">{compPct}%</span>
+                <span className="rsummary__stat-sub">
+                  {compCorrect}/{compAsked} benar
+                </span>
+              </>
+            ) : (
+              <span className="rsummary__stat-empty">N/A</span>
+            )}
+          </div>
+          <span className="rsummary__stat-desc">
+            {compPct !== null ? 'Jawaban pertanyaan' : 'Hanya di kartu paragraf'}
+          </span>
+        </div>
+
+        <div className="rsummary__stat">
+          <span className="rsummary__stat-label">Koreksi Mandiri</span>
+          <div className="rsummary__stat-val-row">
+            <span className="rsummary__stat-val">{totalSelfCorrections}</span>
+            <span className="rsummary__stat-sub">kali</span>
+          </div>
+          <span className="rsummary__stat-desc">Sadar & membetulkan sendiri</span>
+        </div>
+      </div>
+
+      <div className="rsummary__errors">
+        <span className="rsummary__sec-label">Analisis Kesalahan Baca:</span>
+        <div className="rsummary__error-chips">
+          <span className="rsummary__chip rsummary__chip--sub" title="Kata diganti saat dibaca">
+            Substitusi: <strong>{totalSubstituted}</strong>
+          </span>
+          <span className="rsummary__chip rsummary__chip--omit" title="Kata terlewat">
+            Omisi: <strong>{totalOmitted}</strong>
+          </span>
+          <span className="rsummary__chip rsummary__chip--help" title="Dibantu atau dibacakan guru">
+            Dibantu Guru: <strong>{totalTeacherRead}</strong>
+          </span>
+        </div>
+      </div>
+
+      <div className="rsummary__cards">
+        <span className="rsummary__sec-label">Rincian per Kartu:</span>
+        <div className="rsummary__cards-list">
+          {takes.map((t, k) => {
+            const o = outcomes[k];
+            const m = metrics[k];
+            const cardAcc = o.total > 0 ? Math.round((o.correct / o.total) * 100) : 0;
+            const isSelected = k === currentCardIndex;
+            return (
+              <button
+                key={t.take_id}
+                type="button"
+                className={`rsummary__card-row ${isSelected ? 'rsummary__card-row--active' : ''}`}
+                onClick={() => onSelectCard(k)}
+              >
+                <span className="rsummary__card-name">{CARD[t.card.level]}</span>
+                <span className="rsummary__card-acc" style={{ color: cardAcc >= 80 ? '#16a34a' : '#dc2626' }}>
+                  {cardAcc}% ({o.correct}/{o.total} {UNIT[m.unit as Unit]})
+                </span>
+                {m.correctUnitsPerMinute !== null ? (
+                  <span className="rsummary__card-speed">
+                    {m.correctUnitsPerMinute} {m.unit === 'kata' ? 'KPM' : 'SKPM'}
+                  </span>
+                ) : (
+                  <span className="rsummary__card-speed">-</span>
+                )}
+                <span className={`chip ${o.passed ? 'chip--success' : 'chip--neutral'} rsummary__card-chip`}>
+                  {o.passed ? 'Lulus' : 'Belum'}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </section>
   );
 }

@@ -474,7 +474,23 @@ export async function runPlan(overrides?: Partial<Settings>): Promise<boolean> {
   set({ running: true, error: null, result: null, report: null });
   try {
     const result = await call<RunResult>(`run?inference=${inferenceChoice()}`, payload);
-    set({ running: false, result, events: result.calendar.events, unscheduled: result.calendar.unscheduled, approved: null, preparedAt: Date.now() });
+    const initialUnscheduled: Unscheduled[] = [
+      ...result.calendar.events.map((e) => ({
+        planSessionId: e.planSessionId,
+        groupLevel: e.groupLevel,
+        kind: e.kind,
+        week: e.week,
+        minutes: e.minutes,
+        activityId: e.activityId,
+        passageIds: e.passageIds,
+        focus: e.focus,
+        tip: e.tip,
+        students: e.students,
+        reason: 'Siap dijadwalkan oleh guru',
+      })),
+      ...result.calendar.unscheduled,
+    ];
+    set({ running: false, result, events: [], unscheduled: initialUnscheduled, approved: null, preparedAt: Date.now() });
     return true;
   } catch (e) {
     set({ running: false, error: failure(e) });
@@ -511,7 +527,23 @@ export async function replan(fromDate: string): Promise<boolean> {
   set({ running: true, error: null });
   try {
     const result = await call<RunResult>(`replan?inference=${inferenceChoice()}`, { payload, fromDate });
-    set({ running: false, result, events: result.calendar.events, unscheduled: result.calendar.unscheduled, approved: null });
+    const initialUnscheduled: Unscheduled[] = [
+      ...result.calendar.events.map((e) => ({
+        planSessionId: e.planSessionId,
+        groupLevel: e.groupLevel,
+        kind: e.kind,
+        week: e.week,
+        minutes: e.minutes,
+        activityId: e.activityId,
+        passageIds: e.passageIds,
+        focus: e.focus,
+        tip: e.tip,
+        students: e.students,
+        reason: 'Siap dijadwalkan oleh guru',
+      })),
+      ...result.calendar.unscheduled,
+    ];
+    set({ running: false, result, events: [], unscheduled: initialUnscheduled, approved: null });
     return true;
   } catch (e) {
     set({ running: false, error: failure(e) });
@@ -598,10 +630,13 @@ export const SCHOOL_DAY = { from: 7 * 60, to: 14 * 60 };
 export const SCHOOL_DAYS: Day[] = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
 
 export function dayBounds(plan: Pick<Plan, 'timetable'>): { from: number; to: number } {
-  return {
-    from: Math.min(SCHOOL_DAY.from, ...plan.timetable.map((t) => toMin(t.start))),
-    to: Math.max(SCHOOL_DAY.to, ...plan.timetable.map((t) => toMin(t.end))),
-  };
+  const starts = plan.timetable.map((t) => toMin(t.start));
+  const ends = plan.timetable.map((t) => toMin(t.end));
+  const minT = starts.length ? Math.min(...starts) : 7 * 60;
+  const maxT = ends.length ? Math.max(...ends) : 12 * 60;
+  const from = Math.max(7 * 60, Math.floor(minT / 60) * 60);
+  const to = Math.min(15 * 60, Math.max(from + 5 * 60, Math.ceil(maxT / 60) * 60));
+  return { from, to };
 }
 
 /** Weekdays shown on the calendar: Monday to Friday, plus any other day the timetable uses. */
@@ -634,8 +669,18 @@ export function moveTo(id: string, date: string, start: number): MoveResult {
   if (week === null) return 'closed';
   if (s.kind === 'replacement' && week !== plan.cycleWeeks) return 'lastweek';
   const { from, to } = dayBounds(plan);
-  const a = Math.min(Math.max(from, Math.round(start / 5) * 5), to - s.minutes);
-  if (!fitsAt(state.events, date, a, s.minutes, plan.phones, s.groupLevel, e?.id)) return 'nofit';
+  const target = Math.min(Math.max(from, Math.round(start / 5) * 5), to - s.minutes);
+  let bestA: number | null = null;
+  const searchOffsets = [0, -5, 5, -10, 10, -15, 15, -20, 20, -25, 25, -30, 30];
+  for (const off of searchOffsets) {
+    const cand = target + off;
+    if (cand >= from && cand + s.minutes <= to && fitsAt(state.events, date, cand, s.minutes, plan.phones, s.groupLevel, e?.id)) {
+      bestA = cand;
+      break;
+    }
+  }
+  if (bestA === null) return 'nofit';
+  const a = bestA;
   const day = DAYS[(parseDate(date).getDay() + 6) % 7];
   const placed: CalEvent = {
     id: s.planSessionId,
@@ -704,7 +749,93 @@ export function placeUnscheduled(id: string, slot: DatedSlot): 'ok' | 'nofit' | 
 }
 
 export function removeEvent(id: string): void {
-  set({ events: state.events.filter((e) => e.id !== id) });
+  const e = state.events.find((x) => x.id === id);
+  if (!e) return;
+  const u: Unscheduled = {
+    planSessionId: e.planSessionId,
+    groupLevel: e.groupLevel,
+    kind: e.kind,
+    week: e.week,
+    minutes: e.minutes,
+    activityId: e.activityId,
+    passageIds: e.passageIds,
+    focus: e.focus,
+    tip: e.tip,
+    students: e.students,
+    reason: 'Ditarik kembali ke antrean',
+  };
+  set({
+    events: state.events.filter((x) => x.id !== id),
+    unscheduled: [u, ...state.unscheduled],
+  });
+}
+
+export function unplaceAll(): void {
+  const returned: Unscheduled[] = state.events.map((e) => ({
+    planSessionId: e.planSessionId,
+    groupLevel: e.groupLevel,
+    kind: e.kind,
+    week: e.week,
+    minutes: e.minutes,
+    activityId: e.activityId,
+    passageIds: e.passageIds,
+    focus: e.focus,
+    tip: e.tip,
+    students: e.students,
+    reason: 'Ditarik kembali ke antrean',
+  }));
+  set({
+    events: [],
+    unscheduled: [...returned, ...state.unscheduled],
+  });
+}
+
+export function autoScheduleAll(): void {
+  const plan = state.result?.plan;
+  if (!plan) return;
+  const slots = slotsOf(plan);
+  const remaining = [...state.unscheduled];
+  const placedEvents = [...state.events];
+  const stillUnscheduled: Unscheduled[] = [];
+
+  for (const u of remaining) {
+    let placed = false;
+    const weekSlots = slots.filter((s) => s.week === u.week);
+    for (const slot of weekSlots) {
+      if (u.kind === 'replacement' && slot.week !== plan.cycleWeeks) continue;
+      const start = fitInSlot(placedEvents, slot, u.minutes, plan.phones, u.groupLevel);
+      if (start !== null) {
+        placedEvents.push({
+          id: u.planSessionId,
+          planSessionId: u.planSessionId,
+          groupLevel: u.groupLevel,
+          kind: u.kind,
+          week: slot.week,
+          date: slot.date,
+          day: slot.day,
+          start: toHHMM(start),
+          end: toHHMM(start + u.minutes),
+          minutes: u.minutes,
+          lane: 0,
+          activityId: u.activityId,
+          passageIds: u.passageIds,
+          focus: u.focus,
+          tip: u.tip,
+          students: u.students,
+        });
+        placed = true;
+        break;
+      }
+    }
+    if (!placed) {
+      stillUnscheduled.push(u);
+    }
+  }
+
+  set({
+    events: placedEvents.sort(byTime),
+    unscheduled: stillUnscheduled,
+  });
 }
 
 const byTime = (a: CalEvent, b: CalEvent) => a.date.localeCompare(b.date) || a.start.localeCompare(b.start);

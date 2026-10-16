@@ -4,6 +4,7 @@ import {
   DAYS,
   DAY_LABEL,
   approvePlan,
+  autoScheduleAll,
   buildPayload,
   checkHealth,
   clearError,
@@ -22,6 +23,7 @@ import {
   setDone,
   slotsOf,
   toMin,
+  unplaceAll,
   updateSettings,
   usePlanner,
   type CalEvent,
@@ -754,8 +756,8 @@ const DAY_FULL: Record<Day, string> = {
   Sat: 'Sabtu',
   Sun: 'Minggu',
 };
-const PXM = 4; // pixels per minute
-const GAP = 34;
+const PXM = 2.2; // balanced pixels per minute: clean cards, no collision, compact grid
+const GAP = 28;
 
 interface Axis {
   segs: { from: number; to: number; y: number }[];
@@ -780,8 +782,19 @@ const minuteAt = (axis: Axis, y: number): number | null => {
 function ticksOf(axis: Axis): number[] {
   const out: number[] = [];
   for (const s of axis.segs) {
-    out.push(s.from);
-    for (let m = Math.ceil((s.from + 1) / 30) * 30; m < s.to; m += 30) out.push(m);
+    for (let m = Math.floor(s.from / 60) * 60; m <= s.to; m += 60) {
+      if (m >= s.from) out.push(m);
+    }
+  }
+  return out;
+}
+
+function halfTicksOf(axis: Axis): number[] {
+  const out: number[] = [];
+  for (const s of axis.segs) {
+    for (let m = Math.floor(s.from / 30) * 30; m <= s.to; m += 30) {
+      if (m >= s.from && m % 60 !== 0) out.push(m);
+    }
   }
   return out;
 }
@@ -891,17 +904,64 @@ function Kalender() {
               : P.cal.delivered(stamp(approved.syncedToPhoneAt ?? approved.approvedAt))
             : P.cal.draft}
         </p>
-        {!approved && (
+        <div className="calbar__actions">
+          {!approved && pl.unscheduled.length > 0 && (
+            <button
+              type="button"
+              className="btn btn--secondary"
+              title="Jadwalkan semua sesi di antrean secara otomatis"
+              onClick={() => {
+                autoScheduleAll();
+                toast('Semua sesi dijadwalkan otomatis');
+              }}
+            >
+              Jadwalkan Otomatis
+            </button>
+          )}
+          {!approved && pl.events.length > 0 && (
+            <button
+              type="button"
+              className="btn btn--ghost"
+              title="Kosongkan jadwal kalender dan kembalikan ke antrean"
+              onClick={() => {
+                unplaceAll();
+                toast('Kalender dikosongkan. Sesi kembali ke antrean.');
+              }}
+            >
+              Kosongkan Kalender
+            </button>
+          )}
+          {!approved && (
+            <button
+              type="button"
+              className="btn btn--cta"
+              disabled={pl.running}
+              onClick={() => void approvePlan().then((ok) => ok && toast('Rencana disetujui'))}
+            >
+              {pl.running ? P.cal.approving : P.cal.approve}
+            </button>
+          )}
+        </div>
+      </div>
+
+      {!approved && pl.events.length === 0 && pl.unscheduled.length > 0 && (
+        <div className="cal-banner" role="status">
+          <div className="cal-banner__info">
+            <strong>Kalender Belum Diisi ({pl.unscheduled.length} Sesi di Antrean)</strong>
+            <span>Tarik kartu dari antrean sesi ke slot hari & jam yang diinginkan, atau klik "Jadwalkan Otomatis".</span>
+          </div>
           <button
             type="button"
-            className="btn btn--cta"
-            disabled={pl.running}
-            onClick={() => void approvePlan().then((ok) => ok && toast('Rencana disetujui'))}
+            className="btn btn--action"
+            onClick={() => {
+              autoScheduleAll();
+              toast('Semua sesi dijadwalkan otomatis');
+            }}
           >
-            {pl.running ? P.cal.approving : P.cal.approve}
+            Jadwalkan Otomatis Sekarang
           </button>
-        )}
-      </div>
+        </div>
+      )}
 
       <div className="filters" role="group" aria-label={P.sync.groups}>
         <button type="button" className="filters__chip" aria-pressed={only === null} onClick={() => setOnly(null)}>
@@ -986,6 +1046,9 @@ function Kalender() {
                 {ticksOf(axis).map((m) => (
                   <span key={m} className="wk__line" style={{ top: yAt(axis, m) ?? 0 }} />
                 ))}
+                {halfTicksOf(axis).map((m) => (
+                  <span key={m} className="wk__line wk__line--half" style={{ top: yAt(axis, m) ?? 0 }} />
+                ))}
                 {axis.segs.slice(1).map((s) => (
                   <span key={s.y} className="wk__foldband" style={{ top: s.y - GAP, height: GAP }} />
                 ))}
@@ -998,11 +1061,12 @@ function Kalender() {
                       top: yAt(axis, s.start) ?? 0,
                       height: (s.end - s.start) * PXM,
                     }}
+                    title={`Slot Jadwal: ${t(toHHMMLocal(s.start))}–${t(toHHMMLocal(s.end))}`}
                   />
                 ))}
-                {lanes(dayEvents, plan.phones).map(({ e, lane }) => {
-                  const h = e.minutes * PXM - 4;
-                  const size = h < 56 ? 'xs' : h < 84 ? 's' : h < 120 ? 'm' : 'l';
+                {lanes(dayEvents, plan.phones).map(({ e, lane, totalLanes }) => {
+                  const h = Math.max(18, e.minutes * PXM - 2);
+                  const size = h < 28 ? 'xs' : h < 42 ? 's' : h < 75 ? 'm' : 'l';
                   const people = e.kind === 'replacement' ? e.students : (groups.get(e.groupLevel)?.students ?? []);
                   const done = doneOf(e.id);
                   return (
@@ -1015,10 +1079,10 @@ function Kalender() {
                       data-dim={only && only !== e.groupLevel ? '' : undefined}
                       style={{
                         ...groupStyle(e.groupLevel),
-                        top: (yAt(axis, toMin(e.start)) ?? 0) + 2,
+                        top: (yAt(axis, toMin(e.start)) ?? 0) + 1,
                         height: h,
-                        left: `calc(${(lane / plan.phones) * 100}% + 3px)`,
-                        width: `calc(${100 / plan.phones}% - 6px)`,
+                        left: `calc(${(lane / totalLanes) * 100}% + 2px)`,
+                        width: `calc(${100 / totalLanes}% - 4px)`,
                       }}
                       draggable={!approved}
                       title={label(e)}
@@ -1032,30 +1096,47 @@ function Kalender() {
                       onDragEnd={() => setDragging(null)}
                     >
                       <div className="ev__top">
-                        <span className="ev__icon" aria-hidden="true">
-                          {e.kind === 'replacement' ? <IconFlag /> : <IconBook />}
+                        <span className="ev__badge">
+                          {e.kind === 'replacement' ? 'Pengganti' : LEVEL[e.groupLevel]}
                         </span>
-                        <p className="ev__group">
-                          {e.kind === 'replacement' ? `${P.cal.replacement}, ${LEVEL[e.groupLevel]}` : P.cal.group(LEVEL[e.groupLevel])}
-                        </p>
+                        <span className="ev__time">
+                          {t(e.start)}–{t(e.end)}
+                        </span>
+                        {!approved && (
+                          <button
+                            type="button"
+                            className="ev__remove"
+                            title="Kembalikan ke antrean"
+                            onClick={(ev) => {
+                              ev.stopPropagation();
+                              removeEvent(e.id);
+                            }}
+                          >
+                            ×
+                          </button>
+                        )}
                         {approved && (
                           <button
                             type="button"
                             className="ev__check"
                             aria-pressed={done}
                             aria-label={`${P.cal.markDone}: ${label(e)}`}
-                            onClick={() => setDone(e.id, e.date, !done)}
+                            onClick={(ev) => {
+                              ev.stopPropagation();
+                              setDone(e.id, e.date, !done);
+                            }}
                           >
                             <IconCheck />
                           </button>
                         )}
                       </div>
                       <p className="ev__title">{tipOf(e)}</p>
-                      {(size === 'm' || size === 'l') && e.kind === 'practice' && e.focus && <p className="ev__sub">{P.cal.focus(focusLabel(e.focus))}</p>}
-                      <p className="ev__time">
-                        {t(e.start)} – {t(e.end)}
-                      </p>
-                      {(size === 'm' || size === 'l') && e.passageIds.length > 0 && <p className="ev__doc">{P.cal.reading(e.passageIds)}</p>}
+                      {size !== 'xs' && e.kind === 'practice' && e.focus && (
+                        <p className="ev__sub">{focusLabel(e.focus)}</p>
+                      )}
+                      {(size === 'm' || size === 'l') && e.passageIds.length > 0 && (
+                        <p className="ev__doc">{P.cal.reading(e.passageIds)}</p>
+                      )}
                       {size === 'l' && (
                         <div className="ev__people">
                           {people.slice(0, 4).map((c) => (
@@ -1099,10 +1180,29 @@ function Kalender() {
             ))}
           </section>
           {pl.unscheduled.length > 0 && (
-            <section className="lane" aria-labelledby="uns-title">
-              <h2 className="lane__head" id="uns-title">
-                {P.cal.unscheduled} <span className="filters__n">{pl.unscheduled.length}</span>
-              </h2>
+            <section
+              className="lane"
+              aria-labelledby="uns-title"
+              data-drop={dragging ? '' : undefined}
+              onDragOver={(e) => {
+                if (dragging) e.preventDefault();
+              }}
+              onDrop={(e) => {
+                e.preventDefault();
+                const id = e.dataTransfer.getData('text/plain') || dragging;
+                setDragging(null);
+                if (id) {
+                  removeEvent(id);
+                  toast('Sesi dikembalikan ke antrean');
+                }
+              }}
+            >
+              <div className="lane__head-row">
+                <h2 className="lane__head" id="uns-title">
+                  {P.cal.unscheduled} <span className="filters__n">{pl.unscheduled.length}</span>
+                </h2>
+                <span className="lane__hint-drag">Tarik ke kalender</span>
+              </div>
               {pl.unscheduled.map((u) => (
                 <div
                   key={u.planSessionId}
@@ -1116,12 +1216,13 @@ function Kalender() {
                   }}
                   onDragEnd={() => setDragging(null)}
                 >
-                  <p className="ev__title">
-                    <span className="levels__swatch" aria-hidden="true" /> {u.kind === 'replacement' ? P.cal.replacement : P.cal.group(LEVEL[u.groupLevel])}
-                  </p>
-                  <p className="t-meta">
-                    {P.cal.week(u.week)} · {u.minutes} menit
-                  </p>
+                  <div className="lane__card-header">
+                    <span className="levels__swatch" aria-hidden="true" />
+                    <strong className="lane__group">
+                      {u.kind === 'replacement' ? P.cal.replacement : LEVEL[u.groupLevel]}
+                    </strong>
+                    <span className="lane__dur">{u.minutes} m</span>
+                  </div>
                   <p className="lane__tip">{tipOf(u)}</p>
                   <p className="lane__reason">{u.reason}</p>
                   {!approved && (
@@ -1263,18 +1364,6 @@ const svg = {
   strokeLinecap: 'round',
   strokeLinejoin: 'round',
 } as const;
-const IconBook = () => (
-  <svg {...svg}>
-    <path d="M4 5.5C4 4.7 4.7 4 5.5 4H11v15H5.5C4.7 19 4 18.3 4 17.5z" />
-    <path d="M20 5.5c0-.8-.7-1.5-1.5-1.5H13v15h5.5c.8 0 1.5-.7 1.5-1.5z" />
-  </svg>
-);
-const IconFlag = () => (
-  <svg {...svg}>
-    <path d="M5 21V4" />
-    <path d="M5 4h11l-2 4 2 4H5" />
-  </svg>
-);
 const IconCheck = () => (
   <svg {...svg}>
     <path d="M5 12.5l4.5 4.5L19 7.5" />
@@ -1340,16 +1429,62 @@ function columnDate(startDate: string, week: number, day: Day): string {
   return `${monday.getFullYear()}-${p(monday.getMonth() + 1)}-${p(monday.getDate())}`;
 }
 
-/** Puts overlapping sessions of one slot side by side, one column per phone. */
-function lanes(events: CalEvent[], phones: number): { e: CalEvent; lane: number }[] {
-  const out: { e: CalEvent; lane: number }[] = [];
-  const free: number[] = Array(phones).fill(0);
-  for (const e of [...events].sort((a, b) => a.start.localeCompare(b.start))) {
-    let lane = free.findIndex((until) => until <= toMin(e.start));
-    if (lane < 0) lane = 0;
-    free[lane] = toMin(e.end);
-    out.push({ e, lane });
+/** Puts overlapping sessions of one slot side by side, dynamically clustering concurrent sessions. */
+function lanes(events: CalEvent[], phones: number): { e: CalEvent; lane: number; totalLanes: number }[] {
+  if (events.length === 0) return [];
+  const sorted = [...events].sort((a, b) => {
+    const diff = toMin(a.start) - toMin(b.start);
+    if (diff !== 0) return diff;
+    return b.minutes - a.minutes;
+  });
+
+  const clusters: CalEvent[][] = [];
+  let currentCluster: CalEvent[] = [];
+  let clusterEnd = 0;
+
+  for (const e of sorted) {
+    const s = toMin(e.start);
+    const end = toMin(e.end);
+    if (currentCluster.length === 0 || s < clusterEnd) {
+      currentCluster.push(e);
+      clusterEnd = Math.max(clusterEnd, end);
+    } else {
+      clusters.push(currentCluster);
+      currentCluster = [e];
+      clusterEnd = end;
+    }
   }
+  if (currentCluster.length > 0) clusters.push(currentCluster);
+
+  const out: { e: CalEvent; lane: number; totalLanes: number }[] = [];
+
+  for (const cluster of clusters) {
+    const laneEnds: number[] = [];
+    const clusterPlacements: { e: CalEvent; lane: number }[] = [];
+
+    for (const e of cluster) {
+      const s = toMin(e.start);
+      let lane = laneEnds.findIndex((end) => end <= s);
+      if (lane === -1) {
+        lane = laneEnds.length;
+        laneEnds.push(toMin(e.end));
+      } else {
+        laneEnds[lane] = toMin(e.end);
+      }
+      clusterPlacements.push({ e, lane });
+    }
+
+    const totalLanes = Math.min(phones, Math.max(1, laneEnds.length));
+
+    for (const item of clusterPlacements) {
+      out.push({
+        e: item.e,
+        lane: item.lane % totalLanes,
+        totalLanes,
+      });
+    }
+  }
+
   return out;
 }
 

@@ -629,13 +629,45 @@ button.chip {
   gap: var(--space-3) var(--space-4);
 }
 
+.calbar__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-left: auto;
+}
+
+.cal-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--r-14);
+  background: #fdf6ec;
+  border: 1px solid #faecd8;
+  color: #7d5218;
+}
+
+.cal-banner__info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: var(--fs-9);
+}
+
+.cal-banner__info strong {
+  font-size: var(--fs-8);
+  color: #5c3b0d;
+}
+
 .calbar__range {
   font-weight: var(--fw-s);
   font-size: var(--fs-8);
 }
 
 .calbar__status {
-  flex: 1 1 240px;
+  flex: 1 1 200px;
 }
 
 .weeks {
@@ -702,18 +734,18 @@ button.chip {
 /* Calendar: the week grid */
 .board {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 288px;
-  gap: var(--space-4);
+  grid-template-columns: minmax(0, 1fr) 280px;
+  gap: var(--space-3);
   align-items: start;
 }
 
 .wk {
   display: grid;
-  grid-template-columns: 56px repeat(var(--cols), minmax(150px, 1fr));
-  column-gap: var(--space-2);
-  row-gap: var(--space-3);
-  padding: var(--space-4);
-  border-radius: var(--r-24);
+  grid-template-columns: 50px repeat(var(--cols), minmax(130px, 1fr));
+  column-gap: 6px;
+  row-gap: 8px;
+  padding: var(--space-3);
+  border-radius: var(--r-16);
   background: var(--page);
   box-shadow: var(--ring-row);
   overflow-x: auto;
@@ -737,8 +769,9 @@ button.chip {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: var(--space-2) 0;
-  border-radius: var(--r-12);
+  gap: 2px;
+  padding: 6px 4px;
+  border-radius: var(--r-10);
   background: var(--neutral-100);
   box-shadow: inset 0 0 0 1px var(--neutral-200);
 }
@@ -755,12 +788,19 @@ button.chip {
 
 .wk__dayname {
   font-size: 11px;
+  font-weight: 500;
   letter-spacing: 0.04em;
+  color: var(--muted);
 }
 
 .wk__date {
-  font-size: var(--fs-7);
-  font-weight: var(--fw-s);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.wk__dayhead[aria-current='date'] .wk__dayname,
+.wk__dayhead[aria-current='date'] .wk__date {
+  color: var(--page);
 }
 
 .wk__gutter,
@@ -775,6 +815,7 @@ button.chip {
   font-size: 11px;
   color: var(--muted);
   font-variant-numeric: tabular-nums;
+  font-weight: 500;
 }
 
 .wk__fold {
@@ -787,10 +828,14 @@ button.chip {
 }
 
 .wk__col {
-  border-radius: var(--r-12);
+  border-radius: var(--r-10);
+  background: rgba(0, 0, 0, 0.015);
+  box-shadow: inset 0 0 0 1px var(--neutral-200);
+  transition: box-shadow 0.15s ease, background 0.15s ease;
 }
 
 .wk__col[data-drop] {
+  background: rgba(64, 158, 255, 0.05);
   box-shadow: inset 0 0 0 2px var(--ink);
 }
 
@@ -798,7 +843,12 @@ button.chip {
   position: absolute;
   left: 0;
   right: 0;
-  border-top: 1px dashed var(--neutral-200);
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+  pointer-events: none;
+}
+
+.wk__line--half {
+  border-top: 1px dashed rgba(0, 0, 0, 0.04);
 }
 
 .wk__foldband {
@@ -811,10 +861,12 @@ button.chip {
 
 .wk__slot {
   position: absolute;
-  left: 0;
-  right: 0;
-  border-radius: var(--r-12);
-  background: var(--neutral-100);
+  left: 1px;
+  right: 1px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.025);
+  border: 1px dashed rgba(0, 0, 0, 0.09);
+  pointer-events: none;
 }
 
 .wk__col[data-off] {
@@ -860,18 +912,70 @@ button.chip {
   z-index: 1;
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  padding: 8px 10px;
+  box-sizing: border-box;
   overflow: hidden;
-  border-radius: var(--r-12);
-  background: color-mix(in srgb, var(--g) 20%, var(--page));
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--g) 30%, transparent);
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--g) 14%, #ffffff);
+  border-left: 3px solid var(--g);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06), inset 0 0 0 1px rgba(0, 0, 0, 0.04);
   cursor: grab;
-  transition: opacity var(--motion-ui), box-shadow var(--motion-ui);
+  transition: opacity var(--motion-ui), box-shadow var(--motion-ui), transform 0.1s ease;
 }
 
 .ev:hover {
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--g) 60%, transparent), 0 6px 14px -8px rgba(75, 61, 51, 0.4);
+  box-shadow: 0 4px 10px -2px rgba(0, 0, 0, 0.15), inset 0 0 0 1px rgba(0, 0, 0, 0.08);
+  transform: translateY(-1px);
+  z-index: 4;
+}
+
+.ev__badge {
+  flex: 0 0 auto;
+  white-space: nowrap;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 1px 4px;
+  border-radius: 3px;
+  background: var(--g);
+  color: #ffffff;
+  line-height: 1.25;
+  letter-spacing: 0.01em;
+}
+
+.ev__remove {
+  margin-left: auto;
+  flex: 0 0 auto;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 13px;
+  line-height: 1;
+  padding: 0 2px;
+  border-radius: 3px;
+  opacity: 0.6;
+  transition: opacity 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+
+.ev__remove:hover {
+  opacity: 1;
+  color: #b91c1c;
+  background: rgba(185, 28, 28, 0.1);
+}
+
+.ev__body {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.ev__tip {
+  font-size: 10px;
+  line-height: 1.25;
+  color: var(--ink);
+  font-weight: 500;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
 }
 
 .ev[draggable='false'] {
@@ -896,52 +1000,39 @@ button.chip {
 .ev__top {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   min-width: 0;
-}
-
-.ev__icon {
-  display: grid;
-  flex: none;
-  place-items: center;
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  background: var(--page);
-  color: var(--g);
-}
-
-.ev__icon svg {
-  width: 13px;
-  height: 13px;
+  width: 100%;
 }
 
 .ev__title {
   min-width: 0;
   overflow: hidden;
-  font-size: 12px;
-  line-height: 16px;
-  font-weight: var(--fw-s);
-  white-space: nowrap;
-  text-overflow: ellipsis;
+  font-size: 10.5px;
+  line-height: 13px;
+  font-weight: 500;
+  color: var(--ink);
+  margin: 0;
 }
 
 .ev__check {
   display: grid;
-  flex: none;
+  flex: 0 0 auto;
   place-items: center;
-  width: 22px;
-  height: 22px;
+  width: 16px;
+  height: 16px;
   margin-left: auto;
   border-radius: 50%;
   background: var(--page);
   box-shadow: inset 0 0 0 1px var(--neutral-300);
   color: transparent;
+  border: none;
+  cursor: pointer;
 }
 
 .ev__check svg {
-  width: 13px;
-  height: 13px;
+  width: 10px;
+  height: 10px;
 }
 
 .ev__check[aria-pressed='true'] {
@@ -961,95 +1052,96 @@ button.chip {
 .ev__sub,
 .ev__doc {
   overflow: hidden;
-  font-size: 11px;
-  line-height: 15px;
+  font-size: 9.5px;
+  line-height: 12px;
   white-space: nowrap;
   text-overflow: ellipsis;
-  color: var(--neutral-900);
+  color: var(--neutral-700);
 }
 
 .ev__time {
-  font-size: 11px;
-  line-height: 15px;
+  font-size: 9.5px;
+  line-height: 1.2;
   color: var(--muted);
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 0 1 auto;
+  min-width: 0;
 }
 
+/* Responsive card size adjustments based on height */
 .ev[data-size='xs'] {
-  flex-direction: row;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 8px;
+  justify-content: center;
+  padding: 1px 4px;
 }
 
-.ev[data-size='xs'] .ev__icon {
+.ev[data-size='xs'] .ev__title,
+.ev[data-size='xs'] .ev__sub,
+.ev[data-size='xs'] .ev__doc,
+.ev[data-size='xs'] .ev__people {
   display: none;
 }
 
-/* The card leads with the teacher's tip; the group sits small above it */
-.ev__group {
-  min-width: 0;
-  overflow: hidden;
-  font-size: 11px;
-  line-height: 15px;
-  font-weight: var(--fw-s);
-  color: var(--neutral-900);
-  white-space: nowrap;
-  text-overflow: ellipsis;
+.ev[data-size='s'] {
+  justify-content: flex-start;
+  padding: 2px 4px;
+  gap: 1px;
 }
 
-.ev .ev__title {
-  flex: none;
+.ev[data-size='s'] .ev__title {
   display: -webkit-box;
   -webkit-box-orient: vertical;
-  -webkit-line-clamp: var(--lines, 2);
-  white-space: normal;
+  -webkit-line-clamp: 1;
+  font-size: 9.5px;
+  line-height: 12px;
+}
+
+.ev[data-size='s'] .ev__sub,
+.ev[data-size='s'] .ev__doc,
+.ev[data-size='s'] .ev__people {
+  display: none;
 }
 
 .ev[data-size='m'] {
-  --lines: 2;
+  justify-content: flex-start;
+  padding: 3px 5px;
+  gap: 2px;
 }
 
-.ev[data-size='m'] .ev__time,
-.ev[data-size='m'] .ev__sub {
+.ev[data-size='m'] .ev__title {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  font-size: 10px;
+  line-height: 13px;
+}
+
+.ev[data-size='m'] .ev__doc,
+.ev[data-size='m'] .ev__people {
   display: none;
 }
 
 .ev[data-size='l'] {
-  --lines: 4;
+  justify-content: flex-start;
+  padding: 3px 6px;
+  gap: 2px;
 }
 
-/* Ten minutes is a short card: the tip alone, the rest on hover and in the side panel */
-.ev[data-size='s'] {
-  --lines: 3;
+.ev[data-size='l'] .ev__title {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  font-size: 10.5px;
+  line-height: 13px;
 }
 
-.ev[data-size='xs'],
-.ev[data-size='s'] {
-  align-items: flex-start;
-  flex-direction: row-reverse;
-  justify-content: flex-end;
-  padding: 3px 8px;
-}
-
-.ev[data-size='xs'] .ev__group,
-.ev[data-size='xs'] .ev__time,
-.ev[data-size='xs'] .ev__icon,
-.ev[data-size='s'] .ev__group,
-.ev[data-size='s'] .ev__time,
-.ev[data-size='s'] .ev__icon {
-  display: none;
-}
-
-.ev[data-size='xs'] .ev__title,
-.ev[data-size='s'] .ev__title {
-  flex: 1 1 auto;
-}
-
-.ev[data-size='xs'] .ev__title,
-.ev[data-size='s'] .ev__title {
-  font-size: 11px;
-  line-height: 14px;
+.ev[data-size='l'] .ev__sub,
+.ev[data-size='l'] .ev__doc {
+  font-size: 9.5px;
+  line-height: 12px;
+  color: var(--neutral-600);
 }
 
 .ev[aria-current='true'] {
@@ -1181,14 +1273,26 @@ button.chip {
   font-weight: var(--fw-s);
 }
 
+.lane[data-drop] {
+  background: color-mix(in srgb, var(--ink) 8%, var(--neutral-200));
+  box-shadow: inset 0 0 0 2px var(--ink);
+}
+
 .lane__card {
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
-  padding: var(--space-3);
+  gap: var(--space-2);
+  padding: 10px 12px;
   border-radius: var(--r-14);
   background: var(--page);
-  box-shadow: 0 1px 2px rgba(75, 61, 51, 0.08);
+  box-shadow: 0 1px 3px rgba(75, 61, 51, 0.08);
+  border-left: 3.5px solid var(--g);
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+
+.lane__card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(75, 61, 51, 0.12);
 }
 
 .lane__card .ev__title {
@@ -1196,6 +1300,35 @@ button.chip {
   align-items: center;
   gap: 6px;
   white-space: normal;
+}
+
+.lane__meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.lane__badge {
+  font-size: 9px;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: var(--g);
+  color: #fff;
+  line-height: 1.2;
+}
+
+.lane__dur {
+  font-size: 11px;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.lane__act {
+  font-size: 11px;
+  color: var(--muted);
+  font-style: italic;
+  margin-top: 2px;
 }
 
 .lane__reason {
