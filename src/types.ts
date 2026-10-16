@@ -29,6 +29,8 @@ export interface Card {
   syllables?: Record<string, string>;
   /** Jejak pasir: a short name for each block, shown as stops on the trail above the text. */
   stops?: string[];
+  /** Paragraf cards: 2 or 3 oral questions the teacher asks after the reading, each with the answer she listens for. */
+  questions?: { q: string; a: string }[];
 }
 
 export interface CardWord {
@@ -92,7 +94,12 @@ export interface Take {
   events: LiveEvent[];
   versions: { card: number; model: string; engine: string; rubric: string };
   audio: { stored: boolean; duration_ms?: number; deleted_at?: number };
-  teacher: { edits: Record<number, WordStatus>; reviewed_at?: number };
+  teacher: {
+    edits: Record<number, WordStatus>;
+    reviewed_at?: number;
+    /** Paragraf cards: the teacher's tap per oral question, true for right and false for wrong; null or missing means not asked. */
+    comprehension?: (boolean | null)[];
+  };
 }
 
 /** The engine's level suggestion. Confirmation is stored beside it; the original is never overwritten. */

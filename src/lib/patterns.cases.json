@@ -1,0 +1,39 @@
+{
+  "note": "Cases the phone (src/lib/patterns.ts) and the planner (planner/patterns.py) must classify the same way. Both test suites run every case.",
+  "classify": [
+    { "expected": "ban", "heard": "ba", "patterns": ["closed_syllable"] },
+    { "expected": "sar", "heard": null, "patterns": ["closed_syllable"] },
+    { "expected": "tum", "heard": "tu", "patterns": ["closed_syllable"] },
+    { "expected": "bola", "heard": "dola", "patterns": ["letter_confusion"] },
+    { "expected": "b", "heard": "d", "patterns": ["letter_confusion"] },
+    { "expected": "b", "heard": "de", "patterns": ["letter_confusion"] },
+    { "expected": "m", "heard": "en", "patterns": ["letter_confusion"] },
+    { "expected": "ba", "heard": "da", "patterns": ["letter_confusion"] },
+    { "expected": "ba", "heard": "ma", "patterns": [] },
+    { "expected": "m", "heard": null, "patterns": [] },
+    { "expected": "bunga", "heard": "buna", "patterns": ["digraph_cluster"] },
+    { "expected": "nya", "heard": "na", "patterns": ["digraph_cluster"] },
+    { "expected": "putri", "heard": null, "patterns": ["digraph_cluster"] },
+    { "expected": "bintang", "heard": "bintan", "patterns": ["closed_syllable", "digraph_cluster"] },
+    { "expected": "domba", "heard": "doba", "patterns": ["closed_syllable"] },
+    { "expected": "kelinci", "heard": null, "patterns": ["closed_syllable", "long_word"] },
+    { "expected": "sapi", "heard": "sapu", "patterns": [] },
+    { "expected": "pantai", "heard": null, "patterns": ["closed_syllable"] },
+    { "expected": "sungai", "heard": null, "patterns": ["digraph_cluster"] },
+    { "expected": "membaca", "heard": "baca", "patterns": ["closed_syllable", "long_word", "affixed_word"] },
+    { "expected": "berlari", "heard": null, "patterns": ["closed_syllable", "long_word", "affixed_word"] },
+    { "expected": "makanan", "heard": "makan", "patterns": ["closed_syllable", "long_word", "affixed_word"] },
+    { "expected": "jalan", "heard": "jala", "patterns": ["closed_syllable"] },
+    { "expected": "meja", "heard": null, "patterns": [] },
+    { "expected": "pangeran", "heard": null, "patterns": ["closed_syllable", "digraph_cluster", "long_word"] },
+    { "expected": "Bintangnya,", "heard": null, "patterns": ["closed_syllable", "digraph_cluster", "long_word", "affixed_word"] },
+    { "expected": "lama-lama", "heard": null, "patterns": ["long_word"] }
+  ],
+  "syllables": [
+    { "word": "ba", "count": 1 },
+    { "word": "sapi", "count": 2 },
+    { "word": "kelinci", "count": 3 },
+    { "word": "pantai", "count": 2 },
+    { "word": "m", "count": 1 }
+  ]
+}

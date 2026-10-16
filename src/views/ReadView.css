@@ -425,6 +425,19 @@
   font-weight: var(--fw-s);
 }
 
+/* Oral questions after a paragraf card, read left-aligned like a list */
+.panel__questions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  align-self: stretch;
+  padding: var(--space-4);
+  border-radius: var(--r-14);
+  background: var(--card);
+  text-align: left;
+}
+
 .panel__label {
   color: var(--muted);
   font-weight: var(--fw-b);

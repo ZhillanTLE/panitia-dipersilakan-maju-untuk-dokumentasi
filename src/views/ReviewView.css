@@ -418,6 +418,107 @@
   grid-row: 1 / span 2;
 }
 
+.outcome__line--meta {
+  color: var(--muted);
+}
+
+/* How sure the numbers are: a flag, never a score */
+.sreview__flag {
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--r-12);
+  background: var(--caution-tint);
+  color: var(--caution);
+  font-size: var(--fs-9);
+  line-height: var(--lh-9);
+}
+
+/* Pola: misread words grouped by shape, with tappable examples */
+.pola {
+  align-self: stretch;
+}
+
+.pola__row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3) 0;
+  border-top: 1px solid var(--neutral-200);
+}
+
+.pola__name {
+  font-size: var(--fs-8);
+  line-height: var(--lh-8);
+  font-weight: var(--fw-s);
+}
+
+.pola__count {
+  color: var(--muted);
+  font-weight: var(--fw-b);
+  font-variant-numeric: tabular-nums;
+}
+
+.pola__examples {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.pola__ex {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--neutral-200);
+  border-radius: var(--r-12);
+  background: var(--paper);
+  text-align: left;
+  transition: border-color var(--motion-ui) ease;
+}
+
+.pola__ex:hover {
+  border-color: var(--neutral-400);
+}
+
+.pola__word {
+  font-size: var(--fs-8);
+  line-height: var(--lh-8);
+  font-weight: var(--fw-s);
+}
+
+.pola__heard {
+  color: var(--muted);
+  font-size: var(--fs-9);
+  line-height: var(--lh-9);
+}
+
+/* Riwayat: this child only, oldest first */
+.riwayat {
+  align-self: stretch;
+}
+
+.riwayat__row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: var(--space-3);
+  padding: var(--space-2) 0;
+  border-top: 1px solid var(--neutral-200);
+  font-size: var(--fs-9);
+  line-height: var(--lh-9);
+}
+
+.riwayat__date {
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.riwayat__level {
+  font-weight: var(--fw-s);
+}
+
+.riwayat__speed {
+  font-variant-numeric: tabular-nums;
+}
+
 /* The level decision */
 .step--decide {
   align-items: stretch;

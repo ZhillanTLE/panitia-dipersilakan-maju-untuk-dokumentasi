@@ -1,3 +1,4 @@
+import type { CardMetrics, Unit } from './lib/metrics';
 import type { CardLevel, ChildLevel, Confidence, Consents, Source, WordStatus } from './types';
 
 const decimal = new Intl.NumberFormat('id-ID', { maximumFractionDigits: 1 });
@@ -13,6 +14,13 @@ export const LEVEL: Record<ChildLevel, string> = {
   kata: 'Kata',
   kalimat: 'Kalimat',
   paragraf: 'Paragraf',
+};
+
+/** What a card counts, as a noun after a number: "17 suku kata". */
+export const UNIT: Record<Unit, string> = {
+  huruf: 'huruf',
+  suku_kata: 'suku kata',
+  kata: 'kata',
 };
 
 export const CARD: Record<CardLevel, string> = {
@@ -50,7 +58,7 @@ export const CONFIDENCE: Record<Confidence, string> = {
 };
 
 export const SOURCE: Record<Source, string> = {
-  online: 'Suara daring',
+  online: 'Asesmen Suara',
   ondevice: 'Suara di perangkat',
   manual: 'Penanda guru',
   simulated: 'Simulasi',
@@ -193,6 +201,7 @@ export const S = {
     pickTab:
       'Tidak ada hitungan mesin untuk penanda guru. Pilih kartu berikutnya lewat penanda di tepi buku, atau selesaikan bacaan.',
     tabsHint: 'Kartu lain bisa dibuka lewat penanda di tepi buku.',
+    questions: 'Tanyakan ini sekarang, lalu tandai jawabannya. Bisa diubah di Tinjau sampai Anda mengonfirmasi.',
   },
 
   done: {
@@ -242,7 +251,44 @@ export const S = {
     prevPage: 'Halaman sebelumnya',
     nextPage: 'Halaman berikutnya',
     pageOf: (n: number, total: number) => `${n} / ${total}`,
-    cardLine: (correct: number, total: number) => `${correct} dari ${total} benar`,
+    cardLine: (correct: number, total: number, unit: string) => `${correct} dari ${total} ${unit} benar`,
+    cardFacts: (m: CardMetrics, unit: string) => {
+      const e = m.errorCounts;
+      const errors = [
+        e.substituted && `${e.substituted} keliru dibaca`,
+        e.omitted && `${e.omitted} terlewat`,
+        e.teacherRead && `${e.teacherRead} dibacakan guru`,
+        e.uncertain && `${e.uncertain} perlu ditinjau`,
+      ].filter(Boolean);
+      return [
+        m.correctUnitsPerMinute !== null ? `${m.correctUnitsPerMinute} ${unit} benar per menit` : '',
+        `${m.longPauses.count} jeda panjang${m.longPauses.before.length ? ` (sebelum ${m.longPauses.before.slice(0, 3).join(', ')})` : ''}`,
+        errors.length ? errors.join(', ') : 'tanpa kesalahan',
+        m.selfCorrections ? `${m.selfCorrections} dibetulkan sendiri` : '',
+      ]
+        .filter(Boolean)
+        .join('; ');
+    },
+    speed: (n: number, unit: string) => `${n} ${unit} benar per menit`,
+    basedOn: (n: number) => `berdasarkan ${n} kata yang sudah dikonfirmasi`,
+    relisten: 'Beberapa kata belum jelas, dengarkan ulang sebelum menyetujui.',
+    unsure: 'Banyak kata sempat tidak jelas bagi mesin atau suaranya kurang jelas, jadi angka di sini kurang pasti.',
+    patterns: 'Pola kesalahan',
+    patternsNote: 'Kata yang keliru, dikelompokkan menurut bentuknya. Ketuk contoh untuk membuka katanya; rekaman diputar bila disimpan.',
+    patternsNone: 'Tidak ada kata keliru yang masuk pola.',
+    patternsFrom: (card: string) => `Dari ${card.toLowerCase()}, kartu di tingkat anak ini. `,
+    times: (n: number) => `${n} kali`,
+    comprehension: 'Pemahaman',
+    comprehensionNote: 'Ajukan pertanyaan ini setelah anak membaca paragraf, lalu tandai jawabannya. Ketuk lagi untuk menghapus tanda.',
+    comprehensionCount: (correct: number, asked: number) => `${correct} dari ${asked} pertanyaan dijawab benar`,
+    comprehensionNone: 'Belum ada jawaban yang ditandai.',
+    answer: (a: string) => `Jawaban: ${a}`,
+    right: 'Benar',
+    wrong: 'Salah',
+    history: 'Riwayat',
+    historyNote: 'Hasil anak ini sendiri yang sudah dikonfirmasi sebelumnya. Kecepatan hanya dibandingkan dalam satuan yang sama.',
+    historyNone: 'Belum ada hasil sebelumnya untuk anak ini.',
+    otherUnit: 'satuan lain, tidak dibandingkan',
     passLine: (needed: number) => `lulus mulai ${needed}`,
     passed: 'Lulus',
     notPassed: 'Belum lulus',
@@ -286,7 +332,7 @@ export const S = {
 
   // Kelas
   kelas: {
-    title: 'Kelas',
+    title: 'Kelas 2X',
     summary: (students: number, confirmed: number) =>
       `${students} murid, ${confirmed} sudah punya tingkat terkonfirmasi.`,
     progressLabel: 'Kemajuan kelas',
@@ -301,6 +347,9 @@ export const S = {
     floor: 'Belum punya tingkat',
     stepEmpty: 'Belum ada',
     activitiesFor: (level: string) => `Aktivitas untuk kelompok ${level.toLowerCase()}`,
+    patterns: 'Pola kesalahan di kelompok ini',
+    patternCount: (children: number, size: number, label: string) => `${children} dari ${size} anak: ${label.toLowerCase()}`,
+    patternsNone: 'Belum ada pola kesalahan yang berulang di kelompok ini.',
     namePlaceholder: 'Nama panggilan, mis. Rina',
     nameLabel: 'Nama panggilan',
     nameNote: 'Nama hanya tersimpan di perangkat ini. Rekaman, ekspor, dan laporan memakai kode murid.',

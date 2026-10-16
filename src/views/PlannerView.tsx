@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type CSSProperties } from 'react';
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { toast } from '../components/Toast';
 import {
   DAYS,
@@ -7,10 +7,13 @@ import {
   buildPayload,
   checkHealth,
   clearError,
+  dayBounds,
+  daysOf,
   fitInSlot,
   iso,
   makeReport,
   moveEvent,
+  moveTo,
   placeUnscheduled,
   removeEvent,
   replan,
@@ -23,16 +26,20 @@ import {
   usePlanner,
   type CalEvent,
   type DatedSlot,
+  type MoveResult,
   type Day,
   type PlanGroup,
+  type ReportChild,
   type TraceEntry,
   type Unscheduled,
 } from '../lib/planner';
+import { ACTIVITIES } from '../lib/activities';
+import { PATTERN_LABEL, type PatternId } from '../lib/patterns';
 import { href, navigate } from '../lib/route';
 import { LEVEL_ORDER } from '../lib/rubric';
 import { useApp } from '../lib/store';
 import { P } from '../plannerStrings';
-import { LEVEL } from '../strings';
+import { LEVEL, UNIT } from '../strings';
 import type { ChildLevel } from '../types';
 import './PlannerView.css';
 
@@ -61,7 +68,14 @@ const groupStyle = (level: ChildLevel) => ({ '--g': `var(--grp-${level})` }) as 
 export function PlannerView({ step }: { step: string | null }) {
   const app = useApp();
   const pl = usePlanner();
-  const current: Step = STEPS.includes(step as Step) ? (step as Step) : 'sinkron';
+  const open: Record<Step, boolean> = {
+    sinkron: true,
+    pipeline: pl.running || Boolean(pl.result) || Boolean(pl.error),
+    kalender: Boolean(pl.result) && !pl.running,
+    laporan: Boolean(pl.approved) && !pl.running,
+  };
+  const asked: Step = STEPS.includes(step as Step) ? (step as Step) : 'sinkron';
+  const current: Step = open[asked] ? asked : 'sinkron';
 
   useEffect(() => {
     void checkHealth().then(() => restore());
@@ -83,12 +97,21 @@ export function PlannerView({ step }: { step: string | null }) {
         <ol className="steps__list">
           {STEPS.map((s, k) => (
             <li key={s}>
-              <a className="steps__link" href={href('rencana', undefined, { langkah: s })} aria-current={current === s ? 'step' : undefined}>
-                <span className="steps__n" aria-hidden="true">
-                  {k + 1}
+              {open[s] ? (
+                <a className="steps__link" href={href('rencana', undefined, { langkah: s })} aria-current={current === s ? 'step' : undefined}>
+                  <span className="steps__n" aria-hidden="true">
+                    {k + 1}
+                  </span>
+                  {P.steps[s]}
+                </a>
+              ) : (
+                <span className="steps__link" aria-disabled="true" title={P.locked[s as keyof typeof P.locked]}>
+                  <span className="steps__n" aria-hidden="true">
+                    {k + 1}
+                  </span>
+                  {P.steps[s]}
                 </span>
-                {P.steps[s]}
-              </a>
+              )}
             </li>
           ))}
         </ol>
@@ -104,10 +127,10 @@ export function PlannerView({ step }: { step: string | null }) {
 }
 
 function ModeBadge() {
-  const { health } = usePlanner();
+  const { health, settings } = usePlanner();
   if (!health) return null;
   const offline = health === 'offline';
-  const mode = offline ? null : health.mode.inference;
+  const mode = offline ? null : health.mode.inference === 'replay' ? 'replay' : settings.useModel ? 'live' : 'mock';
   return (
     <p className="mode" data-mode={offline ? 'offline' : mode} role="status">
       <span className="mode__dot" aria-hidden="true" />
@@ -173,6 +196,7 @@ function Sinkron() {
           ))}
         </ul>
         {summary.excluded > 0 && <p className="t-meta">{P.sync.excluded(summary.excluded)}</p>}
+        {summary.noReading > 0 && <p className="t-meta">{P.sync.noReading(summary.noReading)}</p>}
         {summary.demo && <p className="t-meta">{P.sync.demo}</p>}
         {summary.included === 0 && <p className="t-meta">{P.sync.nobody}</p>}
       </section>
@@ -321,10 +345,36 @@ function Sinkron() {
       </section>
 
       <div className="rencana__go">
+        <ModelSwitch />
         <button type="button" className="btn btn--cta btn--tall" disabled={!canRun} onClick={go}>
           {pl.running ? P.sync.running : P.sync.run}
         </button>
       </div>
+    </div>
+  );
+}
+
+/** Use the Gemini model for the two agent stages, or the rule-built stand-ins. Code stages are the same either way. */
+function ModelSwitch() {
+  const pl = usePlanner();
+  const health = pl.health && pl.health !== 'offline' ? pl.health : null;
+  const replay = health?.mode.inference === 'replay';
+  const noKey = Boolean(health) && !health!.inferenceConfigured;
+  const on = pl.settings.useModel && !replay;
+  return (
+    <div className="mswitch">
+      <button
+        type="button"
+        role="switch"
+        className="switch"
+        aria-checked={on}
+        disabled={!health || replay || (noKey && !on) || pl.running}
+        onClick={() => updateSettings({ useModel: !pl.settings.useModel })}
+      >
+        <span className="switch__track" aria-hidden="true" />
+        {P.sync.useModel}
+      </button>
+      <p className="t-meta">{replay ? P.sync.modelReplay : noKey ? P.sync.modelNoKey : on ? P.sync.modelOn : P.sync.modelOff}</p>
     </div>
   );
 }
@@ -341,8 +391,8 @@ const AVATAR: Partial<Record<TraceEntry['stage'], Avatar>> = {
   planner: 'searcher',
 };
 
-function statusOf(entry: TraceEntry | undefined, running: boolean, failed: boolean): keyof typeof P.pipeline.status {
-  if (running) return 'menunggu';
+function statusOf(entry: TraceEntry | undefined, running: boolean, failed: boolean, first = false): keyof typeof P.pipeline.status {
+  if (running) return first ? 'berjalan' : 'menunggu';
   if (!entry) return failed ? 'gagal' : 'menunggu';
   if (entry.status === 'fallback') return 'cadangan';
   if (entry.status === 'reused') return 'dipakai';
@@ -360,10 +410,51 @@ function tagOf(stage: TraceEntry['stage'], entry: TraceEntry | undefined): strin
   return P.pipeline.tag.mock;
 }
 
+/** How long a stage stays "berjalan" while its result is revealed: its measured time, held between 0.5 and 2 seconds. */
+const holdOf = (ms: number | undefined) => Math.min(2000, Math.max(500, ms ?? 500));
+
 function Pipeline() {
   const pl = usePlanner();
   const trace = pl.result?.trace ?? [];
   const failed = Boolean(pl.error) && !pl.running;
+  // After a run, each stage is shown working and then revealed in order, so every step's output is settled
+  // before the next one appears. The times printed beside each stage stay the server's measured ones.
+  const [revealed, setRevealed] = useState(STAGES.length);
+  const [active, setActive] = useState<number | null>(null);
+  const sawRun = useRef(false);
+
+  useEffect(() => {
+    if (!pl.running) return;
+    sawRun.current = true;
+    setRevealed(0);
+    setActive(0);
+  }, [pl.running]);
+
+  useEffect(() => {
+    if (pl.running || !sawRun.current) return;
+    sawRun.current = false;
+    const steps = pl.result?.trace;
+    if (!steps) {
+      setActive(null);
+      return;
+    }
+    let cancelled = false;
+    void (async () => {
+      for (let k = 0; k < STAGES.length; k++) {
+        setActive(k);
+        await new Promise((r) => setTimeout(r, holdOf(steps.find((t) => t.stage === STAGES[k])?.ms)));
+        if (cancelled) return;
+        setRevealed(k + 1);
+      }
+      setActive(null);
+    })();
+    return () => {
+      cancelled = true;
+      setRevealed(STAGES.length);
+      setActive(null);
+    };
+  }, [pl.running, pl.result]);
+  const revealing = pl.running || active !== null;
 
   return (
     <div className="rencana__body">
@@ -371,49 +462,71 @@ function Pipeline() {
         <h2 className="rpanel__title" id="pipe-title">
           {P.pipeline.title}
         </h2>
-        {pl.running && <p className="t-meta">{P.pipeline.waiting}</p>}
-        <ol className="tl">
-          {STAGES.map((stage, k) => {
-            const entry = trace.find((x) => x.stage === stage);
-            const status = statusOf(entry, pl.running, failed && stage === 'intake');
-            const avatar = AVATAR[stage];
-            const face = status === 'menunggu' || status === 'gagal' ? 'sleep' : 'finished';
-            return (
-              <li
-                key={stage}
-                className="tl__stage"
-                data-status={status}
-                data-last={k === STAGES.length - 1 ? '' : undefined}
-                aria-label={`${P.pipeline.agentName[stage]}: ${P.pipeline.status[status]}`}
-              >
-                {avatar ? (
-                  <span className="tl__avatar" aria-hidden="true">
-                    {(['sleep', 'awake', 'finished'] as const).map((s) => (
-                      <span
-                        key={s}
-                        className="tl__face"
-                        style={{
-                          backgroundImage: `url(./agents/${avatar}-${s}.svg)`,
-                          opacity: s === face ? 1 : 0,
-                        }}
-                      />
-                    ))}
-                  </span>
-                ) : (
-                  <span className="tl__dot" aria-hidden="true" />
-                )}
-                <div className="tl__head">
-                  <span className="tl__name">{P.pipeline.agentName[stage]}</span>
-                  <span className="tl__tag">{tagOf(stage, entry)}</span>
-                  <span className="tl__status">{P.pipeline.status[status]}</span>
-                  <span className="tl__ms">{entry?.ms !== undefined && status !== 'menunggu' ? P.pipeline.secs(entry.ms) : ''}</span>
-                </div>
-                {entry && status !== 'menunggu' && <StageBody entry={entry} />}
-              </li>
-            );
-          })}
-        </ol>
-        {pl.result && !pl.running && trace.length > 0 && (
+        {!revealing && !pl.error && trace.length === 0 ? (
+          <div className="rpanel__empty">
+            <p className="t-b8">{P.pipeline.empty}</p>
+            <a className="btn btn--cta" href={href('rencana', undefined, { langkah: 'sinkron' })}>
+              {P.sync.run}
+            </a>
+          </div>
+        ) : (
+          <ol className="tl">
+            {STAGES.map((stage, k) => {
+              const entry = trace.find((x) => x.stage === stage);
+              const status =
+                k < revealed
+                  ? statusOf(entry, false, failed && stage === 'intake')
+                  : k === active
+                    ? 'berjalan'
+                    : failed && stage === 'intake'
+                      ? 'gagal'
+                      : 'menunggu';
+              const avatar = AVATAR[stage];
+              const face = status === 'berjalan' ? 'awake' : status === 'menunggu' || status === 'gagal' ? 'sleep' : 'finished';
+              return (
+                <li
+                  key={stage}
+                  className="tl__stage"
+                  data-status={status}
+                  data-last={k === STAGES.length - 1 ? '' : undefined}
+                  aria-label={`${P.pipeline.agentName[stage]}: ${P.pipeline.status[status]}`}
+                >
+                  {avatar ? (
+                    <span className="tl__avatar" aria-hidden="true">
+                      {(['sleep', 'awake', 'finished'] as const).map((s) => (
+                        <span
+                          key={s}
+                          className="tl__face"
+                          style={{
+                            backgroundImage: `url(./agents/${avatar}-${s}.svg)`,
+                            opacity: s === face ? 1 : 0,
+                          }}
+                        />
+                      ))}
+                    </span>
+                  ) : (
+                    <span className="tl__dot" aria-hidden="true" />
+                  )}
+                  <div className="tl__head">
+                    <span className="tl__name">{P.pipeline.agentName[stage]}</span>
+                    <span className="tl__tag">{tagOf(stage, entry)}</span>
+                    <span className="tl__status">{P.pipeline.status[status]}</span>
+                    <span className="tl__ms">{entry?.ms !== undefined && status !== 'menunggu' ? P.pipeline.secs(entry.ms) : ''}</span>
+                  </div>
+                  {status === 'berjalan' && (
+                    <div className="tl__skeleton" aria-hidden="true">
+                      <span />
+                      <span />
+                    </div>
+                  )}
+                  {entry && status !== 'menunggu' && status !== 'berjalan' && <StageBody entry={entry} />}
+                </li>
+              );
+            })}
+          </ol>
+        )}
+        {revealing && <p className="tl__wait">{pl.settings.useModel ? P.pipeline.waitingModel : P.pipeline.waiting}</p>}
+        {pl.result && !revealing && trace.length > 0 && (
           <div className="rencana__go">
             <a className="btn btn--cta btn--tall" href={href('rencana', undefined, { langkah: 'kalender' })}>
               {P.pipeline.next}
@@ -444,8 +557,8 @@ const RULES: { label: string; keys: string[] }[] = [
     keys: ['activity_id', 'activity_level', 'kind', 'empty'],
   },
   { label: P.pipeline.rules.passages, keys: ['passage_id'] },
+  { label: P.pipeline.rules.focus, keys: ['focus', 'first_focus'] },
   { label: P.pipeline.rules.budget, keys: ['budget', 'minutes', 'week'] },
-  { label: P.pipeline.rules.words, keys: ['banned_word'] },
   {
     label: P.pipeline.rules.replacement,
     keys: ['replacement', 'replacement_week'],
@@ -458,31 +571,65 @@ function StageBody({ entry }: { entry: TraceEntry }) {
   const C = P.pipeline.col;
 
   if (entry.stage === 'intake') {
-    const groups = (entry as TraceEntry & { groups?: { level: ChildLevel; size: number }[] }).groups ?? [];
-    return <Reasons lines={[entry.summary ?? '', groups.map((g) => `${LEVEL[g.level]} ${g.size}`).join(' · '), P.pipeline.levelsOnly]} />;
+    const facts = entry.facts ?? [];
+    if (!facts.length) {
+      const groups = entry.groups ?? [];
+      return <Reasons lines={[entry.summary ?? '', groups.map((g) => `${LEVEL[g.level]} ${g.size}`).join(' · '), P.pipeline.levelsOnly]} />;
+    }
+    return (
+      <>
+        <Reasons lines={[entry.summary ?? '', P.pipeline.levelsOnly]} />
+        <div className="ledger ledger--facts">
+          <div className="ledger__row ledger__row--head">
+            <span className="ledger__n">{C.n}</span>
+            <span className="ledger__main">{C.group}</span>
+            <span className="ledger__num">{C.children}</span>
+            <span className="ledger__end">{C.top}</span>
+          </div>
+          {facts.map((g, k) => {
+            const top = g.patterns[0];
+            return (
+              <div key={g.level} className="ledger__row" style={groupStyle(g.level)}>
+                <span className="ledger__n">{String(k + 1).padStart(2, '0')}</span>
+                <span className="ledger__main">
+                  <span className="levels__swatch" aria-hidden="true" /> {P.cal.group(g.name)}
+                </span>
+                <span className="ledger__num">{g.size}</span>
+                <span className="ledger__end">{top ? P.pipeline.topPattern(top.label, top.children) : P.pipeline.noPattern}</span>
+                <span className="ledger__sub">{P.pipeline.factsLine(g)}</span>
+              </div>
+            );
+          })}
+        </div>
+      </>
+    );
   }
 
   if (entry.stage === 'evidence') {
-    const discarded = (entry.discarded ?? []) as {
-      level?: string;
-      line?: string;
-      field?: string;
-      reason: string;
-    }[];
+    const discarded = entry.discarded ?? [];
     return (
       <>
-        <Reasons lines={Object.values(entry.lines ?? {}).flat()} />
+        <Reasons lines={LEVEL_ORDER.flatMap((l) => entry.lines?.[l] ?? [])} />
         {discarded.length > 0 && (
           <div className="ledger">
             {discarded.map((d, k) => (
               <div key={k} className="ledger__row" data-tone="bad">
                 <span className="ledger__n">{String(k + 1).padStart(2, '0')}</span>
                 <span className="ledger__main">{d.line ?? d.field ?? d.level}</span>
-                <span className="ledger__end">{P.pipeline.discardedRow}</span>
+                <span className="ledger__end">{(d.rule && P.pipeline.ruleName[d.rule as keyof typeof P.pipeline.ruleName]) ?? P.pipeline.discardedRow}</span>
                 <span className="ledger__sub">{d.reason}</span>
               </div>
             ))}
           </div>
+        )}
+        {entry.status !== 'reused' && entry.checked !== undefined && (
+          <Reasons
+            lines={[
+              P.pipeline.checkedFoot(entry.checked, discarded.length),
+              entry.repairs ? P.pipeline.repairs(entry.repairs) : '',
+              entry.ruleBuilt?.length ? P.pipeline.ruleBuilt(entry.ruleBuilt.map((l) => LEVEL[l as ChildLevel] ?? l).join(', ')) : '',
+            ]}
+          />
         )}
       </>
     );
@@ -502,6 +649,7 @@ function StageBody({ entry }: { entry: TraceEntry }) {
         {plan.groups.map((g, k) => {
           const practice = g.sessions.filter((s) => s.kind === 'practice');
           const repl = g.sessions.some((s) => s.kind === 'replacement');
+          const first = practice[0];
           return (
             <div key={g.level} className="ledger__row" style={groupStyle(g.level)}>
               <span className="ledger__n">{String(k + 1).padStart(2, '0')}</span>
@@ -511,6 +659,7 @@ function StageBody({ entry }: { entry: TraceEntry }) {
               <span className="ledger__num">{practice.length}</span>
               <span className="ledger__num">{practice.reduce((n, s) => n + s.minutes, 0)}</span>
               <span className="ledger__end">{repl ? P.cal.week(last) : P.pipeline.noReplacement}</span>
+              {first && <span className="ledger__sub">{P.pipeline.firstSession(activityTitle(first.activityId), focusLabel(first.focus))}</span>}
             </div>
           );
         })}
@@ -524,6 +673,7 @@ function StageBody({ entry }: { entry: TraceEntry }) {
 
   if (entry.stage === 'checker') {
     const failures = entry.failures ?? [];
+    const ev = entry.evidence;
     return (
       <div className="ledger">
         <div className="ledger__row ledger__row--head">
@@ -531,15 +681,23 @@ function StageBody({ entry }: { entry: TraceEntry }) {
           <span className="ledger__main">{C.rule}</span>
           <span className="ledger__end">{C.status}</span>
         </div>
+        {ev && (
+          <div className="ledger__row" data-tone={ev.discarded ? 'bad' : 'good'}>
+            <span className="ledger__n">01</span>
+            <span className="ledger__main">{P.pipeline.rules.claims}</span>
+            <span className="ledger__end">{ev.reused ? P.pipeline.status.dipakai : ev.discarded ? P.pipeline.discardedN(ev.discarded) : P.pipeline.pass}</span>
+            {!ev.reused && <span className="ledger__sub">{P.pipeline.checkedFoot(ev.checked, ev.discarded)}</span>}
+          </div>
+        )}
         {RULES.map((r, k) => {
           const hits = failures.filter((f) => r.keys.includes(f.rule));
           const word = !hits.length ? P.pipeline.pass : entry.fallbackUsed ? P.pipeline.failedFallback : P.pipeline.repaired;
           return (
             <div key={r.label} className="ledger__row" data-tone={hits.length ? 'bad' : 'good'}>
-              <span className="ledger__n">{String(k + 1).padStart(2, '0')}</span>
+              <span className="ledger__n">{String(k + 1 + (ev ? 1 : 0)).padStart(2, '0')}</span>
               <span className="ledger__main">{r.label}</span>
               <span className="ledger__end">{word}</span>
-              {hits.length > 0 && <span className="ledger__sub">{hits.map((h) => `${h.group}: ${h.detail}`).join(' · ')}</span>}
+              {hits.length > 0 && <span className="ledger__sub">{hits.map((h) => `${LEVEL[h.group as ChildLevel] ?? h.group}: ${h.detail}`).join(' · ')}</span>}
             </div>
           );
         })}
@@ -596,31 +754,17 @@ const DAY_FULL: Record<Day, string> = {
   Sat: 'Sabtu',
   Sun: 'Minggu',
 };
-const PXM = 7; // pixels per minute
-const GAP = 34; // the folded stretch between two literacy periods
+const PXM = 4; // pixels per minute
+const GAP = 34;
 
 interface Axis {
   segs: { from: number; to: number; y: number }[];
   height: number;
 }
 
-/** A time axis that keeps only the literacy periods and folds the hours between them. */
-function axisOf(slots: DatedSlot[]): Axis {
-  const iv = slots.map((s) => [s.start, s.end] as [number, number]).sort((a, b) => a[0] - b[0]);
-  const merged: [number, number][] = [];
-  for (const [a, b] of iv) {
-    const last = merged[merged.length - 1];
-    if (last && a <= last[1]) last[1] = Math.max(last[1], b);
-    else merged.push([a, b]);
-  }
-  const segs: Axis['segs'] = [];
-  let y = 0;
-  merged.forEach(([from, to], k) => {
-    if (k) y += GAP;
-    segs.push({ from, to, y });
-    y += (to - from) * PXM;
-  });
-  return { segs, height: y };
+/** The whole school day as one continuous axis, so a session can be dropped at any hour. */
+function axisOf(bounds: { from: number; to: number }): Axis {
+  return { segs: [{ from: bounds.from, to: bounds.to, y: 0 }], height: (bounds.to - bounds.from) * PXM };
 }
 
 const yAt = (axis: Axis, m: number): number | null => {
@@ -652,6 +796,8 @@ function Kalender() {
   const [only, setOnly] = useState<ChildLevel | null>(null);
   const [from, setFrom] = useState(() => new Date().toISOString().slice(0, 10));
   const [now, setNow] = useState(() => new Date());
+  const [sel, setSel] = useState<string | null>(null);
+  const grab = useRef(0);
 
   useEffect(() => {
     const id = window.setInterval(() => setNow(new Date()), 60_000);
@@ -677,14 +823,16 @@ function Kalender() {
   const groups = new Map(plan.groups.map((g) => [g.level, g]));
   const weekEvents = pl.events.filter((e) => e.week === week);
   const weekSlots = slots.filter((s) => s.week === week);
-  const axis = axisOf(weekSlots.length ? weekSlots : slots);
-  const columns = DAYS.filter((d) => plan.timetable.some((x) => x.day === d));
+  const axis = axisOf(dayBounds(plan));
+  const columns = daysOf(plan);
+  const selected = pl.events.find((e) => e.id === sel) ?? null;
   const today = iso(now);
   const nowMin = now.getHours() * 60 + now.getMinutes();
   const label = (e: CalEvent | Unscheduled) => describe(e, groups.get(e.groupLevel));
-  const outcome = (r: 'ok' | 'nofit' | 'lastweek') => {
+  const outcome = (r: MoveResult) => {
     if (r === 'nofit') toast(P.cal.noFit);
     if (r === 'lastweek') toast(P.cal.notLastWeek);
+    if (r === 'closed') toast(P.cal.closed);
   };
   const doneOf = (id: string) => pl.done.find((d) => d.planSessionId === id)?.done ?? false;
   const planned = pl.events.filter((e) => e.kind === 'practice');
@@ -831,10 +979,8 @@ function Kalender() {
                   e.preventDefault();
                   const id = e.dataTransfer.getData('text/plain') || dragging;
                   setDragging(null);
-                  const m = minuteAt(axis, e.clientY - e.currentTarget.getBoundingClientRect().top);
-                  const slot = m === null ? undefined : daySlots.find((s) => m >= s.start && m <= s.end);
-                  if (id && slot) outcome(moveEvent(id, slot));
-                  else if (id) toast(P.cal.noFit);
+                  const m = minuteAt(axis, Math.max(0, e.clientY - e.currentTarget.getBoundingClientRect().top - grab.current));
+                  if (id && m !== null) outcome(moveTo(id, date, m));
                 }}
               >
                 {ticksOf(axis).map((m) => (
@@ -876,8 +1022,11 @@ function Kalender() {
                       }}
                       draggable={!approved}
                       title={label(e)}
+                      aria-current={sel === e.id ? 'true' : undefined}
+                      onClick={() => setSel((cur) => (cur === e.id ? null : e.id))}
                       onDragStart={(ev) => {
                         ev.dataTransfer.setData('text/plain', e.id);
+                        grab.current = ev.clientY - ev.currentTarget.getBoundingClientRect().top;
                         setDragging(e.id);
                       }}
                       onDragEnd={() => setDragging(null)}
@@ -886,7 +1035,9 @@ function Kalender() {
                         <span className="ev__icon" aria-hidden="true">
                           {e.kind === 'replacement' ? <IconFlag /> : <IconBook />}
                         </span>
-                        <p className="ev__title">{e.kind === 'replacement' ? P.cal.replacement : P.cal.group(LEVEL[e.groupLevel])}</p>
+                        <p className="ev__group">
+                          {e.kind === 'replacement' ? `${P.cal.replacement}, ${LEVEL[e.groupLevel]}` : P.cal.group(LEVEL[e.groupLevel])}
+                        </p>
                         {approved && (
                           <button
                             type="button"
@@ -899,8 +1050,8 @@ function Kalender() {
                           </button>
                         )}
                       </div>
-                      {(size === 'm' || size === 'l') && e.kind === 'practice' && <p className="ev__sub">{e.focus}</p>}
-                      {(size === 'm' || size === 'l') && e.kind === 'replacement' && <p className="ev__sub">{P.cal.group(LEVEL[e.groupLevel])}</p>}
+                      <p className="ev__title">{tipOf(e)}</p>
+                      {(size === 'm' || size === 'l') && e.kind === 'practice' && e.focus && <p className="ev__sub">{P.cal.focus(focusLabel(e.focus))}</p>}
                       <p className="ev__time">
                         {t(e.start)} – {t(e.end)}
                       </p>
@@ -953,13 +1104,25 @@ function Kalender() {
                 {P.cal.unscheduled} <span className="filters__n">{pl.unscheduled.length}</span>
               </h2>
               {pl.unscheduled.map((u) => (
-                <div key={u.planSessionId} className="lane__card" style={groupStyle(u.groupLevel)}>
+                <div
+                  key={u.planSessionId}
+                  className="lane__card"
+                  style={groupStyle(u.groupLevel)}
+                  draggable={!approved}
+                  onDragStart={(ev) => {
+                    ev.dataTransfer.setData('text/plain', u.planSessionId);
+                    grab.current = 0;
+                    setDragging(u.planSessionId);
+                  }}
+                  onDragEnd={() => setDragging(null)}
+                >
                   <p className="ev__title">
                     <span className="levels__swatch" aria-hidden="true" /> {u.kind === 'replacement' ? P.cal.replacement : P.cal.group(LEVEL[u.groupLevel])}
                   </p>
                   <p className="t-meta">
                     {P.cal.week(u.week)} · {u.minutes} menit
                   </p>
+                  <p className="lane__tip">{tipOf(u)}</p>
                   <p className="lane__reason">{u.reason}</p>
                   {!approved && (
                     <SlotSelect
@@ -972,6 +1135,41 @@ function Kalender() {
                 </div>
               ))}
             </section>
+          )}
+          {selected ? (
+            <section className="side__card sel" style={groupStyle(selected.groupLevel)} aria-labelledby="sel-title">
+              <p className="sel__group">
+                <span className="levels__swatch" aria-hidden="true" />{' '}
+                {selected.kind === 'replacement' ? P.cal.replacement : P.cal.group(LEVEL[selected.groupLevel])}
+              </p>
+              <h2 className="sel__tip" id="sel-title">
+                {tipOf(selected)}
+              </h2>
+              <p className="t-meta">
+                {DAY_FULL[selected.day]} {dayMonth(selected.date)}, {t(selected.start)}–{t(selected.end)}
+              </p>
+              {selected.focus && <p className="t-meta">{P.cal.focus(focusLabel(selected.focus))}</p>}
+              {activityOf(selected.activityId) && (
+                <>
+                  <p className="sel__act">{activityOf(selected.activityId)!.title}</p>
+                  <ol className="sel__steps">
+                    {activityOf(selected.activityId)!.steps.map((x, k) => (
+                      <li key={k}>{x}</li>
+                    ))}
+                  </ol>
+                  <p className="t-meta">
+                    {P.cal.materials}: {activityOf(selected.activityId)!.materials}
+                  </p>
+                </>
+              )}
+              {selected.passageIds.length > 0 && <p className="t-meta">{P.cal.reading(selected.passageIds)}</p>}
+              {selected.kind === 'replacement' && <p className="t-meta">{selected.students.join(', ')}</p>}
+              <button type="button" className="btn btn--text" onClick={() => setSel(null)}>
+                {P.cal.closeDetail}
+              </button>
+            </section>
+          ) : (
+            <p className="t-meta side__hint">{P.cal.pickHint}</p>
           )}
           {approved && (
             <section className="side__card" aria-labelledby="progress-title">
@@ -1158,7 +1356,25 @@ function lanes(events: CalEvent[], phones: number): { e: CalEvent; lane: number 
 function describe(e: CalEvent | Unscheduled, group: PlanGroup | undefined): string {
   const name = P.cal.group(group?.name ?? LEVEL[e.groupLevel]);
   if (e.kind === 'replacement') return `${P.cal.replacement} · ${name} · ${e.students.join(', ')}`;
-  return [name, e.focus && `Kegiatan: ${e.focus}`, P.cal.reading(e.passageIds)].filter(Boolean).join(' · ');
+  return [name, e.focus && P.cal.focus(focusLabel(e.focus)), activityTitle(e.activityId), P.cal.reading(e.passageIds)].filter(Boolean).join(' · ');
+}
+
+/** The card's title: the teacher's tip, or the activity's name for plans saved before tips existed. */
+function tipOf(e: CalEvent | Unscheduled): string {
+  if (e.tip) return e.tip;
+  return e.kind === 'replacement' ? P.cal.replacement : activityTitle(e.activityId) || P.cal.group(LEVEL[e.groupLevel]);
+}
+
+const activityOf = (id: string | null) => ACTIVITIES.find((a) => a.id === id);
+
+/** A pattern's teacher-facing name. Plans saved before patterns existed carry free text here, shown as it is. */
+function focusLabel(focus: PatternId | string | null): string {
+  if (!focus) return '';
+  return PATTERN_LABEL[focus as PatternId] ?? focus;
+}
+
+function activityTitle(id: string | null): string {
+  return ACTIVITIES.find((a) => a.id === id)?.title ?? '';
 }
 
 // ───────────── 4. Laporan siklus ─────────────
@@ -1167,6 +1383,12 @@ function Laporan() {
   const pl = usePlanner();
   const report = pl.report;
   const num = (n: number | null) => (n === null ? P.report.pending : n.toLocaleString('id-ID'));
+  const speed = (c: ReportChild) => {
+    if (c.speedBefore === null && c.speedAfter === null) return P.report.pending;
+    const unit = c.unit ? ` ${UNIT[c.unit]}` : '';
+    if (c.unitChanged) return `${num(c.speedBefore)}${unit} → ${P.report.unitChanged}`;
+    return `${num(c.speedBefore)} → ${num(c.speedAfter)}${unit}`;
+  };
 
   return (
     <div className="rencana__body">
@@ -1208,13 +1430,32 @@ function Laporan() {
                 {P.report.sessions}: <strong>{P.cal.progress(g.sessions.done, g.sessions.planned)}</strong>
               </li>
             </ul>
+            {(g.patterns ?? []).length > 0 && (
+              <>
+                <h4 className="rpanel__sub">{P.report.patterns}</h4>
+                <ul className="counts">
+                  {g.patterns.map((p) => (
+                    <li key={p.id}>
+                      {p.label}:{' '}
+                      {p.children ? (
+                        <>
+                          <strong>{P.report.patternLine(p.before, p.after)}</strong> {P.report.patternOf(p.children)}
+                        </>
+                      ) : (
+                        P.report.noneReplaced
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
             <table className="table">
               <caption className="visually-hidden">{P.cal.group(g.name)}</caption>
               <thead>
                 <tr>
                   <th scope="col">Kode</th>
                   <th scope="col">Tingkat</th>
-                  <th scope="col">{P.report.wcpm}</th>
+                  <th scope="col">{P.report.speed}</th>
                 </tr>
               </thead>
               <tbody>
@@ -1224,9 +1465,7 @@ function Laporan() {
                     <td>
                       {LEVEL[c.before]} → {c.after ? LEVEL[c.after] : P.report.pending}
                     </td>
-                    <td>
-                      {num(c.wcpmBefore)} → {num(c.wcpmAfter)}
-                    </td>
+                    <td>{speed(c)}</td>
                   </tr>
                 ))}
               </tbody>

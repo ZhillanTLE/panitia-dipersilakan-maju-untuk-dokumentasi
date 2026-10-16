@@ -4,10 +4,12 @@ import { IconDownload, IconMic } from '../components/Icons';
 import { toast } from '../components/Toast';
 import { activitiesFor } from '../lib/activities';
 import { formatDate } from '../lib/format';
+import { groupPatternCounts, patternTakes } from '../lib/metrics';
+import { PATTERN_LABEL } from '../lib/patterns';
 import { nextToRead, stageOf, type Stage } from '../lib/progress';
 import { href } from '../lib/route';
 import { LEVEL_ORDER } from '../lib/rubric';
-import { addStudent, nextRef, removeStudent, renameStudent, resetAll, setConsent, useApp } from '../lib/store';
+import { addStudent, nextRef, removeStudent, renameStudent, resetAll, setConsent, takesOf, useApp } from '../lib/store';
 import { CONSENT, LEVEL, S } from '../strings';
 import type { ChildLevel, Consents, Student } from '../types';
 import './ClassView.css';
@@ -109,7 +111,7 @@ export function ClassView() {
             </ul>
           </div>
         </div>
-        {step && <Activities level={step} />}
+        {step && <Activities level={step} students={groups.get(step) ?? []} />}
       </section>
 
       <section className="kelas__section" aria-labelledby="students-title">
@@ -177,9 +179,10 @@ export function ClassView() {
   );
 }
 
-function Activities({ level }: { level: ChildLevel }) {
+function Activities({ level, students }: { level: ChildLevel; students: Student[] }) {
   return (
     <div className="acts-bank">
+      <GroupPatterns students={students} />
       <p className="acts-bank__title">{S.kelas.activitiesFor(LEVEL[level])}</p>
       <ul className="acts-bank__list">
         {activitiesFor(level).map((a) => (
@@ -196,6 +199,34 @@ function Activities({ level }: { level: ChildLevel }) {
           </li>
         ))}
       </ul>
+    </div>
+  );
+}
+
+/**
+ * How many children in the group hit each error pattern, from the readings behind their confirmed
+ * levels. Counts only: no child is listed, so nothing here can be sorted into a leaderboard.
+ */
+function GroupPatterns({ students }: { students: Student[] }) {
+  const app = useApp();
+  if (!students.length) return null;
+  const readings = students.map((s) => {
+    const session = app.sessions.find((x) => x.session_id === s.level?.session_id);
+    return session ? patternTakes(takesOf(session, app.takes), s.level?.value ?? null) : [];
+  });
+  const counts = groupPatternCounts(readings);
+  return (
+    <div className="acts-bank__patterns">
+      <p className="t-s7">{S.kelas.patterns}</p>
+      {counts.length ? (
+        <ul className="acts-bank__counts">
+          {counts.map((c) => (
+            <li key={c.id}>{S.kelas.patternCount(c.children, students.length, PATTERN_LABEL[c.id])}</li>
+          ))}
+        </ul>
+      ) : (
+        <p className="t-meta">{S.kelas.patternsNone}</p>
+      )}
     </div>
   );
 }

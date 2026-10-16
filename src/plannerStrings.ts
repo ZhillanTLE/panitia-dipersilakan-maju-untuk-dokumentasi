@@ -1,9 +1,18 @@
+import type { GroupFacts } from './lib/planner';
+
 // Teacher-facing copy for Rencana, the online planner. Plain Indonesian, counts never percentages.
 // Banned-word rules are enforced by scripts/scope_check.py, which reads this file.
+const num = (n: number) => n.toLocaleString('id-ID', { maximumFractionDigits: 1 });
+
 export const P = {
   title: 'Rencana',
   intro: 'Buat rencana latihan beberapa minggu dari tingkat yang sudah Anda konfirmasi, lalu pasang di jadwal kelas.',
   steps: { sinkron: 'Sinkron', pipeline: 'Proses', kalender: 'Kalender', laporan: 'Laporan siklus' },
+  locked: {
+    pipeline: 'Buat rencana di Sinkron dulu.',
+    kalender: 'Tersedia setelah proses penyusunan selesai.',
+    laporan: 'Tersedia setelah Anda menyetujui kalender.',
+  },
   mode: {
     label: 'Mode',
     mock: 'Uji coba (teks contoh, tanpa model)',
@@ -16,10 +25,11 @@ export const P = {
 
   sync: {
     title: 'Data yang akan dikirim',
-    note: 'Hanya kode murid, tingkat yang sudah Anda konfirmasi, dan ringkasan. Nama, suara, dan catatan tidak pernah dikirim.',
+    note: 'Kode murid, tingkat yang sudah Anda konfirmasi, dan angka dari bacaannya: ketepatan, kecepatan, jenis kesalahan, pola kesalahan dengan contoh kata, dan pemahaman. Nama, suara, dan catatan tidak pernah dikirim; rekaman contoh tetap di perangkat.',
     last: (when: string) => `Disiapkan ${when}`,
     groups: 'Kelompok menurut tingkat',
     excluded: (n: number) => `${n} murid belum dikonfirmasi dan tidak masuk rencana.`,
+    noReading: (n: number) => `${n} murid punya tingkat, tetapi bacaannya sudah tidak ada di perangkat ini, jadi tidak ada angka untuk dikirim. Baca ulang untuk memasukkan mereka.`,
     nobody: 'Belum ada murid dengan tingkat terkonfirmasi. Konfirmasi tingkat di Tinjau dulu.',
     demo: 'Termasuk data contoh. Rencana ini hanya untuk mencoba.',
     settings: 'Pengaturan siklus',
@@ -36,12 +46,19 @@ export const P = {
     day: 'Hari',
     run: 'Buat rencana',
     running: 'Menyusun rencana…',
+    useModel: 'Pakai model Gemini',
+    modelOn: 'Agen Peringkas Bukti dan Penyusun Sesi ditulis oleh Gemini. Data kelas dikirim ke Google tanpa nama atau suara. Setiap angka tetap diperiksa oleh kode.',
+    modelOff: 'Agen memakai aturan dari data, tanpa model. Cepat dan tidak mengirim apa pun ke Google.',
+    modelNoKey: 'Server belum punya kunci GEMINI_API_KEY, jadi model belum bisa dipakai.',
+    modelReplay: 'Mode rekaman: server memutar rekaman, model tidak dipanggil.',
     noSlots: 'Isi minimal satu jam literasi.',
   },
 
   pipeline: {
     title: 'Proses penyusunan',
-    waiting: 'Menunggu jawaban server. Waktu tiap tahap muncul setelah selesai.',
+    waiting: 'Setiap tahap baru ditampilkan setelah hasilnya matang dan diperiksa, satu per satu. Waktu di samping tiap tahap adalah waktu kerja server yang sebenarnya.',
+    waitingModel: 'Gemini menulis bukti dan menyusun sesi, biasanya beberapa belas detik. Setiap tahap baru ditampilkan setelah hasilnya matang dan diperiksa, satu per satu.',
+    empty: 'Belum ada proses untuk ditampilkan. Buat rencana dari halaman Sinkron, lalu tiap tahap muncul di sini dengan waktunya.',
     status: { menunggu: 'menunggu', berjalan: 'berjalan', selesai: 'selesai', gagal: 'gagal', cadangan: 'cadangan', dipakai: 'dipakai ulang' },
     stage: {
       intake: 'Periksa data',
@@ -66,12 +83,50 @@ export const P = {
       scheduler: 'Penjadwal',
     },
     levelsOnly: 'Tingkat hanya dari konfirmasi guru; agen tidak bisa mengubahnya.',
-    col: { n: '#', group: 'Kelompok', sessions: 'Sesi', minutes: 'Menit', replacement: 'Penempatan ulang', rule: 'Aturan', status: 'Status', week: 'Minggu', reason: 'Alasan' },
+    col: {
+      n: '#',
+      group: 'Kelompok',
+      children: 'Anak',
+      top: 'Pola terbanyak',
+      sessions: 'Sesi',
+      minutes: 'Menit',
+      replacement: 'Penempatan ulang',
+      rule: 'Aturan',
+      status: 'Status',
+      week: 'Minggu',
+      reason: 'Alasan',
+    },
+    topPattern: (label: string, children: number) => `${label}, ${children} anak`,
+    noPattern: 'Tanpa pola berulang',
+    factsLine: (g: GroupFacts) =>
+      [
+        `Nilai tengah ${num(g.accuracy.medianCorrect)} dari ${num(g.accuracy.medianAttempted)} ${g.unitName} benar`,
+        g.correctUnitsPerMinute ? `${num(g.correctUnitsPerMinute.median)} ${g.unitName} benar per menit` : '',
+        g.comprehension ? `pemahaman ${num(g.comprehension.medianCorrect)} dari ${num(g.comprehension.medianAsked)} pertanyaan` : '',
+      ]
+        .filter(Boolean)
+        .join(', '),
+    firstSession: (activity: string, focus: string) => [`Sesi pertama: ${activity || 'kegiatan'}`, focus && `fokus ${focus.toLowerCase()}`].filter(Boolean).join(', '),
+    checkedFoot: (checked: number, discarded: number) =>
+      `${checked} kalimat diperiksa oleh kode; setiap angka dicocokkan dengan data kelompoknya. ${discarded} dibuang.`,
+    repairs: (n: number) => `Agen diminta memperbaiki ${n} kali.`,
+    ruleBuilt: (groups: string) => `Kalimat untuk ${groups} disusun dengan aturan dari data, karena agen tidak memberi kalimat yang lolos.`,
+    discardedN: (n: number) => `${n} dibuang`,
+    ruleName: {
+      number_mismatch: 'Angka tidak cocok',
+      percent: 'Memakai persen',
+      child_code: 'Kode murid',
+      level_move: 'Pindah tingkat',
+      banned_word: 'Kata terlarang',
+      field: 'Kolom terlarang',
+      level: 'Tingkat dari agen',
+    },
     rules: {
+      claims: 'Setiap angka di bukti cocok dengan data, tanpa kata terlarang',
       library: 'Kegiatan ada di pustaka tingkatnya',
       passages: 'Bacaan dari paket tingkat yang sama',
+      focus: 'Fokus dari pola yang muncul, pola terbanyak lebih dulu',
       budget: 'Menit per minggu dalam batas',
-      words: 'Tanpa kata terlarang',
       replacement: 'Penempatan ulang di minggu terakhir',
     },
     pass: 'Lolos',
@@ -122,8 +177,12 @@ export const P = {
     list: 'Daftar sesi',
     group: (name: string) => `Kelompok ${name}`,
     replacement: 'Penempatan ulang',
-    dragHint: 'Seret sesi ke jam lain, atau pakai menu Pindahkan.',
-    noFit: 'Sesi tidak muat di jam itu.',
+    dragHint: 'Seret sesi ke jam mana pun pada hari sekolah, atau pakai menu Pindahkan. Jam literasi diberi warna sebagai saran.',
+    noFit: 'Sesi tidak muat di jam itu: bentrok dengan sesi kelompok yang sama atau ponsel sedang dipakai.',
+    closed: 'Hari itu libur, di luar siklus, atau bukan hari sekolah.',
+    pickHint: 'Ketuk satu sesi untuk melihat langkahnya. Seret sesi ke jam mana pun pada hari sekolah; jam literasi diberi warna.',
+    closeDetail: 'Tutup',
+    materials: 'Bahan',
     notLastWeek: 'Penempatan ulang harus di minggu terakhir.',
     done: 'Sudah dilakukan',
     progress: (done: number, planned: number) => `${done} dari ${planned} sesi`,
@@ -132,6 +191,7 @@ export const P = {
     replanFrom: 'Mulai dari tanggal',
     unscheduledReason: 'Alasan',
     reading: (ids: string[]) => (ids.length ? `Bacaan ${ids.join(', ')}` : ''),
+    focus: (label: string) => `Fokus: ${label.toLowerCase()}`,
   },
 
   report: {
@@ -143,7 +203,12 @@ export const P = {
     down: 'turun tingkat',
     notYet: 'belum ditempatkan ulang',
     sessions: 'Sesi latihan',
-    wcpm: 'Kata benar per menit, bacaan baru',
+    speed: 'Benar per menit, bacaan baru (satuan yang sama)',
+    unitChanged: 'satuan berbeda, tidak dibandingkan',
+    patterns: 'Pola yang dilatih',
+    patternLine: (before: number, after: number) => `${before} → ${after} anak`,
+    patternOf: (n: number) => `(dari ${n} anak yang sudah ditempatkan ulang)`,
+    noneReplaced: 'belum ada anak yang ditempatkan ulang',
     before: 'Sebelum',
     after: 'Sesudah',
     pending: 'belum ada',

@@ -7,20 +7,24 @@ from __future__ import annotations
 import datetime as dt
 
 from . import config, store
-from .calendar_slots import slots_for
 from .scheduler import _mins
-from .timeutil import day_name
+from .timeutil import day_name, to_hhmm, to_min, week_start
+
+
+def school_day(timetable: list[dict]) -> tuple[int, int]:
+    """The hours a session may be placed in: the school day, widened to cover every literacy period."""
+    a, b = (to_min(x) for x in config.SCHOOL_DAY)
+    return min([a] + [to_min(t["start"]) for t in timetable]), max([b] + [to_min(t["end"]) for t in timetable])
 
 
 def validate_events(events: list[dict], plan: dict, draft_events: list[dict]) -> list[str]:
     problems: list[str] = []
     known = {e["id"] for e in draft_events} | {s["id"] for g in plan["groups"] for s in g["sessions"]}
-    payload_like = {
-        "class": {"startDate": plan["startDate"], "holidays": plan["holidays"], "phones": plan["phones"]},
-        "timetable": plan["timetable"],
-    }
-    weeks = list(range(1, plan["cycleWeeks"] + 1))
-    slots = slots_for(payload_like, weeks)
+    start = dt.date.fromisoformat(plan["startDate"])
+    holidays = set(plan["holidays"])
+    days = set(config.SCHOOL_DAYS) | {t["day"] for t in plan["timetable"]}
+    day_from, day_to = school_day(plan["timetable"])
+    last = plan["cycleWeeks"]
     seen: set[str] = set()
     for e in events:
         if e.get("id") not in known:
@@ -39,9 +43,16 @@ def validate_events(events: list[dict], plan: dict, draft_events: list[dict]) ->
             problems.append(f"{e['id']}: durasi harus {e.get('minutes')} menit.")
         if day_name(date) != e.get("day"):
             problems.append(f"{e['id']}: hari tidak cocok dengan tanggal.")
-        if not any(s["date"] == e["date"] and s["start"] <= a and b <= s["end"] for s in slots):
-            problems.append(f"{e['id']}: di luar jam literasi atau pada hari libur.")
-        if e.get("kind") == "replacement" and not any(s["week"] == weeks[-1] and s["date"] == e["date"] for s in slots):
+        week = (date - week_start(start, 1)).days // 7 + 1
+        if date < start or not 1 <= week <= last:
+            problems.append(f"{e['id']}: di luar siklus.")
+        elif e.get("week") != week:
+            problems.append(f"{e['id']}: minggu tidak cocok dengan tanggal.")
+        if date.isoformat() in holidays or day_name(date) not in days:
+            problems.append(f"{e['id']}: pada hari libur atau bukan hari sekolah.")
+        if a < day_from or b > day_to:
+            problems.append(f"{e['id']}: di luar jam sekolah ({to_hhmm(day_from)}–{to_hhmm(day_to)}).")
+        if e.get("kind") == "replacement" and week != last:
             problems.append(f"{e['id']}: penempatan ulang harus di minggu terakhir.")
     # Phone count: at no moment may more sessions run than there are phones; a group never runs twice.
     phones = plan["phones"]
@@ -83,6 +94,8 @@ def approve(class_code: str, plan_id: str, events: list[dict]) -> dict:
     state["approved"] = {
         "plan": draft["plan"],
         "calendar": {"events": events, "unscheduled": draft["calendar"]["unscheduled"]},
+        "trace": draft.get("trace", []),
+        "mode": draft.get("mode"),
         "approvedAt": approved_at,
         "queuedForPhone": True,
         "syncedToPhoneAt": None,

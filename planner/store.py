@@ -38,7 +38,15 @@ def save(class_code: str, state: dict) -> None:
 
 def save_draft(class_code: str, result: dict, payload: dict) -> None:
     state = load(class_code)
-    state["draft"] = {"plan": result["plan"], "calendar": result["calendar"], "savedAt": _now(), "levelsPayload": _levels_only(payload)}
+    state["draft"] = {
+        "plan": result["plan"],
+        "calendar": result["calendar"],
+        # The trace is kept so the Proses screen can show the last run after a reload.
+        "trace": result.get("trace", []),
+        "mode": result.get("mode"),
+        "savedAt": _now(),
+        "levelsPayload": _levels_only(payload),
+    }
     save(class_code, state)
 
 

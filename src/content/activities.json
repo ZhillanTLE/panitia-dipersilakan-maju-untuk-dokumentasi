@@ -1,14 +1,18 @@
 {
   "bank": "aktivitas-id",
-  "version": 1,
+  "version": 2,
   "status": "draft",
-  "note": "Draft activities written for the prototype. Not yet reviewed by an educator.",
+  "note": "Draft activities written for the prototype. Not yet reviewed by an educator. Each activity lists the error patterns it practises (content/patterns.json); an empty list means general practice. `tip` is the one-line instruction shown on the calendar; {contoh} is filled with example words from the group's own readings for the session's focus.",
   "activities": [
     {
       "id": "ACT-PEM-01",
       "level": "pemula",
       "title": "Kartu huruf bersuara",
+      "tip": "Angkat kartu huruf satu per satu, bunyikan bersama, lalu sebut benda yang berawal bunyi itu (latih: {contoh}).",
       "minutes": 10,
+      "patterns": [
+        "letter_confusion"
+      ],
       "materials": "Kartu huruf a, i, u, m, s",
       "steps": [
         "Angkat satu kartu, ucapkan bunyinya, lalu murid menirukan bersama.",
@@ -20,7 +24,11 @@
       "id": "ACT-PEM-02",
       "level": "pemula",
       "title": "Huruf di sekitar kelas",
+      "tip": "Tulis satu huruf besar di papan; anak mencari dan membunyikan huruf yang sama di kelas (mulai dari: {contoh}).",
       "minutes": 10,
+      "patterns": [
+        "letter_confusion"
+      ],
       "materials": "Poster, papan tulis, buku murid",
       "steps": [
         "Tulis satu huruf besar di papan.",
@@ -32,7 +40,9 @@
       "id": "ACT-HUR-01",
       "level": "huruf",
       "title": "Gabung bunyi",
+      "tip": "Geser kartu konsonan ke kartu vokal sambil membaca b… a… ba, lalu ganti vokalnya (pakai: {contoh}).",
       "minutes": 15,
+      "patterns": [],
       "materials": "Kartu konsonan dan kartu vokal",
       "steps": [
         "Letakkan kartu b di kiri dan kartu a di kanan.",
@@ -44,7 +54,11 @@
       "id": "ACT-HUR-02",
       "level": "huruf",
       "title": "Tebak bunyi awal",
+      "tip": "Ucapkan satu kata, anak mengangkat kartu huruf awalnya, lalu cari kata lain dengan huruf yang sama (mulai dari: {contoh}).",
       "minutes": 10,
+      "patterns": [
+        "letter_confusion"
+      ],
       "materials": "Kartu huruf",
       "steps": [
         "Ucapkan satu kata, misalnya meja.",
@@ -53,10 +67,28 @@
       ]
     },
     {
+      "id": "ACT-HUR-03",
+      "level": "huruf",
+      "title": "Pasangan huruf mirip",
+      "tip": "Letakkan pasangan huruf mirip berdampingan, bunyikan satu, anak menunjuk yang tepat (yang tertukar: {contoh}).",
+      "minutes": 10,
+      "patterns": [
+        "letter_confusion"
+      ],
+      "materials": "Kartu huruf b, d, p, q, m, n",
+      "steps": [
+        "Letakkan dua kartu yang mirip berdampingan, misalnya b dan d.",
+        "Bunyikan satu huruf; murid menunjuk kartu yang tepat.",
+        "Murid menelusuri bentuk huruf itu dengan jari sambil membunyikannya."
+      ]
+    },
+    {
       "id": "ACT-SUK-01",
       "level": "suku_kata",
       "title": "Rantai suku kata",
+      "tip": "Pasangan anak menyusun dua kartu suku kata menjadi kata, lalu membacanya bersama (mulai dari: {contoh}).",
       "minutes": 15,
+      "patterns": [],
       "materials": "Kartu suku kata",
       "steps": [
         "Bagikan dua kartu suku kata kepada setiap pasangan.",
@@ -68,7 +100,11 @@
       "id": "ACT-SUK-02",
       "level": "suku_kata",
       "title": "Tepuk suku kata",
+      "tip": "Tepuk satu kali untuk setiap suku kata, lalu baca tulisannya per suku kata (kata: {contoh}).",
       "minutes": 10,
+      "patterns": [
+        "long_word"
+      ],
       "materials": "Daftar kata dua suku",
       "steps": [
         "Ucapkan kata, misalnya sapi.",
@@ -77,10 +113,60 @@
       ]
     },
     {
+      "id": "ACT-SUK-03",
+      "level": "suku_kata",
+      "title": "Suku kata tertutup",
+      "tip": "Baca suku kata terbuka, lalu tambah satu huruf di belakangnya: ba menjadi ban (latih: {contoh}).",
+      "minutes": 10,
+      "patterns": [
+        "closed_syllable"
+      ],
+      "materials": "Kartu suku kata terbuka dan kartu huruf konsonan",
+      "steps": [
+        "Baca satu suku kata terbuka bersama, misalnya ba.",
+        "Tempelkan satu huruf di belakangnya: ba + n = ban.",
+        "Murid membaca keduanya bergantian: ba, ban. Ulangi dengan sa, sar dan tu, tum."
+      ]
+    },
+    {
+      "id": "ACT-SUK-04",
+      "level": "suku_kata",
+      "title": "Bunyi ng dan ny",
+      "tip": "Lingkari ng atau ny, bunyikan sebagai satu bunyi, lalu baca suku katanya (latih: {contoh}).",
+      "minutes": 10,
+      "patterns": [
+        "digraph_cluster"
+      ],
+      "materials": "Kartu suku kata nga, ngi, nya, nyu",
+      "steps": [
+        "Tunjukkan kartu nga dan bunyikan bersama.",
+        "Jelaskan bahwa n dan g dibaca menjadi satu bunyi.",
+        "Murid membaca kartu ng dan ny bergiliran, lalu mencari kata yang memakainya, misalnya bunga."
+      ]
+    },
+    {
+      "id": "ACT-SUK-05",
+      "level": "suku_kata",
+      "title": "Suku kata mirip",
+      "tip": "Letakkan dua suku kata mirip berdampingan, bunyikan satu, anak menunjuk yang tepat (yang tertukar: {contoh}).",
+      "minutes": 10,
+      "patterns": [
+        "letter_confusion"
+      ],
+      "materials": "Kartu suku kata ba, da, pa, ma, na",
+      "steps": [
+        "Letakkan dua kartu yang mirip berdampingan, misalnya ba dan da.",
+        "Bunyikan salah satunya; murid menunjuk kartu yang tepat.",
+        "Murid membaca kedua kartu itu bergantian dengan pelan."
+      ]
+    },
+    {
       "id": "ACT-KAT-01",
       "level": "kata",
       "title": "Kata jadi kalimat",
+      "tip": "Anak membaca satu kata, teman menambah satu kata, sampai menjadi kalimat pendek (mulai dari: {contoh}).",
       "minutes": 15,
+      "patterns": [],
       "materials": "Kartu kata",
       "steps": [
         "Murid membaca satu kata, misalnya bola.",
@@ -92,7 +178,9 @@
       "id": "ACT-KAT-02",
       "level": "kata",
       "title": "Bingo kata",
+      "tip": "Main bingo kata dari kartu bacaan; yang mendapat satu baris membacakan ketiga katanya (selipkan: {contoh}).",
       "minutes": 15,
+      "patterns": [],
       "materials": "Lembar bingo 3 × 3 berisi kata dari kartu bacaan",
       "steps": [
         "Bacakan satu kata dengan jelas.",
@@ -101,10 +189,44 @@
       ]
     },
     {
+      "id": "ACT-KAT-03",
+      "level": "kata",
+      "title": "Pilah kata tertutup",
+      "tip": "Tepuk suku kata setiap kata, lalu tunjuk suku yang berakhir huruf mati (latih: {contoh}).",
+      "minutes": 10,
+      "patterns": [
+        "closed_syllable"
+      ],
+      "materials": "Kartu kata dari bacaan, misalnya lampu, domba, gurun",
+      "steps": [
+        "Baca satu kartu kata bersama dan tepuk suku katanya: lam-pu.",
+        "Murid menunjuk suku kata yang berakhir dengan huruf mati.",
+        "Murid memilah kartu menjadi dua tumpukan, lalu membaca satu tumpukan bersama."
+      ]
+    },
+    {
+      "id": "ACT-KAT-04",
+      "level": "kata",
+      "title": "Kata dengan ng dan ny",
+      "tip": "Lingkari ng atau ny di dalam kata, bunyikan bagian itu, lalu seluruh katanya (latih: {contoh}).",
+      "minutes": 10,
+      "patterns": [
+        "digraph_cluster"
+      ],
+      "materials": "Kartu kata, misalnya bintang, bunga, nyanyi",
+      "steps": [
+        "Tunjukkan satu kata dan lingkari ng atau ny di dalamnya.",
+        "Murid membunyikan bagian itu, lalu seluruh kata.",
+        "Murid mencari satu kata lain dengan ng atau ny di bacaannya."
+      ]
+    },
+    {
       "id": "ACT-KAL-01",
       "level": "kalimat",
       "title": "Baca bergantian",
+      "tip": "Berpasangan, bergiliran membaca satu kalimat sambil menunjuk setiap kata (perhatikan: {contoh}).",
       "minutes": 15,
+      "patterns": [],
       "materials": "Satu kartu kalimat untuk dua murid",
       "steps": [
         "Murid duduk berpasangan dengan satu kartu.",
@@ -116,7 +238,9 @@
       "id": "ACT-KAL-02",
       "level": "kalimat",
       "title": "Kalimat acak",
+      "tip": "Susun potongan kata yang diacak menjadi kalimat, lalu baca keras-keras (selipkan: {contoh}).",
       "minutes": 15,
+      "patterns": [],
       "materials": "Potongan kata dari satu kalimat",
       "steps": [
         "Berikan potongan kata yang diacak, misalnya: pasar / ibu / ke / pergi.",
@@ -125,10 +249,45 @@
       ]
     },
     {
+      "id": "ACT-KAL-03",
+      "level": "kalimat",
+      "title": "Pecah kata panjang",
+      "tip": "Pilih kata panjang di kalimat, tepuk dan baca per suku kata, lalu baca ulang kalimatnya (latih: {contoh}).",
+      "minutes": 10,
+      "patterns": [
+        "long_word",
+        "closed_syllable"
+      ],
+      "materials": "Kartu kalimat",
+      "steps": [
+        "Pilih satu kata panjang dari kalimat, misalnya bersinar.",
+        "Murid menepuk dan membaca per suku kata: ber-si-nar.",
+        "Murid membaca ulang seluruh kalimat dengan kata itu."
+      ]
+    },
+    {
+      "id": "ACT-KAL-04",
+      "level": "kalimat",
+      "title": "Kata dasar dan imbuhan",
+      "tip": "Tutup awalan dengan jari, baca kata dasarnya, lalu buka dan baca seluruh kata (latih: {contoh}).",
+      "minutes": 10,
+      "patterns": [
+        "affixed_word"
+      ],
+      "materials": "Kartu kalimat, pensil",
+      "steps": [
+        "Pilih satu kata berimbuhan, misalnya membaca.",
+        "Tutup awalannya dengan jari dan baca kata dasarnya: baca.",
+        "Buka lagi dan baca seluruh kata, lalu seluruh kalimat."
+      ]
+    },
+    {
       "id": "ACT-PAR-01",
       "level": "paragraf",
       "title": "Baca lalu ceritakan",
+      "tip": "Baca paragraf dalam hati lalu keras-keras, kemudian ceritakan kembali dengan kata sendiri (perhatikan: {contoh}).",
       "minutes": 20,
+      "patterns": [],
       "materials": "Paragraf pendek",
       "steps": [
         "Murid membaca paragraf dalam hati, lalu keras-keras.",
@@ -140,12 +299,47 @@
       "id": "ACT-PAR-02",
       "level": "paragraf",
       "title": "Apa, siapa, di mana",
+      "tip": "Anak mengambil kartu tanya apa, siapa, atau di mana, lalu menunjuk kalimat jawabannya di bacaan.",
       "minutes": 15,
+      "patterns": [],
       "materials": "Paragraf pendek dan tiga kartu tanya",
       "steps": [
         "Murid membaca paragraf bersama kelompoknya.",
         "Setiap murid mengambil satu kartu tanya: apa, siapa, atau di mana.",
         "Murid menjawab dengan menunjuk kalimat yang tepat di bacaan."
+      ]
+    },
+    {
+      "id": "ACT-PAR-03",
+      "level": "paragraf",
+      "title": "Berburu kata berimbuhan",
+      "tip": "Garis bawahi kata berawalan me- atau ber-, baca katanya lalu kata dasarnya (latih: {contoh}).",
+      "minutes": 15,
+      "patterns": [
+        "affixed_word"
+      ],
+      "materials": "Bacaan paragraf, pensil",
+      "steps": [
+        "Murid membaca paragraf bersama kelompoknya.",
+        "Murid menggarisbawahi kata yang berawalan me- atau ber- atau berakhiran -kan atau -an.",
+        "Setiap murid membaca satu kata itu, lalu kata dasarnya."
+      ]
+    },
+    {
+      "id": "ACT-PAR-04",
+      "level": "paragraf",
+      "title": "Kata panjang di paragraf",
+      "tip": "Cari kata dengan tiga suku kata atau lebih, tepuk, lalu baca ulang kalimatnya (latih: {contoh}).",
+      "minutes": 10,
+      "patterns": [
+        "long_word",
+        "closed_syllable"
+      ],
+      "materials": "Bacaan paragraf",
+      "steps": [
+        "Guru membacakan satu kalimat dari paragraf.",
+        "Murid mencari kata dengan tiga suku kata atau lebih dan menepuknya.",
+        "Murid membaca ulang kalimat itu keras-keras."
       ]
     }
   ]

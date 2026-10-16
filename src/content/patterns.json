@@ -1,0 +1,72 @@
+{
+  "bank": "pola-id",
+  "version": 1,
+  "status": "draft",
+  "note": "Fixed rules that sort a misread word by its shape. They describe what was read, never why. Shared by the phone (src/lib/patterns.ts) and the planner (planner/patterns.py); src/lib/patterns.cases.json holds the cases both must agree on. Draft, not yet reviewed by an educator.",
+  "patterns": [
+    { "id": "letter_confusion", "label": "Huruf mirip tertukar" },
+    { "id": "closed_syllable", "label": "Suku kata tertutup" },
+    { "id": "digraph_cluster", "label": "ng, ny dan gugus konsonan" },
+    { "id": "long_word", "label": "Kata panjang" },
+    { "id": "affixed_word", "label": "Kata berimbuhan" }
+  ],
+  "vowels": "aiueo",
+  "confusable": [
+    ["b", "d"],
+    ["p", "q"],
+    ["m", "n"],
+    ["b", "p"],
+    ["d", "t"],
+    ["g", "k"],
+    ["u", "n"],
+    ["f", "v"]
+  ],
+  "letterNames": {
+    "a": "a",
+    "be": "b",
+    "ce": "c",
+    "de": "d",
+    "e": "e",
+    "ef": "f",
+    "ge": "g",
+    "ha": "h",
+    "i": "i",
+    "je": "j",
+    "ka": "k",
+    "el": "l",
+    "em": "m",
+    "en": "n",
+    "o": "o",
+    "pe": "p",
+    "ki": "q",
+    "er": "r",
+    "es": "s",
+    "te": "t",
+    "u": "u",
+    "fe": "v",
+    "ve": "v",
+    "we": "w",
+    "eks": "x",
+    "ye": "y",
+    "zet": "z"
+  },
+  "digraphs": ["ng", "ny", "sy", "kh"],
+  "clusters": ["bl", "br", "dr", "fl", "fr", "gl", "gr", "kl", "kr", "pl", "pr", "sk", "sl", "sp", "st", "sw", "tr"],
+  "longWordSyllables": 3,
+  "prefixes": [
+    { "affix": "meng", "minStem": 4 },
+    { "affix": "meny", "minStem": 4 },
+    { "affix": "mem", "minStem": 4 },
+    { "affix": "men", "minStem": 4 },
+    { "affix": "me", "minStem": 4 },
+    { "affix": "ber", "minStem": 4 },
+    { "affix": "ter", "minStem": 4 },
+    { "affix": "per", "minStem": 4 }
+  ],
+  "suffixes": [
+    { "affix": "kan", "minStem": 4 },
+    { "affix": "nya", "minStem": 3 },
+    { "affix": "an", "minStem": 5 }
+  ],
+  "notAffixed": ["beruang", "halaman", "jembatan", "melati", "merdeka", "mereka", "pangeran", "perempuan", "pertama", "terbang", "terompet"]
+}

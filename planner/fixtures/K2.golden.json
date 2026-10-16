@@ -7,8 +7,8 @@
   {
    "stage": "intake",
    "status": "done",
-   "startedAt": "2026-10-16T10:27:39.408+00:00",
-   "ms": 1,
+   "startedAt": "2026-10-16T11:40:04.836+00:00",
+   "ms": 3,
    "summary": "6 kelompok, 14 anak",
    "groups": [
     {
@@ -35,53 +35,390 @@
      "level": "paragraf",
      "size": 2
     }
+   ],
+   "facts": [
+    {
+     "level": "pemula",
+     "name": "Pemula",
+     "size": 1,
+     "unit": "huruf",
+     "unitName": "huruf",
+     "accuracy": {
+      "medianCorrect": 6,
+      "medianAttempted": 10
+     },
+     "correctUnitsPerMinute": {
+      "median": 9,
+      "children": 1
+     },
+     "practice": {
+      "medianSessions": 0,
+      "medianChange": null,
+      "children": 0
+     },
+     "comprehension": null,
+     "patterns": [
+      {
+       "id": "letter_confusion",
+       "label": "Huruf mirip tertukar",
+       "children": 1,
+       "count": 3,
+       "examples": [
+        "b",
+        "m",
+        "k"
+       ]
+      }
+     ],
+     "topReadBackWords": [],
+     "lastCycle": {
+      "planned": 0,
+      "done": 0
+     }
+    },
+    {
+     "level": "huruf",
+     "name": "Huruf",
+     "size": 3,
+     "unit": "huruf",
+     "unitName": "huruf",
+     "accuracy": {
+      "medianCorrect": 8,
+      "medianAttempted": 10
+     },
+     "correctUnitsPerMinute": {
+      "median": 28,
+      "children": 3
+     },
+     "practice": {
+      "medianSessions": 4,
+      "medianChange": 1,
+      "children": 3
+     },
+     "comprehension": null,
+     "patterns": [
+      {
+       "id": "letter_confusion",
+       "label": "Huruf mirip tertukar",
+       "children": 3,
+       "count": 4,
+       "examples": [
+        "b",
+        "m",
+        "u"
+       ]
+      }
+     ],
+     "topReadBackWords": [
+      "ba",
+      "bu"
+     ],
+     "lastCycle": {
+      "planned": 0,
+      "done": 0
+     }
+    },
+    {
+     "level": "suku_kata",
+     "name": "Suku Kata",
+     "size": 3,
+     "unit": "suku_kata",
+     "unitName": "suku kata",
+     "accuracy": {
+      "medianCorrect": 8,
+      "medianAttempted": 10
+     },
+     "correctUnitsPerMinute": {
+      "median": 13,
+      "children": 3
+     },
+     "practice": {
+      "medianSessions": 3,
+      "medianChange": 7,
+      "children": 3
+     },
+     "comprehension": null,
+     "patterns": [
+      {
+       "id": "letter_confusion",
+       "label": "Huruf mirip tertukar",
+       "children": 2,
+       "count": 3,
+       "examples": [
+        "ba",
+        "pa"
+       ]
+      }
+     ],
+     "topReadBackWords": [],
+     "lastCycle": {
+      "planned": 0,
+      "done": 0
+     }
+    },
+    {
+     "level": "kata",
+     "name": "Kata",
+     "size": 3,
+     "unit": "kata",
+     "unitName": "kata",
+     "accuracy": {
+      "medianCorrect": 8,
+      "medianAttempted": 10
+     },
+     "correctUnitsPerMinute": {
+      "median": 27,
+      "children": 3
+     },
+     "practice": {
+      "medianSessions": 5,
+      "medianChange": 0,
+      "children": 3
+     },
+     "comprehension": null,
+     "patterns": [
+      {
+       "id": "closed_syllable",
+       "label": "Suku kata tertutup",
+       "children": 3,
+       "count": 7,
+       "examples": [
+        "bintang",
+        "lampu",
+        "gurun"
+       ]
+      },
+      {
+       "id": "letter_confusion",
+       "label": "Huruf mirip tertukar",
+       "children": 1,
+       "count": 1,
+       "examples": [
+        "rubah"
+       ]
+      },
+      {
+       "id": "digraph_cluster",
+       "label": "ng, ny dan gugus konsonan",
+       "children": 1,
+       "count": 1,
+       "examples": [
+        "bintang"
+       ]
+      }
+     ],
+     "topReadBackWords": [
+      "buku",
+      "meja",
+      "rumah"
+     ],
+     "lastCycle": {
+      "planned": 0,
+      "done": 0
+     }
+    },
+    {
+     "level": "kalimat",
+     "name": "Kalimat",
+     "size": 2,
+     "unit": "kata",
+     "unitName": "kata",
+     "accuracy": {
+      "medianCorrect": 19,
+      "medianAttempted": 22
+     },
+     "correctUnitsPerMinute": {
+      "median": 12,
+      "children": 2
+     },
+     "practice": {
+      "medianSessions": 3.5,
+      "medianChange": 5,
+      "children": 2
+     },
+     "comprehension": null,
+     "patterns": [
+      {
+       "id": "closed_syllable",
+       "label": "Suku kata tertutup",
+       "children": 2,
+       "count": 6,
+       "examples": [
+        "bersinar",
+        "mencari",
+        "pohon"
+       ]
+      },
+      {
+       "id": "long_word",
+       "label": "Kata panjang",
+       "children": 2,
+       "count": 4,
+       "examples": [
+        "bersinar",
+        "mencari",
+        "sekuntum"
+       ]
+      },
+      {
+       "id": "affixed_word",
+       "label": "Kata berimbuhan",
+       "children": 2,
+       "count": 3,
+       "examples": [
+        "bersinar",
+        "mencari"
+       ]
+      },
+      {
+       "id": "digraph_cluster",
+       "label": "ng, ny dan gugus konsonan",
+       "children": 1,
+       "count": 1,
+       "examples": [
+        "langit"
+       ]
+      }
+     ],
+     "topReadBackWords": [
+      "ibu"
+     ],
+     "lastCycle": {
+      "planned": 0,
+      "done": 0
+     }
+    },
+    {
+     "level": "paragraf",
+     "name": "Paragraf",
+     "size": 2,
+     "unit": "kata",
+     "unitName": "kata",
+     "accuracy": {
+      "medianCorrect": 74,
+      "medianAttempted": 78
+     },
+     "correctUnitsPerMinute": {
+      "median": 33,
+      "children": 2
+     },
+     "practice": {
+      "medianSessions": 6,
+      "medianChange": 7.5,
+      "children": 2
+     },
+     "comprehension": {
+      "medianCorrect": 2.5,
+      "medianAsked": 3,
+      "children": 2
+     },
+     "patterns": [
+      {
+       "id": "closed_syllable",
+       "label": "Suku kata tertutup",
+       "children": 2,
+       "count": 8,
+       "examples": [
+        "membersihkan",
+        "menyiram",
+        "sekuntum"
+       ]
+      },
+      {
+       "id": "long_word",
+       "label": "Kata panjang",
+       "children": 2,
+       "count": 6,
+       "examples": [
+        "membersihkan",
+        "menyiram",
+        "sekuntum"
+       ]
+      },
+      {
+       "id": "affixed_word",
+       "label": "Kata berimbuhan",
+       "children": 2,
+       "count": 5,
+       "examples": [
+        "membersihkan",
+        "menyiram",
+        "berjalan"
+       ]
+      },
+      {
+       "id": "digraph_cluster",
+       "label": "ng, ny dan gugus konsonan",
+       "children": 2,
+       "count": 4,
+       "examples": [
+        "menyiram",
+        "gunung",
+        "sangat"
+       ]
+      }
+     ],
+     "topReadBackWords": [
+      "bintang",
+      "rubah",
+      "mawar"
+     ],
+     "lastCycle": {
+      "planned": 0,
+      "done": 0
+     }
+    }
    ]
   },
   {
    "stage": "evidence",
    "status": "done",
-   "startedAt": "2026-10-16T10:27:39.410+00:00",
-   "ms": 3,
-   "summary": "16 baris bukti",
+   "startedAt": "2026-10-16T11:40:04.839+00:00",
+   "ms": 6,
+   "summary": "17 baris bukti, 0 dibuang",
    "lines": {
     "pemula": [
-     "Kelompok Pemula: 1 anak.",
-     "Belum ada sesi latihan yang tercatat untuk kelompok ini."
+     "Kelompok Pemula: 1 anak, semuanya keliru pada pola huruf mirip tertukar (contoh: b, m, k).",
+     "Nilai tengah ketepatan: 6 dari 10 huruf benar, 9 huruf benar per menit."
     ],
     "huruf": [
-     "Kelompok Huruf: 3 anak, tengah 3 sesi latihan.",
-     "Kata benar per menit dari bacaan pertama ke ketiga naik 1 kata (3 anak).",
-     "Kata yang sering dibaca ulang: ba, bu."
+     "Kelompok Huruf: 3 anak, semuanya keliru pada pola huruf mirip tertukar (contoh: b, m, u).",
+     "Nilai tengah ketepatan: 8 dari 10 huruf benar, 28 huruf benar per menit.",
+     "Kecepatan baca saat latihan naik dari bacaan pertama ke bacaan ketiga (3 anak)."
     ],
     "suku_kata": [
-     "Kelompok Suku Kata: 3 anak, tengah 6 sesi latihan.",
-     "Kata benar per menit dari bacaan pertama ke ketiga naik 7 kata (3 anak)."
+     "Kelompok Suku Kata: 3 anak, 2 di antaranya keliru pada pola huruf mirip tertukar (contoh: ba, pa).",
+     "Nilai tengah ketepatan: 8 dari 10 suku kata benar, 13 suku kata benar per menit.",
+     "Kecepatan baca saat latihan naik dari bacaan pertama ke bacaan ketiga (3 anak)."
     ],
     "kata": [
-     "Kelompok Kata: 3 anak, tengah 4 sesi latihan.",
-     "Kata benar per menit dari bacaan pertama ke ketiga tetap (3 anak).",
-     "Kata yang sering dibaca ulang: buku, meja, rumah."
+     "Kelompok Kata: 3 anak, semuanya keliru pada pola suku kata tertutup (contoh: bintang, lampu, gurun).",
+     "Nilai tengah ketepatan: 8 dari 10 kata benar, 27 kata benar per menit.",
+     "Kecepatan baca saat latihan tetap dari bacaan pertama ke bacaan ketiga (3 anak)."
     ],
     "kalimat": [
-     "Kelompok Kalimat: 2 anak, tengah 5,5 sesi latihan.",
-     "Kata benar per menit dari bacaan pertama ke ketiga naik 5 kata (2 anak).",
-     "Kata yang sering dibaca ulang: ibu."
+     "Kelompok Kalimat: 2 anak, semuanya keliru pada pola suku kata tertutup (contoh: bersinar, mencari, pohon).",
+     "Nilai tengah ketepatan: 19 dari 22 kata benar, 12 kata benar per menit.",
+     "Kecepatan baca saat latihan naik dari bacaan pertama ke bacaan ketiga (2 anak)."
     ],
     "paragraf": [
-     "Kelompok Paragraf: 2 anak, tengah 6,5 sesi latihan.",
-     "Kata benar per menit dari bacaan pertama ke ketiga naik 7,5 kata (2 anak).",
-     "Kata yang sering dibaca ulang: bintang, rubah, mawar."
+     "Kelompok Paragraf: 2 anak, semuanya keliru pada pola suku kata tertutup (contoh: membersihkan, menyiram, sekuntum).",
+     "Nilai tengah ketepatan: 74 dari 78 kata benar, 33 kata benar per menit.",
+     "Pemahaman paragraf: nilai tengah 2,5 dari 3 pertanyaan dijawab benar (2 anak)."
     ]
    },
    "discarded": [],
-   "writtenBy": "mock"
+   "writtenBy": "aturan (mode uji coba)",
+   "checked": 17,
+   "repairs": 0,
+   "ruleBuilt": []
   },
   {
    "stage": "planner",
    "status": "done",
-   "startedAt": "2026-10-16T10:27:39.413+00:00",
-   "ms": 1,
-   "summary": "18 sesi untuk 6 kelompok",
+   "startedAt": "2026-10-16T11:40:04.845+00:00",
+   "ms": 4,
+   "summary": "24 sesi untuk 6 kelompok",
    "attempts": 1,
    "plannedBy": "mock (rencana dasar)",
    "discarded": []
@@ -89,19 +426,24 @@
   {
    "stage": "checker",
    "status": "done",
-   "startedAt": "2026-10-16T10:27:39.413+00:00",
-   "ms": 6,
-   "summary": "18 sesi lolos pemeriksaan",
+   "startedAt": "2026-10-16T11:40:04.849+00:00",
+   "ms": 0,
+   "summary": "24 sesi lolos pemeriksaan",
    "failures": [],
    "fallbackUsed": false,
-   "fallbackReason": null
+   "fallbackReason": null,
+   "evidence": {
+    "checked": 17,
+    "discarded": 0,
+    "reused": false
+   }
   },
   {
    "stage": "scheduler",
    "status": "done",
-   "startedAt": "2026-10-16T10:27:39.419+00:00",
-   "ms": 0,
-   "summary": "18 sesi terjadwal, 0 belum muat",
+   "startedAt": "2026-10-16T11:40:04.849+00:00",
+   "ms": 1,
+   "summary": "24 sesi terjadwal, 0 belum muat",
    "unscheduled": []
   }
  ],
@@ -122,9 +464,21 @@
     "students": [
      "K2-01"
     ],
+    "unit": "huruf",
+    "patterns": [
+     {
+      "id": "letter_confusion",
+      "label": "Huruf mirip tertukar",
+      "children": 1,
+      "count": 3
+     }
+    ],
+    "topPatterns": [
+     "letter_confusion"
+    ],
     "evidence": [
-     "Kelompok Pemula: 1 anak.",
-     "Belum ada sesi latihan yang tercatat untuk kelompok ini."
+     "Kelompok Pemula: 1 anak, semuanya keliru pada pola huruf mirip tertukar (contoh: b, m, k).",
+     "Nilai tengah ketepatan: 6 dari 10 huruf benar, 9 huruf benar per menit."
     ],
     "sessions": [
      {
@@ -134,7 +488,7 @@
       "activityId": "ACT-PEM-01",
       "passageIds": [],
       "minutes": 10,
-      "focus": "Kartu huruf bersuara"
+      "focus": "letter_confusion"
      },
      {
       "id": "pemula-w1-p2",
@@ -143,7 +497,7 @@
       "activityId": "ACT-PEM-02",
       "passageIds": [],
       "minutes": 10,
-      "focus": "Huruf di sekitar kelas"
+      "focus": "letter_confusion"
      },
      {
       "id": "pemula-w2-p3",
@@ -152,7 +506,7 @@
       "activityId": "ACT-PEM-01",
       "passageIds": [],
       "minutes": 10,
-      "focus": "Kartu huruf bersuara"
+      "focus": "letter_confusion"
      },
      {
       "id": "pemula-w2-r1",
@@ -161,7 +515,7 @@
       "activityId": null,
       "passageIds": [],
       "minutes": 10,
-      "focus": "Penempatan ulang",
+      "focus": null,
       "students": [
        "K2-01"
       ]
@@ -177,25 +531,26 @@
      "K2-03",
      "K2-14"
     ],
+    "unit": "huruf",
+    "patterns": [
+     {
+      "id": "letter_confusion",
+      "label": "Huruf mirip tertukar",
+      "children": 3,
+      "count": 4
+     }
+    ],
+    "topPatterns": [
+     "letter_confusion"
+    ],
     "evidence": [
-     "Kelompok Huruf: 3 anak, tengah 3 sesi latihan.",
-     "Kata benar per menit dari bacaan pertama ke ketiga naik 1 kata (3 anak).",
-     "Kata yang sering dibaca ulang: ba, bu."
+     "Kelompok Huruf: 3 anak, semuanya keliru pada pola huruf mirip tertukar (contoh: b, m, u).",
+     "Nilai tengah ketepatan: 8 dari 10 huruf benar, 28 huruf benar per menit.",
+     "Kecepatan baca saat latihan naik dari bacaan pertama ke bacaan ketiga (3 anak)."
     ],
     "sessions": [
      {
       "id": "huruf-w1-p1",
-      "week": 1,
-      "kind": "practice",
-      "activityId": "ACT-HUR-01",
-      "passageIds": [
-       "HUR-01"
-      ],
-      "minutes": 15,
-      "focus": "Gabung bunyi"
-     },
-     {
-      "id": "huruf-w1-p2",
       "week": 1,
       "kind": "practice",
       "activityId": "ACT-HUR-02",
@@ -203,7 +558,18 @@
        "HUR-01"
       ],
       "minutes": 10,
-      "focus": "Tebak bunyi awal"
+      "focus": "letter_confusion"
+     },
+     {
+      "id": "huruf-w1-p2",
+      "week": 1,
+      "kind": "practice",
+      "activityId": "ACT-HUR-03",
+      "passageIds": [
+       "HUR-01"
+      ],
+      "minutes": 10,
+      "focus": "letter_confusion"
      },
      {
       "id": "huruf-w2-p3",
@@ -214,7 +580,7 @@
        "HUR-01"
       ],
       "minutes": 10,
-      "focus": "Tebak bunyi awal"
+      "focus": "letter_confusion"
      },
      {
       "id": "huruf-w2-r1",
@@ -223,7 +589,7 @@
       "activityId": null,
       "passageIds": [],
       "minutes": 10,
-      "focus": "Penempatan ulang",
+      "focus": null,
       "students": [
        "K2-02",
        "K2-03",
@@ -241,34 +607,47 @@
      "K2-05",
      "K2-06"
     ],
+    "unit": "suku_kata",
+    "patterns": [
+     {
+      "id": "letter_confusion",
+      "label": "Huruf mirip tertukar",
+      "children": 2,
+      "count": 3
+     }
+    ],
+    "topPatterns": [
+     "letter_confusion"
+    ],
     "evidence": [
-     "Kelompok Suku Kata: 3 anak, tengah 6 sesi latihan.",
-     "Kata benar per menit dari bacaan pertama ke ketiga naik 7 kata (3 anak)."
+     "Kelompok Suku Kata: 3 anak, 2 di antaranya keliru pada pola huruf mirip tertukar (contoh: ba, pa).",
+     "Nilai tengah ketepatan: 8 dari 10 suku kata benar, 13 suku kata benar per menit.",
+     "Kecepatan baca saat latihan naik dari bacaan pertama ke bacaan ketiga (3 anak)."
     ],
     "sessions": [
      {
       "id": "suku_kata-w1-p1",
       "week": 1,
       "kind": "practice",
-      "activityId": "ACT-SUK-01",
+      "activityId": "ACT-SUK-05",
       "passageIds": [
        "SUK-01",
        "SUK-02"
       ],
-      "minutes": 15,
-      "focus": "Rantai suku kata"
+      "minutes": 10,
+      "focus": "letter_confusion"
      },
      {
       "id": "suku_kata-w1-p2",
       "week": 1,
       "kind": "practice",
-      "activityId": "ACT-SUK-02",
+      "activityId": "ACT-SUK-01",
       "passageIds": [
        "SUK-02",
        "SUK-01"
       ],
-      "minutes": 10,
-      "focus": "Tepuk suku kata"
+      "minutes": 15,
+      "focus": "letter_confusion"
      },
      {
       "id": "suku_kata-w2-p3",
@@ -280,7 +659,7 @@
        "SUK-02"
       ],
       "minutes": 10,
-      "focus": "Tepuk suku kata"
+      "focus": "letter_confusion"
      },
      {
       "id": "suku_kata-w2-r1",
@@ -289,7 +668,7 @@
       "activityId": null,
       "passageIds": [],
       "minutes": 10,
-      "focus": "Penempatan ulang",
+      "focus": null,
       "students": [
        "K2-04",
        "K2-05",
@@ -307,23 +686,71 @@
      "K2-08",
      "K2-09"
     ],
+    "unit": "kata",
+    "patterns": [
+     {
+      "id": "closed_syllable",
+      "label": "Suku kata tertutup",
+      "children": 3,
+      "count": 7
+     },
+     {
+      "id": "letter_confusion",
+      "label": "Huruf mirip tertukar",
+      "children": 1,
+      "count": 1
+     },
+     {
+      "id": "digraph_cluster",
+      "label": "ng, ny dan gugus konsonan",
+      "children": 1,
+      "count": 1
+     }
+    ],
+    "topPatterns": [
+     "closed_syllable"
+    ],
     "evidence": [
-     "Kelompok Kata: 3 anak, tengah 4 sesi latihan.",
-     "Kata benar per menit dari bacaan pertama ke ketiga tetap (3 anak).",
-     "Kata yang sering dibaca ulang: buku, meja, rumah."
+     "Kelompok Kata: 3 anak, semuanya keliru pada pola suku kata tertutup (contoh: bintang, lampu, gurun).",
+     "Nilai tengah ketepatan: 8 dari 10 kata benar, 27 kata benar per menit.",
+     "Kecepatan baca saat latihan tetap dari bacaan pertama ke bacaan ketiga (3 anak)."
     ],
     "sessions": [
      {
       "id": "kata-w1-p1",
       "week": 1,
       "kind": "practice",
-      "activityId": "ACT-KAT-01",
+      "activityId": "ACT-KAT-03",
       "passageIds": [
        "KAT-01",
        "KAT-02"
       ],
+      "minutes": 10,
+      "focus": "closed_syllable"
+     },
+     {
+      "id": "kata-w1-p2",
+      "week": 1,
+      "kind": "practice",
+      "activityId": "ACT-KAT-01",
+      "passageIds": [
+       "KAT-02",
+       "KAT-01"
+      ],
       "minutes": 15,
-      "focus": "Kata jadi kalimat"
+      "focus": "closed_syllable"
+     },
+     {
+      "id": "kata-w2-p3",
+      "week": 2,
+      "kind": "practice",
+      "activityId": "ACT-KAT-03",
+      "passageIds": [
+       "KAT-01",
+       "KAT-02"
+      ],
+      "minutes": 10,
+      "focus": "closed_syllable"
      },
      {
       "id": "kata-w2-r1",
@@ -332,7 +759,7 @@
       "activityId": null,
       "passageIds": [],
       "minutes": 10,
-      "focus": "Penempatan ulang",
+      "focus": null,
       "students": [
        "K2-07",
        "K2-08",
@@ -349,23 +776,77 @@
      "K2-10",
      "K2-11"
     ],
+    "unit": "kata",
+    "patterns": [
+     {
+      "id": "closed_syllable",
+      "label": "Suku kata tertutup",
+      "children": 2,
+      "count": 6
+     },
+     {
+      "id": "long_word",
+      "label": "Kata panjang",
+      "children": 2,
+      "count": 4
+     },
+     {
+      "id": "affixed_word",
+      "label": "Kata berimbuhan",
+      "children": 2,
+      "count": 3
+     },
+     {
+      "id": "digraph_cluster",
+      "label": "ng, ny dan gugus konsonan",
+      "children": 1,
+      "count": 1
+     }
+    ],
+    "topPatterns": [
+     "closed_syllable"
+    ],
     "evidence": [
-     "Kelompok Kalimat: 2 anak, tengah 5,5 sesi latihan.",
-     "Kata benar per menit dari bacaan pertama ke ketiga naik 5 kata (2 anak).",
-     "Kata yang sering dibaca ulang: ibu."
+     "Kelompok Kalimat: 2 anak, semuanya keliru pada pola suku kata tertutup (contoh: bersinar, mencari, pohon).",
+     "Nilai tengah ketepatan: 19 dari 22 kata benar, 12 kata benar per menit.",
+     "Kecepatan baca saat latihan naik dari bacaan pertama ke bacaan ketiga (2 anak)."
     ],
     "sessions": [
      {
       "id": "kalimat-w1-p1",
       "week": 1,
       "kind": "practice",
-      "activityId": "ACT-KAL-01",
+      "activityId": "ACT-KAL-03",
       "passageIds": [
        "KAL-01",
        "KAL-02"
       ],
+      "minutes": 10,
+      "focus": "closed_syllable"
+     },
+     {
+      "id": "kalimat-w1-p2",
+      "week": 1,
+      "kind": "practice",
+      "activityId": "ACT-KAL-01",
+      "passageIds": [
+       "KAL-02",
+       "KAL-01"
+      ],
       "minutes": 15,
-      "focus": "Baca bergantian"
+      "focus": "closed_syllable"
+     },
+     {
+      "id": "kalimat-w2-p3",
+      "week": 2,
+      "kind": "practice",
+      "activityId": "ACT-KAL-03",
+      "passageIds": [
+       "KAL-01",
+       "KAL-02"
+      ],
+      "minutes": 10,
+      "focus": "closed_syllable"
      },
      {
       "id": "kalimat-w2-r1",
@@ -374,7 +855,7 @@
       "activityId": null,
       "passageIds": [],
       "minutes": 10,
-      "focus": "Penempatan ulang",
+      "focus": null,
       "students": [
        "K2-10",
        "K2-11"
@@ -390,23 +871,77 @@
      "K2-12",
      "K2-13"
     ],
+    "unit": "kata",
+    "patterns": [
+     {
+      "id": "closed_syllable",
+      "label": "Suku kata tertutup",
+      "children": 2,
+      "count": 8
+     },
+     {
+      "id": "long_word",
+      "label": "Kata panjang",
+      "children": 2,
+      "count": 6
+     },
+     {
+      "id": "affixed_word",
+      "label": "Kata berimbuhan",
+      "children": 2,
+      "count": 5
+     },
+     {
+      "id": "digraph_cluster",
+      "label": "ng, ny dan gugus konsonan",
+      "children": 2,
+      "count": 4
+     }
+    ],
+    "topPatterns": [
+     "closed_syllable"
+    ],
     "evidence": [
-     "Kelompok Paragraf: 2 anak, tengah 6,5 sesi latihan.",
-     "Kata benar per menit dari bacaan pertama ke ketiga naik 7,5 kata (2 anak).",
-     "Kata yang sering dibaca ulang: bintang, rubah, mawar."
+     "Kelompok Paragraf: 2 anak, semuanya keliru pada pola suku kata tertutup (contoh: membersihkan, menyiram, sekuntum).",
+     "Nilai tengah ketepatan: 74 dari 78 kata benar, 33 kata benar per menit.",
+     "Pemahaman paragraf: nilai tengah 2,5 dari 3 pertanyaan dijawab benar (2 anak)."
     ],
     "sessions": [
      {
       "id": "paragraf-w1-p1",
       "week": 1,
       "kind": "practice",
-      "activityId": "ACT-PAR-01",
+      "activityId": "ACT-PAR-04",
       "passageIds": [
        "PAR-01",
        "PAR-02"
       ],
-      "minutes": 20,
-      "focus": "Baca lalu ceritakan"
+      "minutes": 10,
+      "focus": "closed_syllable"
+     },
+     {
+      "id": "paragraf-w1-p2",
+      "week": 1,
+      "kind": "practice",
+      "activityId": "ACT-PAR-04",
+      "passageIds": [
+       "PAR-02",
+       "PAR-01"
+      ],
+      "minutes": 10,
+      "focus": "closed_syllable"
+     },
+     {
+      "id": "paragraf-w2-p3",
+      "week": 2,
+      "kind": "practice",
+      "activityId": "ACT-PAR-04",
+      "passageIds": [
+       "PAR-01",
+       "PAR-02"
+      ],
+      "minutes": 10,
+      "focus": "closed_syllable"
      },
      {
       "id": "paragraf-w2-r1",
@@ -415,7 +950,7 @@
       "activityId": null,
       "passageIds": [],
       "minutes": 10,
-      "focus": "Penempatan ulang",
+      "focus": null,
       "students": [
        "K2-12",
        "K2-13"
@@ -440,20 +975,118 @@
    "K2-13": "paragraf",
    "K2-14": "huruf"
   },
-  "wcpmUnseenStart": {
-   "K2-02": 28,
-   "K2-03": 12,
-   "K2-04": 12,
-   "K2-05": 13,
-   "K2-06": 28,
-   "K2-07": 27,
-   "K2-08": 27,
-   "K2-09": 36,
-   "K2-10": 13,
-   "K2-11": 11,
-   "K2-12": 27,
-   "K2-13": 39,
-   "K2-14": 35
+  "speedAtStart": {
+   "K2-01": {
+    "value": 9,
+    "unit": "huruf"
+   },
+   "K2-02": {
+    "value": 28,
+    "unit": "huruf"
+   },
+   "K2-03": {
+    "value": 12,
+    "unit": "huruf"
+   },
+   "K2-04": {
+    "value": 12,
+    "unit": "suku_kata"
+   },
+   "K2-05": {
+    "value": 13,
+    "unit": "suku_kata"
+   },
+   "K2-06": {
+    "value": 28,
+    "unit": "suku_kata"
+   },
+   "K2-07": {
+    "value": 27,
+    "unit": "kata"
+   },
+   "K2-08": {
+    "value": 27,
+    "unit": "kata"
+   },
+   "K2-09": {
+    "value": 36,
+    "unit": "kata"
+   },
+   "K2-10": {
+    "value": 13,
+    "unit": "kata"
+   },
+   "K2-11": {
+    "value": 11,
+    "unit": "kata"
+   },
+   "K2-12": {
+    "value": 27,
+    "unit": "kata"
+   },
+   "K2-13": {
+    "value": 39,
+    "unit": "kata"
+   },
+   "K2-14": {
+    "value": 35,
+    "unit": "huruf"
+   }
+  },
+  "patternsAtStart": {
+   "K2-01": [
+    "letter_confusion"
+   ],
+   "K2-02": [
+    "letter_confusion"
+   ],
+   "K2-03": [
+    "letter_confusion"
+   ],
+   "K2-04": [
+    "letter_confusion"
+   ],
+   "K2-05": [
+    "letter_confusion"
+   ],
+   "K2-06": [],
+   "K2-07": [
+    "closed_syllable",
+    "digraph_cluster"
+   ],
+   "K2-08": [
+    "closed_syllable"
+   ],
+   "K2-09": [
+    "letter_confusion",
+    "closed_syllable"
+   ],
+   "K2-10": [
+    "closed_syllable",
+    "long_word",
+    "affixed_word"
+   ],
+   "K2-11": [
+    "closed_syllable",
+    "digraph_cluster",
+    "long_word",
+    "affixed_word"
+   ],
+   "K2-12": [
+    "closed_syllable",
+    "digraph_cluster",
+    "long_word",
+    "affixed_word"
+   ],
+   "K2-13": [
+    "closed_syllable",
+    "digraph_cluster",
+    "long_word",
+    "affixed_word"
+   ],
+   "K2-14": [
+    "letter_confusion"
+   ]
   },
   "phones": 1,
   "timetable": [
@@ -508,7 +1141,7 @@
     "lane": 0,
     "activityId": "ACT-PEM-01",
     "passageIds": [],
-    "focus": "Kartu huruf bersuara",
+    "focus": "letter_confusion",
     "students": []
    },
    {
@@ -520,34 +1153,14 @@
     "date": "2026-10-19",
     "day": "Mon",
     "start": "08:10",
-    "end": "08:25",
-    "minutes": 15,
+    "end": "08:20",
+    "minutes": 10,
     "lane": 0,
-    "activityId": "ACT-HUR-01",
+    "activityId": "ACT-HUR-02",
     "passageIds": [
      "HUR-01"
     ],
-    "focus": "Gabung bunyi",
-    "students": []
-   },
-   {
-    "id": "suku_kata-w1-p2",
-    "planSessionId": "suku_kata-w1-p2",
-    "groupLevel": "suku_kata",
-    "kind": "practice",
-    "week": 1,
-    "date": "2026-10-19",
-    "day": "Mon",
-    "start": "08:25",
-    "end": "08:35",
-    "minutes": 10,
-    "lane": 0,
-    "activityId": "ACT-SUK-02",
-    "passageIds": [
-     "SUK-02",
-     "SUK-01"
-    ],
-    "focus": "Tepuk suku kata",
+    "focus": "letter_confusion",
     "students": []
    },
    {
@@ -556,18 +1169,18 @@
     "groupLevel": "suku_kata",
     "kind": "practice",
     "week": 1,
-    "date": "2026-10-20",
-    "day": "Tue",
-    "start": "08:00",
-    "end": "08:15",
-    "minutes": 15,
+    "date": "2026-10-19",
+    "day": "Mon",
+    "start": "08:20",
+    "end": "08:30",
+    "minutes": 10,
     "lane": 0,
-    "activityId": "ACT-SUK-01",
+    "activityId": "ACT-SUK-05",
     "passageIds": [
      "SUK-01",
      "SUK-02"
     ],
-    "focus": "Rantai suku kata",
+    "focus": "letter_confusion",
     "students": []
    },
    {
@@ -578,16 +1191,16 @@
     "week": 1,
     "date": "2026-10-20",
     "day": "Tue",
-    "start": "08:15",
-    "end": "08:30",
-    "minutes": 15,
+    "start": "08:00",
+    "end": "08:10",
+    "minutes": 10,
     "lane": 0,
-    "activityId": "ACT-KAT-01",
+    "activityId": "ACT-KAT-03",
     "passageIds": [
      "KAT-01",
      "KAT-02"
     ],
-    "focus": "Kata jadi kalimat",
+    "focus": "closed_syllable",
     "students": []
    },
    {
@@ -596,18 +1209,18 @@
     "groupLevel": "kalimat",
     "kind": "practice",
     "week": 1,
-    "date": "2026-10-21",
-    "day": "Wed",
-    "start": "08:00",
-    "end": "08:15",
-    "minutes": 15,
+    "date": "2026-10-20",
+    "day": "Tue",
+    "start": "08:10",
+    "end": "08:20",
+    "minutes": 10,
     "lane": 0,
-    "activityId": "ACT-KAL-01",
+    "activityId": "ACT-KAL-03",
     "passageIds": [
      "KAL-01",
      "KAL-02"
     ],
-    "focus": "Baca bergantian",
+    "focus": "closed_syllable",
     "students": []
    },
    {
@@ -616,18 +1229,18 @@
     "groupLevel": "paragraf",
     "kind": "practice",
     "week": 1,
-    "date": "2026-10-21",
-    "day": "Wed",
-    "start": "08:15",
-    "end": "08:35",
-    "minutes": 20,
+    "date": "2026-10-20",
+    "day": "Tue",
+    "start": "08:20",
+    "end": "08:30",
+    "minutes": 10,
     "lane": 0,
-    "activityId": "ACT-PAR-01",
+    "activityId": "ACT-PAR-04",
     "passageIds": [
      "PAR-01",
      "PAR-02"
     ],
-    "focus": "Baca lalu ceritakan",
+    "focus": "closed_syllable",
     "students": []
    },
    {
@@ -636,15 +1249,15 @@
     "groupLevel": "pemula",
     "kind": "practice",
     "week": 1,
-    "date": "2026-10-22",
-    "day": "Thu",
+    "date": "2026-10-21",
+    "day": "Wed",
     "start": "08:00",
     "end": "08:10",
     "minutes": 10,
     "lane": 0,
     "activityId": "ACT-PEM-02",
     "passageIds": [],
-    "focus": "Huruf di sekitar kelas",
+    "focus": "letter_confusion",
     "students": []
    },
    {
@@ -653,17 +1266,97 @@
     "groupLevel": "huruf",
     "kind": "practice",
     "week": 1,
-    "date": "2026-10-22",
-    "day": "Thu",
+    "date": "2026-10-21",
+    "day": "Wed",
     "start": "08:10",
     "end": "08:20",
     "minutes": 10,
     "lane": 0,
-    "activityId": "ACT-HUR-02",
+    "activityId": "ACT-HUR-03",
     "passageIds": [
      "HUR-01"
     ],
-    "focus": "Tebak bunyi awal",
+    "focus": "letter_confusion",
+    "students": []
+   },
+   {
+    "id": "suku_kata-w1-p2",
+    "planSessionId": "suku_kata-w1-p2",
+    "groupLevel": "suku_kata",
+    "kind": "practice",
+    "week": 1,
+    "date": "2026-10-21",
+    "day": "Wed",
+    "start": "08:20",
+    "end": "08:35",
+    "minutes": 15,
+    "lane": 0,
+    "activityId": "ACT-SUK-01",
+    "passageIds": [
+     "SUK-02",
+     "SUK-01"
+    ],
+    "focus": "letter_confusion",
+    "students": []
+   },
+   {
+    "id": "kata-w1-p2",
+    "planSessionId": "kata-w1-p2",
+    "groupLevel": "kata",
+    "kind": "practice",
+    "week": 1,
+    "date": "2026-10-22",
+    "day": "Thu",
+    "start": "08:00",
+    "end": "08:15",
+    "minutes": 15,
+    "lane": 0,
+    "activityId": "ACT-KAT-01",
+    "passageIds": [
+     "KAT-02",
+     "KAT-01"
+    ],
+    "focus": "closed_syllable",
+    "students": []
+   },
+   {
+    "id": "kalimat-w1-p2",
+    "planSessionId": "kalimat-w1-p2",
+    "groupLevel": "kalimat",
+    "kind": "practice",
+    "week": 1,
+    "date": "2026-10-22",
+    "day": "Thu",
+    "start": "08:15",
+    "end": "08:30",
+    "minutes": 15,
+    "lane": 0,
+    "activityId": "ACT-KAL-01",
+    "passageIds": [
+     "KAL-02",
+     "KAL-01"
+    ],
+    "focus": "closed_syllable",
+    "students": []
+   },
+   {
+    "id": "paragraf-w1-p2",
+    "planSessionId": "paragraf-w1-p2",
+    "groupLevel": "paragraf",
+    "kind": "practice",
+    "week": 1,
+    "date": "2026-10-23",
+    "day": "Fri",
+    "start": "10:00",
+    "end": "10:10",
+    "minutes": 10,
+    "lane": 0,
+    "activityId": "ACT-PAR-04",
+    "passageIds": [
+     "PAR-02",
+     "PAR-01"
+    ],
+    "focus": "closed_syllable",
     "students": []
    },
    {
@@ -680,7 +1373,7 @@
     "lane": 0,
     "activityId": "ACT-PEM-01",
     "passageIds": [],
-    "focus": "Kartu huruf bersuara",
+    "focus": "letter_confusion",
     "students": []
    },
    {
@@ -699,7 +1392,7 @@
     "passageIds": [
      "HUR-01"
     ],
-    "focus": "Tebak bunyi awal",
+    "focus": "letter_confusion",
     "students": []
    },
    {
@@ -719,7 +1412,67 @@
      "SUK-01",
      "SUK-02"
     ],
-    "focus": "Tepuk suku kata",
+    "focus": "letter_confusion",
+    "students": []
+   },
+   {
+    "id": "kata-w2-p3",
+    "planSessionId": "kata-w2-p3",
+    "groupLevel": "kata",
+    "kind": "practice",
+    "week": 2,
+    "date": "2026-10-27",
+    "day": "Tue",
+    "start": "08:00",
+    "end": "08:10",
+    "minutes": 10,
+    "lane": 0,
+    "activityId": "ACT-KAT-03",
+    "passageIds": [
+     "KAT-01",
+     "KAT-02"
+    ],
+    "focus": "closed_syllable",
+    "students": []
+   },
+   {
+    "id": "kalimat-w2-p3",
+    "planSessionId": "kalimat-w2-p3",
+    "groupLevel": "kalimat",
+    "kind": "practice",
+    "week": 2,
+    "date": "2026-10-27",
+    "day": "Tue",
+    "start": "08:10",
+    "end": "08:20",
+    "minutes": 10,
+    "lane": 0,
+    "activityId": "ACT-KAL-03",
+    "passageIds": [
+     "KAL-01",
+     "KAL-02"
+    ],
+    "focus": "closed_syllable",
+    "students": []
+   },
+   {
+    "id": "paragraf-w2-p3",
+    "planSessionId": "paragraf-w2-p3",
+    "groupLevel": "paragraf",
+    "kind": "practice",
+    "week": 2,
+    "date": "2026-10-27",
+    "day": "Tue",
+    "start": "08:20",
+    "end": "08:30",
+    "minutes": 10,
+    "lane": 0,
+    "activityId": "ACT-PAR-04",
+    "passageIds": [
+     "PAR-01",
+     "PAR-02"
+    ],
+    "focus": "closed_syllable",
     "students": []
    },
    {
@@ -736,7 +1489,7 @@
     "lane": 0,
     "activityId": null,
     "passageIds": [],
-    "focus": "Penempatan ulang",
+    "focus": null,
     "students": [
      "K2-12",
      "K2-13"
@@ -756,7 +1509,7 @@
     "lane": 0,
     "activityId": null,
     "passageIds": [],
-    "focus": "Penempatan ulang",
+    "focus": null,
     "students": [
      "K2-10",
      "K2-11"
@@ -776,7 +1529,7 @@
     "lane": 0,
     "activityId": null,
     "passageIds": [],
-    "focus": "Penempatan ulang",
+    "focus": null,
     "students": [
      "K2-07",
      "K2-08",
@@ -797,7 +1550,7 @@
     "lane": 0,
     "activityId": null,
     "passageIds": [],
-    "focus": "Penempatan ulang",
+    "focus": null,
     "students": [
      "K2-04",
      "K2-05",
@@ -818,7 +1571,7 @@
     "lane": 0,
     "activityId": null,
     "passageIds": [],
-    "focus": "Penempatan ulang",
+    "focus": null,
     "students": [
      "K2-02",
      "K2-03",
@@ -839,7 +1592,7 @@
     "lane": 0,
     "activityId": null,
     "passageIds": [],
-    "focus": "Penempatan ulang",
+    "focus": null,
     "students": [
      "K2-01"
     ]

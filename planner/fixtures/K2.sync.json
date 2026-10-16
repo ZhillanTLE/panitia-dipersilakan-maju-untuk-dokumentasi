@@ -1,6 +1,6 @@
 {
  "_sample": "Data contoh untuk mode rekaman. Bukan murid sungguhan.",
- "schemaVersion": "1.0",
+ "schemaVersion": "2.0",
  "class": {
   "code": "K2",
   "teacherCode": "G-01",
@@ -49,6 +49,51 @@
    "confirmedLevel": "pemula",
    "confirmedAt": "2026-10-14",
    "levelHistory": [],
+   "metrics": {
+    "unit": "huruf",
+    "accuracy": {
+     "correct": 6,
+     "attempted": 10
+    },
+    "correctUnitsPerMinute": 9,
+    "errorCounts": {
+     "substituted": 3,
+     "omitted": 1,
+     "teacherRead": 0,
+     "uncertain": 0
+    },
+    "patterns": [
+     {
+      "id": "letter_confusion",
+      "count": 3,
+      "examples": [
+       {
+        "word": "b",
+        "heard": "de",
+        "clipId": null
+       },
+       {
+        "word": "m",
+        "heard": "en",
+        "clipId": null
+       },
+       {
+        "word": "k",
+        "heard": "ge",
+        "clipId": null
+       }
+      ]
+     }
+    ],
+    "longPauses": 3,
+    "selfCorrections": 1,
+    "comprehension": null,
+    "confidence": {
+     "uncertainWordShare": 0.05,
+     "teacherCorrections": 2,
+     "audioQuality": "ok"
+    }
+   },
    "practice": {
     "sessions": 0,
     "wordsReadBack": []
@@ -59,193 +104,904 @@
    "confirmedLevel": "huruf",
    "confirmedAt": "2026-10-14",
    "levelHistory": [],
+   "metrics": {
+    "unit": "huruf",
+    "accuracy": {
+     "correct": 8,
+     "attempted": 10
+    },
+    "correctUnitsPerMinute": 28,
+    "errorCounts": {
+     "substituted": 1,
+     "omitted": 1,
+     "teacherRead": 0,
+     "uncertain": 0
+    },
+    "patterns": [
+     {
+      "id": "letter_confusion",
+      "count": 1,
+      "examples": [
+       {
+        "word": "b",
+        "heard": "d",
+        "clipId": null
+       }
+      ]
+     }
+    ],
+    "longPauses": 1,
+    "selfCorrections": 0,
+    "comprehension": null,
+    "confidence": {
+     "uncertainWordShare": 0.05,
+     "teacherCorrections": 1,
+     "audioQuality": "ok"
+    }
+   },
    "practice": {
     "sessions": 3,
-    "wcpmFirstRead": 10,
-    "wordsReadBack": [],
-    "wcpmThirdRead": 13
-   },
-   "wcpmUnseen": 28
+    "correctUnitsPerMinuteFirstRead": 10,
+    "correctUnitsPerMinuteThirdRead": 13,
+    "wordsReadBack": []
+   }
   },
   {
    "code": "K2-03",
    "confirmedLevel": "huruf",
    "confirmedAt": "2026-10-14",
    "levelHistory": [],
+   "metrics": {
+    "unit": "huruf",
+    "accuracy": {
+     "correct": 8,
+     "attempted": 10
+    },
+    "correctUnitsPerMinute": 12,
+    "errorCounts": {
+     "substituted": 2,
+     "omitted": 0,
+     "teacherRead": 0,
+     "uncertain": 0
+    },
+    "patterns": [
+     {
+      "id": "letter_confusion",
+      "count": 2,
+      "examples": [
+       {
+        "word": "m",
+        "heard": "n",
+        "clipId": null
+       },
+       {
+        "word": "u",
+        "heard": "n",
+        "clipId": null
+       }
+      ]
+     }
+    ],
+    "longPauses": 1,
+    "selfCorrections": 0,
+    "comprehension": null,
+    "confidence": {
+     "uncertainWordShare": 0.05,
+     "teacherCorrections": 1,
+     "audioQuality": "ok"
+    }
+   },
    "practice": {
-    "sessions": 3,
-    "wcpmFirstRead": 24,
+    "sessions": 4,
+    "correctUnitsPerMinuteFirstRead": 24,
+    "correctUnitsPerMinuteThirdRead": 22,
     "wordsReadBack": [
      "ba"
-    ],
-    "wcpmThirdRead": 22
-   },
-   "wcpmUnseen": 12
+    ]
+   }
   },
   {
    "code": "K2-04",
    "confirmedLevel": "suku_kata",
    "confirmedAt": "2026-10-14",
-   "levelHistory": [],
-   "practice": {
-    "sessions": 6,
-    "wcpmFirstRead": 21,
-    "wordsReadBack": [],
-    "wcpmThirdRead": 22
+   "levelHistory": [
+    {
+     "level": "huruf",
+     "confirmedAt": "2026-09-30"
+    }
+   ],
+   "metrics": {
+    "unit": "suku_kata",
+    "accuracy": {
+     "correct": 8,
+     "attempted": 10
+    },
+    "correctUnitsPerMinute": 12,
+    "errorCounts": {
+     "substituted": 2,
+     "omitted": 0,
+     "teacherRead": 0,
+     "uncertain": 0
+    },
+    "patterns": [
+     {
+      "id": "letter_confusion",
+      "count": 2,
+      "examples": [
+       {
+        "word": "ba",
+        "heard": "da",
+        "clipId": null
+       },
+       {
+        "word": "pa",
+        "heard": "ba",
+        "clipId": null
+       }
+      ]
+     }
+    ],
+    "longPauses": 1,
+    "selfCorrections": 0,
+    "comprehension": null,
+    "confidence": {
+     "uncertainWordShare": 0.05,
+     "teacherCorrections": 1,
+     "audioQuality": "ok"
+    }
    },
-   "wcpmUnseen": 12
+   "practice": {
+    "sessions": 3,
+    "correctUnitsPerMinuteFirstRead": 21,
+    "correctUnitsPerMinuteThirdRead": 22,
+    "wordsReadBack": []
+   }
   },
   {
    "code": "K2-05",
    "confirmedLevel": "suku_kata",
    "confirmedAt": "2026-10-14",
    "levelHistory": [],
-   "practice": {
-    "sessions": 7,
-    "wcpmFirstRead": 21,
-    "wordsReadBack": [],
-    "wcpmThirdRead": 28
+   "metrics": {
+    "unit": "suku_kata",
+    "accuracy": {
+     "correct": 8,
+     "attempted": 10
+    },
+    "correctUnitsPerMinute": 13,
+    "errorCounts": {
+     "substituted": 1,
+     "omitted": 0,
+     "teacherRead": 1,
+     "uncertain": 0
+    },
+    "patterns": [
+     {
+      "id": "letter_confusion",
+      "count": 1,
+      "examples": [
+       {
+        "word": "ba",
+        "heard": "da",
+        "clipId": null
+       }
+      ]
+     }
+    ],
+    "longPauses": 1,
+    "selfCorrections": 0,
+    "comprehension": null,
+    "confidence": {
+     "uncertainWordShare": 0.05,
+     "teacherCorrections": 1,
+     "audioQuality": "ok"
+    }
    },
-   "wcpmUnseen": 13
+   "practice": {
+    "sessions": 3,
+    "correctUnitsPerMinuteFirstRead": 21,
+    "correctUnitsPerMinuteThirdRead": 28,
+    "wordsReadBack": []
+   }
   },
   {
    "code": "K2-06",
    "confirmedLevel": "suku_kata",
    "confirmedAt": "2026-10-14",
    "levelHistory": [],
-   "practice": {
-    "sessions": 4,
-    "wcpmFirstRead": 28,
-    "wordsReadBack": [],
-    "wcpmThirdRead": 35
+   "metrics": {
+    "unit": "suku_kata",
+    "accuracy": {
+     "correct": 9,
+     "attempted": 10
+    },
+    "correctUnitsPerMinute": 28,
+    "errorCounts": {
+     "substituted": 1,
+     "omitted": 0,
+     "teacherRead": 0,
+     "uncertain": 0
+    },
+    "patterns": [],
+    "longPauses": 0,
+    "selfCorrections": 0,
+    "comprehension": null,
+    "confidence": {
+     "uncertainWordShare": 0.05,
+     "teacherCorrections": 0,
+     "audioQuality": "ok"
+    }
    },
-   "wcpmUnseen": 28
+   "practice": {
+    "sessions": 3,
+    "correctUnitsPerMinuteFirstRead": 28,
+    "correctUnitsPerMinuteThirdRead": 35,
+    "wordsReadBack": []
+   }
   },
   {
    "code": "K2-07",
    "confirmedLevel": "kata",
    "confirmedAt": "2026-10-14",
-   "levelHistory": [],
+   "levelHistory": [
+    {
+     "level": "suku_kata",
+     "confirmedAt": "2026-09-30"
+    }
+   ],
+   "metrics": {
+    "unit": "kata",
+    "accuracy": {
+     "correct": 7,
+     "attempted": 10
+    },
+    "correctUnitsPerMinute": 27,
+    "errorCounts": {
+     "substituted": 2,
+     "omitted": 1,
+     "teacherRead": 0,
+     "uncertain": 0
+    },
+    "patterns": [
+     {
+      "id": "closed_syllable",
+      "count": 3,
+      "examples": [
+       {
+        "word": "bintang",
+        "heard": "bintan",
+        "clipId": null
+       },
+       {
+        "word": "lampu",
+        "heard": "lapu",
+        "clipId": null
+       },
+       {
+        "word": "gurun",
+        "heard": null,
+        "clipId": null
+       }
+      ]
+     },
+     {
+      "id": "digraph_cluster",
+      "count": 1,
+      "examples": [
+       {
+        "word": "bintang",
+        "heard": "bintan",
+        "clipId": null
+       }
+      ]
+     }
+    ],
+    "longPauses": 2,
+    "selfCorrections": 1,
+    "comprehension": null,
+    "confidence": {
+     "uncertainWordShare": 0.05,
+     "teacherCorrections": 1,
+     "audioQuality": "ok"
+    }
+   },
    "practice": {
-    "sessions": 6,
-    "wcpmFirstRead": 9,
+    "sessions": 4,
+    "correctUnitsPerMinuteFirstRead": 9,
+    "correctUnitsPerMinuteThirdRead": 7,
     "wordsReadBack": [
      "buku"
-    ],
-    "wcpmThirdRead": 7
-   },
-   "wcpmUnseen": 27
+    ]
+   }
   },
   {
    "code": "K2-08",
    "confirmedLevel": "kata",
    "confirmedAt": "2026-10-14",
    "levelHistory": [],
+   "metrics": {
+    "unit": "kata",
+    "accuracy": {
+     "correct": 8,
+     "attempted": 10
+    },
+    "correctUnitsPerMinute": 27,
+    "errorCounts": {
+     "substituted": 2,
+     "omitted": 0,
+     "teacherRead": 0,
+     "uncertain": 0
+    },
+    "patterns": [
+     {
+      "id": "closed_syllable",
+      "count": 2,
+      "examples": [
+       {
+        "word": "domba",
+        "heard": "doba",
+        "clipId": null
+       },
+       {
+        "word": "pasir",
+        "heard": "pasi",
+        "clipId": null
+       }
+      ]
+     }
+    ],
+    "longPauses": 1,
+    "selfCorrections": 0,
+    "comprehension": null,
+    "confidence": {
+     "uncertainWordShare": 0.05,
+     "teacherCorrections": 1,
+     "audioQuality": "ok"
+    }
+   },
    "practice": {
-    "sessions": 4,
-    "wcpmFirstRead": 17,
+    "sessions": 6,
+    "correctUnitsPerMinuteFirstRead": 17,
+    "correctUnitsPerMinuteThirdRead": 17,
     "wordsReadBack": [
      "buku",
      "meja",
      "rumah"
-    ],
-    "wcpmThirdRead": 17
-   },
-   "wcpmUnseen": 27
+    ]
+   }
   },
   {
    "code": "K2-09",
    "confirmedLevel": "kata",
    "confirmedAt": "2026-10-14",
    "levelHistory": [],
+   "metrics": {
+    "unit": "kata",
+    "accuracy": {
+     "correct": 8,
+     "attempted": 10
+    },
+    "correctUnitsPerMinute": 36,
+    "errorCounts": {
+     "substituted": 2,
+     "omitted": 0,
+     "teacherRead": 0,
+     "uncertain": 0
+    },
+    "patterns": [
+     {
+      "id": "letter_confusion",
+      "count": 1,
+      "examples": [
+       {
+        "word": "rubah",
+        "heard": "rudah",
+        "clipId": null
+       }
+      ]
+     },
+     {
+      "id": "closed_syllable",
+      "count": 2,
+      "examples": [
+       {
+        "word": "rubah",
+        "heard": "rudah",
+        "clipId": null
+       },
+       {
+        "word": "sumur",
+        "heard": "sumu",
+        "clipId": null
+       }
+      ]
+     }
+    ],
+    "longPauses": 1,
+    "selfCorrections": 0,
+    "comprehension": null,
+    "confidence": {
+     "uncertainWordShare": 0.05,
+     "teacherCorrections": 1,
+     "audioQuality": "ok"
+    }
+   },
    "practice": {
-    "sessions": 3,
-    "wcpmFirstRead": 26,
+    "sessions": 5,
+    "correctUnitsPerMinuteFirstRead": 26,
+    "correctUnitsPerMinuteThirdRead": 32,
     "wordsReadBack": [
      "buku",
      "meja"
-    ],
-    "wcpmThirdRead": 32
-   },
-   "wcpmUnseen": 36
+    ]
+   }
   },
   {
    "code": "K2-10",
    "confirmedLevel": "kalimat",
    "confirmedAt": "2026-10-14",
    "levelHistory": [],
+   "metrics": {
+    "unit": "kata",
+    "accuracy": {
+     "correct": 18,
+     "attempted": 22
+    },
+    "correctUnitsPerMinute": 13,
+    "errorCounts": {
+     "substituted": 3,
+     "omitted": 0,
+     "teacherRead": 1,
+     "uncertain": 0
+    },
+    "patterns": [
+     {
+      "id": "closed_syllable",
+      "count": 4,
+      "examples": [
+       {
+        "word": "bersinar",
+        "heard": "sinar",
+        "clipId": null
+       },
+       {
+        "word": "mencari",
+        "heard": "cari",
+        "clipId": null
+       },
+       {
+        "word": "pohon",
+        "heard": "poho",
+        "clipId": null
+       }
+      ]
+     },
+     {
+      "id": "long_word",
+      "count": 3,
+      "examples": [
+       {
+        "word": "bersinar",
+        "heard": "sinar",
+        "clipId": null
+       },
+       {
+        "word": "mencari",
+        "heard": "cari",
+        "clipId": null
+       },
+       {
+        "word": "sekuntum",
+        "heard": null,
+        "clipId": null
+       }
+      ]
+     },
+     {
+      "id": "affixed_word",
+      "count": 2,
+      "examples": [
+       {
+        "word": "bersinar",
+        "heard": "sinar",
+        "clipId": null
+       },
+       {
+        "word": "mencari",
+        "heard": "cari",
+        "clipId": null
+       }
+      ]
+     }
+    ],
+    "longPauses": 3,
+    "selfCorrections": 1,
+    "comprehension": null,
+    "confidence": {
+     "uncertainWordShare": 0.05,
+     "teacherCorrections": 2,
+     "audioQuality": "ok"
+    }
+   },
    "practice": {
     "sessions": 4,
-    "wcpmFirstRead": 11,
+    "correctUnitsPerMinuteFirstRead": 11,
+    "correctUnitsPerMinuteThirdRead": 14,
     "wordsReadBack": [
      "ibu"
-    ],
-    "wcpmThirdRead": 14
-   },
-   "wcpmUnseen": 13
+    ]
+   }
   },
   {
    "code": "K2-11",
    "confirmedLevel": "kalimat",
    "confirmedAt": "2026-10-14",
    "levelHistory": [],
-   "practice": {
-    "sessions": 7,
-    "wcpmFirstRead": 30,
-    "wordsReadBack": [],
-    "wcpmThirdRead": 37
+   "metrics": {
+    "unit": "kata",
+    "accuracy": {
+     "correct": 20,
+     "attempted": 22
+    },
+    "correctUnitsPerMinute": 11,
+    "errorCounts": {
+     "substituted": 2,
+     "omitted": 0,
+     "teacherRead": 0,
+     "uncertain": 0
+    },
+    "patterns": [
+     {
+      "id": "closed_syllable",
+      "count": 2,
+      "examples": [
+       {
+        "word": "mencari",
+        "heard": "cari",
+        "clipId": null
+       },
+       {
+        "word": "langit",
+        "heard": "lagit",
+        "clipId": null
+       }
+      ]
+     },
+     {
+      "id": "digraph_cluster",
+      "count": 1,
+      "examples": [
+       {
+        "word": "langit",
+        "heard": "lagit",
+        "clipId": null
+       }
+      ]
+     },
+     {
+      "id": "long_word",
+      "count": 1,
+      "examples": [
+       {
+        "word": "mencari",
+        "heard": "cari",
+        "clipId": null
+       }
+      ]
+     },
+     {
+      "id": "affixed_word",
+      "count": 1,
+      "examples": [
+       {
+        "word": "mencari",
+        "heard": "cari",
+        "clipId": null
+       }
+      ]
+     }
+    ],
+    "longPauses": 1,
+    "selfCorrections": 0,
+    "comprehension": null,
+    "confidence": {
+     "uncertainWordShare": 0.05,
+     "teacherCorrections": 1,
+     "audioQuality": "ok"
+    }
    },
-   "wcpmUnseen": 11
+   "practice": {
+    "sessions": 3,
+    "correctUnitsPerMinuteFirstRead": 30,
+    "correctUnitsPerMinuteThirdRead": 37,
+    "wordsReadBack": []
+   }
   },
   {
    "code": "K2-12",
    "confirmedLevel": "paragraf",
    "confirmedAt": "2026-10-14",
    "levelHistory": [],
+   "metrics": {
+    "unit": "kata",
+    "accuracy": {
+     "correct": 73,
+     "attempted": 78
+    },
+    "correctUnitsPerMinute": 27,
+    "errorCounts": {
+     "substituted": 4,
+     "omitted": 1,
+     "teacherRead": 0,
+     "uncertain": 0
+    },
+    "patterns": [
+     {
+      "id": "closed_syllable",
+      "count": 5,
+      "examples": [
+       {
+        "word": "membersihkan",
+        "heard": "bersihkan",
+        "clipId": null
+       },
+       {
+        "word": "menyiram",
+        "heard": "siram",
+        "clipId": null
+       },
+       {
+        "word": "sekuntum",
+        "heard": null,
+        "clipId": null
+       }
+      ]
+     },
+     {
+      "id": "digraph_cluster",
+      "count": 2,
+      "examples": [
+       {
+        "word": "menyiram",
+        "heard": "siram",
+        "clipId": null
+       },
+       {
+        "word": "gunung",
+        "heard": "gunun",
+        "clipId": null
+       }
+      ]
+     },
+     {
+      "id": "long_word",
+      "count": 4,
+      "examples": [
+       {
+        "word": "membersihkan",
+        "heard": "bersihkan",
+        "clipId": null
+       },
+       {
+        "word": "menyiram",
+        "heard": "siram",
+        "clipId": null
+       },
+       {
+        "word": "sekuntum",
+        "heard": null,
+        "clipId": null
+       }
+      ]
+     },
+     {
+      "id": "affixed_word",
+      "count": 3,
+      "examples": [
+       {
+        "word": "membersihkan",
+        "heard": "bersihkan",
+        "clipId": null
+       },
+       {
+        "word": "menyiram",
+        "heard": "siram",
+        "clipId": null
+       },
+       {
+        "word": "berjalan",
+        "heard": "jalan",
+        "clipId": null
+       }
+      ]
+     }
+    ],
+    "longPauses": 3,
+    "selfCorrections": 1,
+    "comprehension": {
+     "correct": 2,
+     "asked": 3,
+     "cardUnit": "paragraf"
+    },
+    "confidence": {
+     "uncertainWordShare": 0.05,
+     "teacherCorrections": 2,
+     "audioQuality": "ok"
+    }
+   },
    "practice": {
-    "sessions": 7,
-    "wcpmFirstRead": 14,
+    "sessions": 6,
+    "correctUnitsPerMinuteFirstRead": 14,
+    "correctUnitsPerMinuteThirdRead": 22,
     "wordsReadBack": [
      "bintang",
      "rubah",
      "mawar"
-    ],
-    "wcpmThirdRead": 22
-   },
-   "wcpmUnseen": 27
+    ]
+   }
   },
   {
    "code": "K2-13",
    "confirmedLevel": "paragraf",
    "confirmedAt": "2026-10-14",
    "levelHistory": [],
+   "metrics": {
+    "unit": "kata",
+    "accuracy": {
+     "correct": 75,
+     "attempted": 78
+    },
+    "correctUnitsPerMinute": 39,
+    "errorCounts": {
+     "substituted": 3,
+     "omitted": 0,
+     "teacherRead": 0,
+     "uncertain": 0
+    },
+    "patterns": [
+     {
+      "id": "closed_syllable",
+      "count": 3,
+      "examples": [
+       {
+        "word": "sangat",
+        "heard": "sanat",
+        "clipId": null
+       },
+       {
+        "word": "akhirnya",
+        "heard": "akirnya",
+        "clipId": null
+       },
+       {
+        "word": "bertemu",
+        "heard": "temu",
+        "clipId": null
+       }
+      ]
+     },
+     {
+      "id": "digraph_cluster",
+      "count": 2,
+      "examples": [
+       {
+        "word": "sangat",
+        "heard": "sanat",
+        "clipId": null
+       },
+       {
+        "word": "akhirnya",
+        "heard": "akirnya",
+        "clipId": null
+       }
+      ]
+     },
+     {
+      "id": "long_word",
+      "count": 2,
+      "examples": [
+       {
+        "word": "akhirnya",
+        "heard": "akirnya",
+        "clipId": null
+       },
+       {
+        "word": "bertemu",
+        "heard": "temu",
+        "clipId": null
+       }
+      ]
+     },
+     {
+      "id": "affixed_word",
+      "count": 2,
+      "examples": [
+       {
+        "word": "akhirnya",
+        "heard": "akirnya",
+        "clipId": null
+       },
+       {
+        "word": "bertemu",
+        "heard": "temu",
+        "clipId": null
+       }
+      ]
+     }
+    ],
+    "longPauses": 2,
+    "selfCorrections": 1,
+    "comprehension": {
+     "correct": 3,
+     "asked": 3,
+     "cardUnit": "paragraf"
+    },
+    "confidence": {
+     "uncertainWordShare": 0.05,
+     "teacherCorrections": 1,
+     "audioQuality": "ok"
+    }
+   },
    "practice": {
     "sessions": 6,
-    "wcpmFirstRead": 18,
+    "correctUnitsPerMinuteFirstRead": 18,
+    "correctUnitsPerMinuteThirdRead": 25,
     "wordsReadBack": [
      "bintang",
      "rubah",
      "mawar"
-    ],
-    "wcpmThirdRead": 25
-   },
-   "wcpmUnseen": 39
+    ]
+   }
   },
   {
    "code": "K2-14",
    "confirmedLevel": "huruf",
    "confirmedAt": "2026-10-14",
    "levelHistory": [],
+   "metrics": {
+    "unit": "huruf",
+    "accuracy": {
+     "correct": 9,
+     "attempted": 10
+    },
+    "correctUnitsPerMinute": 35,
+    "errorCounts": {
+     "substituted": 1,
+     "omitted": 0,
+     "teacherRead": 0,
+     "uncertain": 0
+    },
+    "patterns": [
+     {
+      "id": "letter_confusion",
+      "count": 1,
+      "examples": [
+       {
+        "word": "t",
+        "heard": "de",
+        "clipId": null
+       }
+      ]
+     }
+    ],
+    "longPauses": 0,
+    "selfCorrections": 0,
+    "comprehension": null,
+    "confidence": {
+     "uncertainWordShare": 0.05,
+     "teacherCorrections": 0,
+     "audioQuality": "ok"
+    }
+   },
    "practice": {
-    "sessions": 6,
-    "wcpmFirstRead": 19,
+    "sessions": 5,
+    "correctUnitsPerMinuteFirstRead": 19,
+    "correctUnitsPerMinuteThirdRead": 20,
     "wordsReadBack": [
      "ba",
      "bu"
-    ],
-    "wcpmThirdRead": 20
-   },
-   "wcpmUnseen": 35
+    ]
+   }
   }
  ],
  "sessionsDone": []

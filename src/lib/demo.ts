@@ -1,5 +1,5 @@
 import { cardFor, cardWords } from './cards';
-import { CARD_ORDER, RUBRIC_VERSION, nextCard, suggestLevel } from './rubric';
+import { CARD_ORDER, RUBRIC, RUBRIC_VERSION, nextCard, suggestLevel } from './rubric';
 import { ENGINE_VERSION } from './scoring';
 import type { CardLevel, ChildLevel, Session, Student, Take, WordResult } from '../types';
 
@@ -19,8 +19,8 @@ export const DEMO_STUDENTS: [string, string, boolean, boolean][] = [
   ['K2-14', 'Nanda', true, false],
 ];
 
-/** How many students stay unread, for the teacher to try the reading flow on. */
-export const LEFT_TO_READ = 2;
+/** The one student left unread for the demo, so the teacher can try the reading flow on them. */
+export const LEFT_UNREAD = 'K2-02';
 
 function rng(seed: number): () => number {
   let a = seed >>> 0;
@@ -65,7 +65,10 @@ function demoTake(student_ref: string, session_id: string, level: CardLevel, pas
   const words = cardWords(card);
   const accuracy = pass ? 0.9 + rand() * 0.1 : 0.4 + rand() * 0.35;
   const errors = new Set<number>();
-  const wanted = Math.min(words.length, Math.round(words.length * (1 - accuracy)));
+  // A pass always has a mistake or two, never so many that it would fail the card's pass mark.
+  const room = words.length - Math.ceil(RUBRIC.cards[level].min_accuracy * words.length - 1e-9);
+  const raw = Math.round(words.length * (1 - accuracy));
+  const wanted = pass ? Math.max(1, Math.min(raw, room)) : Math.min(words.length, Math.max(raw, room + 1));
   while (errors.size < wanted) errors.add(Math.floor(rand() * words.length));
   const pace = 550 + rand() * 650;
   const results: WordResult[] = words.map((w, k) => {
@@ -94,8 +97,14 @@ function demoTake(student_ref: string, session_id: string, level: CardLevel, pas
     events: [],
     versions: { card: card.version, model: DEMO_MODEL, engine: ENGINE_VERSION, rubric: RUBRIC_VERSION },
     audio: { stored: false },
-    teacher: { edits: {}, reviewed_at: at + 60_000 },
+    teacher: { edits: {}, reviewed_at: at + 60_000, ...(card.questions ? { comprehension: demoAnswers(student_ref, card.questions.length, pass) } : {}) },
   };
+}
+
+/** Example taps for the oral questions after a paragraf card. Its own random stream, so the readings stay as they were. */
+function demoAnswers(student_ref: string, n: number, pass: boolean): boolean[] {
+  const rand = rng(hash(`${student_ref}:pertanyaan`));
+  return Array.from({ length: n }, () => rand() < (pass ? 0.85 : 0.45));
 }
 
 /** A confirmed example reading for one student, stepping down the cards as a real reading would. */
