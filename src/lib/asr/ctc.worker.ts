@@ -1,6 +1,8 @@
 /// <reference lib="webworker" />
-import * as ort from 'onnxruntime-web/webgpu';
-import wasmUrl from 'onnxruntime-web/ort-wasm-simd-threaded.jsep.wasm?url';
+// The WASM-only build: the WebGPU bundle crashes in Chrome inside its JSEP glue
+// ("reading 'Xe'"), and the int8 model runs on the CPU anyway.
+import * as ort from 'onnxruntime-web/wasm';
+import wasmUrl from 'onnxruntime-web/ort-wasm-simd-threaded.wasm?url';
 import { readPackFile, type PackLocation, type PackManifest } from './pack';
 
 // Runs the acoustic model off the main thread, so the highlight and the page stay smooth.
@@ -26,16 +28,6 @@ let session: ort.InferenceSession | null = null;
 
 const post = (reply: WorkerReply, transfer: Transferable[] = []) => self.postMessage(reply, transfer);
 
-async function gpuAvailable(): Promise<boolean> {
-  const gpu = (navigator as unknown as { gpu?: { requestAdapter(): Promise<unknown> } }).gpu;
-  if (!gpu) return false;
-  try {
-    return Boolean(await gpu.requestAdapter());
-  } catch {
-    return false;
-  }
-}
-
 async function create(location: PackLocation, file: string, backend: Backend): Promise<ort.InferenceSession> {
   const bytes = await readPackFile(location, file, (loaded, total) => post({ type: 'progress', loaded, total }));
   return ort.InferenceSession.create(new Uint8Array(bytes), {
@@ -49,16 +41,9 @@ async function load(location: PackLocation, manifest: PackManifest, prefer: Back
   // WASM threads need cross-origin isolation; the GPU path does not use them.
   threads = self.crossOriginIsolated ? Math.max(1, wanted ?? Math.min(4, (navigator.hardwareConcurrency || 2) - 1)) : 1;
   ort.env.wasm.numThreads = threads;
-  let backend: Backend = 'wasm';
-  if (prefer !== 'wasm' && manifest.variants.gpu && (await gpuAvailable())) {
-    try {
-      session = await create(location, manifest.variants.gpu, 'webgpu');
-      backend = 'webgpu';
-    } catch {
-      session = null;
-    }
-  }
-  if (!session) session = await create(location, manifest.variants.cpu, 'wasm');
+  const backend: Backend = 'wasm';
+  void prefer;
+  session = await create(location, manifest.variants.cpu, 'wasm');
   const loadMs = performance.now() - t0;
 
   // One warm-up run compiles kernels (and GPU shaders) before the first child reads.
