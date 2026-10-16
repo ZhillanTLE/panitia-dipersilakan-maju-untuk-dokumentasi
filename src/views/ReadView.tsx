@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Book, PageFoot } from '../components/Book';
 import { IconCheck, IconLeft, IconMic, IconStop, IconTextSize } from '../components/Icons';
 import { Ladder } from '../components/Ladder';
+import { Questions } from '../components/Questions';
 import { ListenButton } from '../components/ListenButton';
 import { SketchStars, Trail } from '../components/Trail';
 import { ReadingText } from '../components/ReadingText';
@@ -813,6 +814,12 @@ function NextCard({ take, ended, reader, upNext, onOpen, onEnd, onNextStudent }:
     <div className="panel">
       {quality.status === 'retry_suggested' && (
         <p className="callout">{lowSpeech ? S.next.quality(Math.round((quality.speech_ratio ?? 0) * 100)) : S.next.clipping}</p>
+      )}
+      {take.card.level === 'paragraf' && (
+        <div className="panel__questions">
+          <p className="panel__hint">{S.next.questions}</p>
+          <Questions take_id={take.take_id} locked={false} />
+        </div>
       )}
       {outcome ? (
         <p className="panel__lead">

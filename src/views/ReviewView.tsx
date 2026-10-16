@@ -2,19 +2,22 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AudioBar, type AudioBarHandle } from '../components/AudioBar';
 import { Book, PageFoot } from '../components/Book';
 import { IconCheck, IconFlag, IconLeft, IconRight } from '../components/Icons';
+import { Questions } from '../components/Questions';
 import { ReadingText } from '../components/ReadingText';
 import { toast } from '../components/Toast';
 import { WordMenu } from '../components/WordMenu';
 import { activitiesFor } from '../lib/activities';
 import { cardById, cardFor, cardWords } from '../lib/cards';
-import { formatDateTime } from '../lib/format';
+import { formatDate, formatDateTime } from '../lib/format';
+import { cardMetrics, confirmedWords, earlierResults, LEVEL_CARD, LEVEL_UNIT, patternHits, patternTakes, questionsOf, UNSURE_SHARE, type PatternExample } from '../lib/metrics';
+import { PATTERN_LABEL } from '../lib/patterns';
 import { loadPrefs } from '../lib/prefs';
 import { href, navigate } from '../lib/route';
 import { CARD_ORDER, RUBRIC, RUBRIC_VERSION, cardOutcome, effectiveStatus, isError, nextCard, suggestLevel } from '../lib/rubric';
 import { ENGINE_VERSION, scoreTake } from '../lib/scoring';
 import { simulateTokens } from '../lib/simulate';
 import { addTake, confirmSession, endSession, getAudio, nameOf, newId, setWordEdit, takesOf, useApp } from '../lib/store';
-import { CARD, LEVEL, S, SOURCE, STATUS } from '../strings';
+import { CARD, LEVEL, S, SOURCE, STATUS, UNIT } from '../strings';
 import type { CardLevel, ChildLevel, Session, Source, Take, WordStatus } from '../types';
 import './ReviewView.css';
 
@@ -188,6 +191,7 @@ function SessionReview({ session, active }: { session: Session; active: boolean 
   const [selectedWord, setSelectedWord] = useState<number | null>(null);
   const [playingMs, setPlayingMs] = useState<number | null>(null);
   const [blob, setBlob] = useState<Blob | null>(null);
+  const [playAsk, setPlayAsk] = useState<{ take_id: string; i: number } | null>(null);
   const bodyRef = useRef<HTMLDivElement>(null);
   const audioRef = useRef<AudioBarHandle>(null);
   const textSize = useMemo(() => loadPrefs().textSize, []);
@@ -235,6 +239,14 @@ function SessionReview({ session, active }: { session: Session; active: boolean 
     return () => window.removeEventListener('keydown', onKey);
   }, [active, go, index, selectedWord]);
 
+  // A pattern example asked to play: wait until its card's recording has loaded.
+  useEffect(() => {
+    if (!playAsk || !blob || take?.take_id !== playAsk.take_id) return;
+    const start = take.words[playAsk.i]?.start_ms;
+    if (start !== undefined) audioRef.current?.playFrom(start - lead - 300, start - lead + 1600);
+    setPlayAsk(null);
+  }, [playAsk, blob, take, lead]);
+
   // Every word the engine did not hear as plainly correct, across all cards, in reading order.
   const flags: Flag[] = takes.flatMap((t, k) =>
     t.words
@@ -277,10 +289,25 @@ function SessionReview({ session, active }: { session: Session; active: boolean 
     audioRef.current?.playFrom(start - lead - 300, start - lead + 1600);
   };
 
+  /** Opens a pattern example on its card; plays it when the recording was kept. */
+  const showExample = (e: PatternExample) => {
+    const k = takes.findIndex((t) => t.take_id === e.take_id);
+    if (k < 0) return;
+    go(k, isConfirmed ? null : e.i);
+    if (takes[k].audio.stored && takes[k].words[e.i]?.start_ms !== undefined) setPlayAsk({ take_id: e.take_id, i: e.i });
+  };
+
   const outcomes = takes.map((t) => cardOutcome(t));
+  const metrics = takes.map((t) => cardMetrics(t));
   const unresolved = outcomes.reduce((n, o) => n + o.unresolved, 0);
+  const poorAudio = takes.some((t) => t.quality.status === 'retry_suggested');
+  const unsure = metrics.some((m) => m.confidence.uncertainWordShare >= UNSURE_SHARE);
+  const paragraphs = takes.filter((t) => questionsOf(t).length > 0);
   const suggestion = suggestLevel(takes, true);
   const finalLevel = isConfirmed ? (session.suggestion?.confirmed?.level ?? null) : suggestion.level;
+  const unit = finalLevel ? LEVEL_UNIT(finalLevel) : null;
+  const hits = patternHits(patternTakes(takes, finalLevel));
+  const history = session.simulated ? [] : earlierResults(session.student_ref, app.sessions, app.takes, session.started_at, session.session_id);
 
   const nextOpen = () => {
     const after = openFlags.find((f) => f.take > index || (f.take === index && f.i > (selectedWord ?? -1))) ?? openFlags[0];
@@ -391,11 +418,15 @@ function SessionReview({ session, active }: { session: Session; active: boolean 
             <span className="sreview__code">{session.student_ref}</span>
             {session.simulated && <span className="chip chip--ink">{S.review.simulated}</span>}
             {session.demo && <span className="chip chip--neutral" title={S.kelas.demoNote}>{S.review.demo}</span>}
+            {!isConfirmed && <span className="chip chip--caution">{S.review.pending}</span>}
           </div>
           <p className="t-meta">
             {formatDateTime(session.started_at)}, {SOURCE[take.source].toLowerCase()}
           </p>
         </header>
+
+        {!isConfirmed && (unresolved > 0 || poorAudio) && <p className="sreview__flag">{S.review.relisten}</p>}
+        {(isConfirmed || (unresolved === 0 && !poorAudio)) && (unsure || poorAudio) && <p className="sreview__flag">{S.review.unsure}</p>}
 
         <section className="step" data-done={!isConfirmed && openFlags.length === 0 ? '' : undefined}>
           <h3 className="step__title">
@@ -455,8 +486,9 @@ function SessionReview({ session, active }: { session: Session; active: boolean 
                   >
                     <span className="outcome__name">{CARD[t.card.level]}</span>
                     <span className="outcome__line">
-                      {S.review.cardLine(o.correct, o.total)}, {S.review.passLine(o.needed)}
+                      {S.review.cardLine(o.correct, o.total, UNIT[metrics[k].unit])}, {S.review.passLine(o.needed)}
                     </span>
+                    <span className="outcome__line outcome__line--meta">{S.review.cardFacts(metrics[k], UNIT[metrics[k].unit])}</span>
                     <span className={`chip ${o.passed ? 'chip--success' : 'chip--neutral'} outcome__chip`}>
                       {o.passed ? S.review.passed : S.review.notPassed}
                     </span>
@@ -465,13 +497,78 @@ function SessionReview({ session, active }: { session: Session; active: boolean 
               );
             })}
           </ol>
-          {take.fluency.wcpm !== null && take.fluency.reading_time_s !== null && (
-            <p className="t-meta">
-              {S.review.fluency(take.fluency.reading_time_s, take.fluency.wcpm)}. {S.review.fluencyNote}
-              {take.insertions.length > 0 && ` ${S.review.insertions(take.insertions.length)}.`}
-            </p>
+          <p className="t-meta">
+            {S.review.fluencyNote}
+            {take.insertions.length > 0 && ` ${S.review.insertions(take.insertions.length)}.`}
+          </p>
+        </section>
+
+        <section className="step" aria-labelledby="pola-title">
+          <h3 className="step__title" id="pola-title">
+            {S.review.patterns}
+          </h3>
+          {hits.length ? (
+            <>
+              <p className="step__text">
+                {finalLevel ? S.review.patternsFrom(CARD[LEVEL_CARD[finalLevel]]) : ''}
+                {S.review.patternsNote}
+              </p>
+              <ul className="pola">
+                {hits.map((h) => (
+                  <li key={h.id} className="pola__row">
+                    <p className="pola__name">
+                      {PATTERN_LABEL[h.id]} <span className="pola__count">{S.review.times(h.count)}</span>
+                    </p>
+                    <ul className="pola__examples">
+                      {h.examples.map((e) => (
+                        <li key={`${e.take_id}:${e.i}`}>
+                          <button type="button" className="pola__ex" onClick={() => showExample(e)}>
+                            <span className="pola__word">{e.word}</span>
+                            <span className="pola__heard">{e.heard ? S.review.heardAs(e.heard) : S.review.notHeard}</span>
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  </li>
+                ))}
+              </ul>
+            </>
+          ) : (
+            <p className="step__text">{S.review.patternsNone}</p>
           )}
         </section>
+
+        {paragraphs.map((t) => (
+          <section key={t.take_id} className="step" aria-labelledby={`qa-${t.take_id}`}>
+            <h3 className="step__title" id={`qa-${t.take_id}`}>
+              {S.review.comprehension}
+            </h3>
+            {!isConfirmed && <p className="step__text">{S.review.comprehensionNote}</p>}
+            <Questions take_id={t.take_id} locked={isConfirmed} />
+          </section>
+        ))}
+
+        {!session.simulated && (
+          <section className="step" aria-labelledby="riwayat-title">
+            <h3 className="step__title" id="riwayat-title">
+              {S.review.history}
+            </h3>
+            <p className="step__text">{history.length ? S.review.historyNote : S.review.historyNone}</p>
+            {history.length > 0 && (
+              <ol className="riwayat">
+                {history.map((r) => (
+                  <li key={r.session_id} className="riwayat__row">
+                    <span className="riwayat__date">{formatDate(r.at)}</span>
+                    <span className="riwayat__level">{LEVEL[r.level]}</span>
+                    <span className="riwayat__speed">
+                      {r.correctUnitsPerMinute === null ? '—' : unit && r.unit !== unit ? S.review.otherUnit : S.review.speed(r.correctUnitsPerMinute, UNIT[r.unit])}
+                    </span>
+                  </li>
+                ))}
+              </ol>
+            )}
+          </section>
+        )}
 
         <section className="step step--decide">
           <h3 className="step__title">
@@ -489,6 +586,7 @@ function SessionReview({ session, active }: { session: Session; active: boolean 
                 {suggestion.missing ? S.review.noLevel(CARD[suggestion.missing]) : '—'}
               </p>
             )}
+            {!isConfirmed && finalLevel && <p className="verdict__label">{S.review.basedOn(confirmedWords(takes))}</p>}
             <div className="verdict__chips">
               <span className={`chip ${isConfirmed ? 'chip--success' : 'chip--caution'}`}>
                 {isConfirmed ? S.review.confirmedChip : S.review.pendingChip}

@@ -279,6 +279,18 @@ export function setWordEdit(take_id: string, i: number, status: WordStatus | nul
   persist(db.put('takes', next));
 }
 
+/** The teacher's tap for oral question `k` on a paragraf card: right, wrong, or null for not asked. */
+export function setComprehension(take_id: string, k: number, value: boolean | null): void {
+  const take = state.takes[take_id];
+  if (!take) return;
+  const answers = [...(take.teacher.comprehension ?? [])];
+  while (answers.length <= k) answers.push(null);
+  answers[k] = value;
+  const next: Take = { ...take, teacher: { ...take.teacher, comprehension: answers } };
+  set({ takes: { ...state.takes, [take_id]: next } });
+  persist(db.put('takes', next));
+}
+
 export async function getAudio(take_id: string): Promise<Blob | undefined> {
   try {
     return await db.get<Blob>('audio', take_id);

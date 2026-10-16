@@ -18,6 +18,20 @@
         "Bintang kecil",
         "Perjalanan",
         "Gurun dan rubah"
+      ],
+      "questions": [
+        {
+          "q": "Di mana pangeran kecil tinggal?",
+          "a": "Di sebuah bintang yang sangat kecil."
+        },
+        {
+          "q": "Apa yang disiram pangeran setiap pagi?",
+          "a": "Sekuntum mawar."
+        },
+        {
+          "q": "Siapa yang ditemui pangeran di gurun?",
+          "a": "Seekor rubah."
+        }
       ]
     },
     {
@@ -98,6 +112,20 @@
       "blocks": [
         "Setiap hari Minggu, Dina pergi ke rumah nenek. Rumah nenek ada di dekat sawah. Di belakang rumah ada kebun kecil.",
         "Nenek menanam cabai, tomat, dan bayam. Dina senang membantu nenek menyiram tanaman. Sore hari, mereka makan pisang goreng bersama."
+      ],
+      "questions": [
+        {
+          "q": "Ke mana Dina pergi setiap hari Minggu?",
+          "a": "Ke rumah nenek."
+        },
+        {
+          "q": "Apa saja yang ditanam nenek?",
+          "a": "Cabai, tomat, dan bayam."
+        },
+        {
+          "q": "Apa yang mereka makan bersama pada sore hari?",
+          "a": "Pisang goreng."
+        }
       ]
     },
     {

@@ -94,8 +94,14 @@ function demoTake(student_ref: string, session_id: string, level: CardLevel, pas
     events: [],
     versions: { card: card.version, model: DEMO_MODEL, engine: ENGINE_VERSION, rubric: RUBRIC_VERSION },
     audio: { stored: false },
-    teacher: { edits: {}, reviewed_at: at + 60_000 },
+    teacher: { edits: {}, reviewed_at: at + 60_000, ...(card.questions ? { comprehension: demoAnswers(student_ref, card.questions.length, pass) } : {}) },
   };
+}
+
+/** Example taps for the oral questions after a paragraf card. Its own random stream, so the readings stay as they were. */
+function demoAnswers(student_ref: string, n: number, pass: boolean): boolean[] {
+  const rand = rng(hash(`${student_ref}:pertanyaan`));
+  return Array.from({ length: n }, () => rand() < (pass ? 0.85 : 0.45));
 }
 
 /** A confirmed example reading for one student, stepping down the cards as a real reading would. */

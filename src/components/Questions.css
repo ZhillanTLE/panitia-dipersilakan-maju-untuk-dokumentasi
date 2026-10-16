@@ -1,0 +1,69 @@
+/* Pemahaman: oral questions, right or wrong */
+.qa {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  align-self: stretch;
+}
+
+.qa__row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  column-gap: var(--space-3);
+  align-items: center;
+  padding: var(--space-3) 0;
+  border-top: 1px solid var(--neutral-200);
+}
+
+.qa__q {
+  font-size: var(--fs-9);
+  line-height: var(--lh-9);
+  font-weight: var(--fw-s);
+}
+
+.qa__a {
+  grid-column: 1;
+  color: var(--muted);
+  font-size: var(--fs-9);
+  line-height: var(--lh-9);
+}
+
+.qa__taps {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  display: flex;
+  gap: var(--space-1);
+}
+
+.qa__tap {
+  min-width: 56px;
+  min-height: 36px;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--neutral-300);
+  border-radius: var(--r-pill);
+  background: var(--card);
+  font-size: var(--fs-9);
+  font-weight: var(--fw-s);
+}
+
+.qa__tap[data-value='right'][aria-pressed='true'] {
+  border-color: var(--success);
+  background: var(--success);
+  color: var(--card);
+}
+
+.qa__tap[data-value='wrong'][aria-pressed='true'] {
+  border-color: var(--caution);
+  background: var(--caution-tint);
+  color: var(--caution);
+}
+
+.qa__tap:disabled {
+  cursor: default;
+}
+
+.qa__count {
+  color: var(--muted);
+  font-size: var(--fs-9);
+  line-height: var(--lh-9);
+}
