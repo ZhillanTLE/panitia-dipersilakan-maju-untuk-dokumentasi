@@ -7,6 +7,8 @@ import './ReadingText.css';
 export interface ReviewMarks {
   status(i: number): WordStatus;
   edited(i: number): boolean;
+  /** What the engine heard instead, written above a misread word like a reading aid. */
+  heard?(i: number): string | undefined;
   insertions: Insertion[];
   selected?: number;
 }
@@ -86,14 +88,26 @@ export function ReadingText({ card, words, mode, cursor = 0, playing, review, on
           </Fragment>
         ))
       : w.text;
+    const heard = mode === 'review' && (state === 'substituted' || state === 'uncertain') ? review?.heard?.(w.i) : undefined;
+    const body = heard ? (
+      <>
+        <span className="w__heard" aria-hidden="true">
+          {heard}
+        </span>
+        {content}
+      </>
+    ) : (
+      content
+    );
     const common = {
       'data-i': w.i,
       'data-state': state,
       'data-edited': review?.edited(w.i) ? '' : undefined,
       className: 'w',
     };
-    if (!onWordTap) return <span {...common}>{content}</span>;
-    const label = mode === 'review' ? `${w.text}: ${STATUS[state as WordStatus]}` : undefined;
+    if (!onWordTap) return <span {...common}>{body}</span>;
+    const label =
+      mode === 'review' ? `${w.text}: ${STATUS[state as WordStatus]}${heard ? `, terdengar ${heard}` : ''}` : undefined;
     return (
       <button
         type="button"
@@ -102,7 +116,7 @@ export function ReadingText({ card, words, mode, cursor = 0, playing, review, on
         aria-pressed={mode === 'review' ? review?.selected === w.i : undefined}
         onClick={() => onWordTap(w.i)}
       >
-        {content}
+        {body}
       </button>
     );
   };

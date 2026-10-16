@@ -132,8 +132,11 @@ button.w {
 }
 
 .reading--review .w[data-state='substituted'] {
+  border-radius: 3px 3px 0 0;
   background: var(--caution-tint);
-  box-shadow: 0 0 0 2px var(--caution-tint);
+  box-shadow:
+    0 0 0 2px var(--caution-tint),
+    inset 0 -2px 0 var(--caution);
   color: var(--caution);
 }
 
@@ -190,4 +193,37 @@ button.w {
   display: block;
   font-size: var(--fs-9);
   vertical-align: baseline;
+}
+
+/* Review reads like an annotated text: extra leading leaves room for what was heard */
+.reading--review {
+  line-height: 2.05;
+}
+
+.reading--review.reading--grid .reading__grid {
+  row-gap: calc(var(--rs) * 1.1);
+}
+
+.w__heard {
+  position: absolute;
+  bottom: calc(100% - 0.35em);
+  left: 50%;
+  max-width: 9em;
+  overflow: hidden;
+  color: var(--caution);
+  font-size: max(11px, 0.42em);
+  line-height: 1.2;
+  font-weight: var(--fw-s);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.w[data-state='uncertain'] .w__heard {
+  color: var(--muted);
+}
+
+.reading--glyphs .w__heard {
+  font-size: 12px;
 }

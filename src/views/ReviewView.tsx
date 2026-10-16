@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AudioBar, type AudioBarHandle } from '../components/AudioBar';
 import { Book, PageFoot } from '../components/Book';
-import { IconLeft, IconRight } from '../components/Icons';
+import { IconCheck, IconFlag, IconLeft, IconRight } from '../components/Icons';
 import { ReadingText } from '../components/ReadingText';
 import { toast } from '../components/Toast';
 import { WordMenu } from '../components/WordMenu';
@@ -15,7 +15,7 @@ import { ENGINE_VERSION, scoreTake } from '../lib/scoring';
 import { simulateTokens } from '../lib/simulate';
 import { addTake, confirmSession, endSession, getAudio, newId, setWordEdit, takesOf, useApp } from '../lib/store';
 import { CARD, LEVEL, S, SOURCE, STATUS } from '../strings';
-import type { CardLevel, ChildLevel, Session, Source, Take } from '../types';
+import type { CardLevel, ChildLevel, Session, Source, Take, WordStatus } from '../types';
 import './ReviewView.css';
 
 /** How far word timings trail the voice, per source. Used to seek and to box the word being played. */
@@ -39,7 +39,10 @@ export function ReviewView({ active, sessionId }: { active: boolean; sessionId?:
   return (
     <section className="review" aria-label={S.review.title}>
       <aside className="review__list">
-        <h1 className="review__title">{S.review.title}</h1>
+        <div className="review__head">
+          <h1 className="review__title">{S.review.title}</h1>
+          <p className="t-meta">{S.review.intro}</p>
+        </div>
         <SessionList title={S.review.pending} sessions={pending} selectedId={sessionId} takes={app.takes} />
         {confirmed.length > 0 && (
           <SessionList title={S.review.confirmed} sessions={confirmed} selectedId={sessionId} takes={app.takes} />
@@ -76,6 +79,7 @@ function SessionList({
         {sessions.map((s) => {
           const sTakes = takesOf(s, takes);
           const unresolved = sTakes.reduce((n, t) => n + cardOutcome(t).unresolved, 0);
+          const confirmedLevel = s.suggestion?.status === 'confirmed' ? s.suggestion.confirmed?.level : undefined;
           return (
             <li key={s.session_id}>
               <a
@@ -83,18 +87,19 @@ function SessionList({
                 href={href('tinjau', s.session_id)}
                 aria-current={s.session_id === selectedId ? 'page' : undefined}
               >
-                <span className="slist__ref">{s.student_ref}</span>
+                <span className="slist__ref">
+                  {s.student_ref}
+                  {s.simulated && <span className="slist__sim">{S.review.simulated}</span>}
+                </span>
                 <span className="slist__meta">
                   {formatDateTime(s.started_at)}, {S.review.cards(sTakes.length).toLowerCase()}
                 </span>
-                <span className="slist__chips">
-                  {s.simulated && <span className="chip chip--ink">{S.review.simulated}</span>}
-                  {s.suggestion?.status !== 'confirmed' && unresolved > 0 && (
-                    <span className="chip chip--caution">{S.review.unresolved(unresolved)}</span>
-                  )}
-                  {s.suggestion?.status === 'confirmed' && s.suggestion.confirmed?.level && (
-                    <span className="chip chip--success">{LEVEL[s.suggestion.confirmed.level]}</span>
-                  )}
+                <span className="slist__side">
+                  {confirmedLevel ? (
+                    <span className="chip chip--success">{LEVEL[confirmedLevel]}</span>
+                  ) : unresolved > 0 ? (
+                    <span className="chip chip--caution">{unresolved}</span>
+                  ) : null}
                 </span>
               </a>
             </li>
@@ -163,6 +168,17 @@ function makeSimulatedSession(): void {
   navigate('tinjau', session.session_id);
 }
 
+interface Flag {
+  take: number;
+  i: number;
+  expected: string;
+  heard?: string;
+  status: WordStatus;
+  open: boolean;
+}
+
+const LEGEND: WordStatus[] = ['correct', 'substituted', 'omitted', 'uncertain', 'supplied', 'repeated', 'self_corrected'];
+
 function SessionReview({ session, active }: { session: Session; active: boolean }) {
   const app = useApp();
   const takes = takesOf(session, app.takes);
@@ -191,13 +207,16 @@ function SessionReview({ session, active }: { session: Session; active: boolean 
     };
   }, [take?.take_id, take?.audio.stored]);
 
+  /** Opens card `next`, and optionally word `word` on it. */
   const go = useCallback(
-    (next: number) => {
-      if (next < 0 || next >= takes.length || next === index) return;
-      setDir(next > index ? 'forward' : 'back');
-      setSelectedWord(null);
-      setPlayingMs(null);
-      setIndex(next);
+    (next: number, word: number | null = null) => {
+      if (next < 0 || next >= takes.length) return;
+      if (next !== index) {
+        setDir(next > index ? 'forward' : 'back');
+        setPlayingMs(null);
+        setIndex(next);
+      }
+      setSelectedWord(word);
     },
     [index, takes.length],
   );
@@ -214,6 +233,21 @@ function SessionReview({ session, active }: { session: Session; active: boolean 
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [active, go, index, selectedWord]);
+
+  // Every word the engine did not hear as plainly correct, across all cards, in reading order.
+  const flags: Flag[] = takes.flatMap((t, k) =>
+    t.words
+      .filter((w) => effectiveStatus(t, w.i) !== 'correct' || w.status !== 'correct')
+      .map((w) => ({
+        take: k,
+        i: w.i,
+        expected: w.expected,
+        heard: w.heard,
+        status: effectiveStatus(t, w.i),
+        open: effectiveStatus(t, w.i) === 'uncertain',
+      })),
+  );
+  const openFlags = flags.filter((f) => f.open);
 
   if (!take || !card) return null;
 
@@ -247,6 +281,11 @@ function SessionReview({ session, active }: { session: Session; active: boolean 
   const suggestion = suggestLevel(takes, true);
   const finalLevel = isConfirmed ? (session.suggestion?.confirmed?.level ?? null) : suggestion.level;
 
+  const nextOpen = () => {
+    const after = openFlags.find((f) => f.take > index || (f.take === index && f.i > (selectedWord ?? -1))) ?? openFlags[0];
+    if (after) go(after.take, after.i);
+  };
+
   return (
     <div className="sreview">
       <div className="sreview__book">
@@ -269,6 +308,10 @@ function SessionReview({ session, active }: { session: Session; active: boolean 
               review={{
                 status: (i) => effectiveStatus(take, i),
                 edited: (i) => take.teacher.edits[i] !== undefined,
+                heard: (i) => {
+                  const h = take.words[i]?.heard;
+                  return h && h.toLowerCase() !== take.words[i].expected.toLowerCase() ? h : undefined;
+                },
                 insertions: take.insertions,
                 selected: selectedWord ?? undefined,
               }}
@@ -308,7 +351,8 @@ function SessionReview({ session, active }: { session: Session; active: boolean 
               <IconLeft size={14} />
             </button>
             <span className="pager__label">
-              {CARD[take.card.level]}, {S.review.pageOf(index + 1, takes.length)}
+              {CARD[take.card.level]}
+              <span className="pager__of">{S.review.pageOf(index + 1, takes.length)}</span>
             </span>
             <button
               type="button"
@@ -319,84 +363,151 @@ function SessionReview({ session, active }: { session: Session; active: boolean 
             >
               <IconRight size={14} />
             </button>
+            {!isConfirmed && (
+              <span className="pager__hint">{take.source === 'manual' ? S.review.manualHint : S.review.tapHint}</span>
+            )}
           </div>
-          {!isConfirmed && <p className="t-meta">{take.source === 'manual' ? S.review.manualHint : S.review.tapHint}</p>}
+          <details className="legend">
+            <summary>{S.review.legend}</summary>
+            <ul className="legend__list reading--review">
+              {LEGEND.map((status) => (
+                <li key={status}>
+                  <span className="w" data-state={status}>
+                    {S.review.legendSample}
+                  </span>
+                  <span className="legend__name">{STATUS[status]}</span>
+                </li>
+              ))}
+            </ul>
+          </details>
         </div>
       </div>
 
       <div className="sreview__panel">
         <header className="sreview__head">
-          <h2 className="t-s5">{session.student_ref}</h2>
+          <div className="sreview__who">
+            <h2 className="sreview__ref">{session.student_ref}</h2>
+            {session.simulated && <span className="chip chip--ink">{S.review.simulated}</span>}
+          </div>
           <p className="t-meta">
             {formatDateTime(session.started_at)}, {SOURCE[take.source].toLowerCase()}
           </p>
-          {session.simulated && <span className="chip chip--ink">{S.review.simulated}</span>}
         </header>
 
-        <ol className="outcomes">
-          {takes.map((t, k) => {
-            const o = outcomes[k];
-            return (
-              <li key={t.take_id}>
-                <button
-                  type="button"
-                  className="outcome"
-                  aria-current={k === index ? 'true' : undefined}
-                  onClick={() => go(k)}
-                >
-                  <span className="outcome__name">{CARD[t.card.level]}</span>
-                  <span className="outcome__line">
-                    {S.review.cardLine(o.correct, o.total)}, {S.review.passLine(o.needed)}
-                  </span>
-                  <span className="outcome__chips">
-                    <span className={`chip ${o.passed ? 'chip--success' : 'chip--neutral'}`}>
+        <section className="step" data-done={!isConfirmed && openFlags.length === 0 ? '' : undefined}>
+          <h3 className="step__title">
+            <span className={`num${isConfirmed || openFlags.length === 0 ? ' is-done' : ' is-on'}`}>
+              {isConfirmed || openFlags.length === 0 ? <IconCheck size={12} /> : 1}
+            </span>
+            {S.review.steps.check}
+          </h3>
+          <p className="step__text">
+            {!flags.length ? S.review.flagsNone : openFlags.length ? S.review.flagsOpen(openFlags.length) : S.review.flagsDone}
+          </p>
+          {flags.length > 0 && (
+            <ul className="flags" aria-label={S.review.flagsList}>
+              {flags.map((f) => (
+                <li key={`${f.take}:${f.i}`}>
+                  <button
+                    type="button"
+                    className="flag"
+                    data-open={f.open ? '' : undefined}
+                    aria-current={f.take === index && f.i === selectedWord ? 'true' : undefined}
+                    disabled={isConfirmed}
+                    onClick={() => go(f.take, f.i)}
+                  >
+                    <span className="flag__word">{f.expected}</span>
+                    <span className="flag__heard">{f.heard ? S.review.heardAs(f.heard) : S.review.notHeard}</span>
+                    <span className="flag__status" data-state={f.status}>
+                      {STATUS[f.status]}
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+          {!isConfirmed && openFlags.length > 0 && (
+            <button type="button" className="btn btn--action" onClick={nextOpen}>
+              <IconFlag size={14} />
+              {S.review.nextFlag}
+            </button>
+          )}
+        </section>
+
+        <section className="step">
+          <h3 className="step__title">
+            <span className="num">2</span>
+            {S.review.steps.cards}
+          </h3>
+          <ol className="outcomes">
+            {takes.map((t, k) => {
+              const o = outcomes[k];
+              return (
+                <li key={t.take_id}>
+                  <button
+                    type="button"
+                    className="outcome"
+                    aria-current={k === index ? 'true' : undefined}
+                    onClick={() => go(k)}
+                  >
+                    <span className="outcome__name">{CARD[t.card.level]}</span>
+                    <span className="outcome__line">
+                      {S.review.cardLine(o.correct, o.total)}, {S.review.passLine(o.needed)}
+                    </span>
+                    <span className={`chip ${o.passed ? 'chip--success' : 'chip--neutral'} outcome__chip`}>
                       {o.passed ? S.review.passed : S.review.notPassed}
                     </span>
-                    {o.unresolved > 0 && <span className="chip chip--caution">{S.review.unresolved(o.unresolved)}</span>}
-                  </span>
-                </button>
-              </li>
-            );
-          })}
-        </ol>
-
-        {take.fluency.wcpm !== null && take.fluency.reading_time_s !== null && (
-          <p className="t-meta">
-            {S.review.fluency(take.fluency.reading_time_s, take.fluency.wcpm)}. {S.review.fluencyNote}
-            {take.insertions.length > 0 && ` ${S.review.insertions(take.insertions.length)}.`}
-          </p>
-        )}
-
-        <div className="verdict">
-          <p className="verdict__label">{isConfirmed ? S.review.level : S.review.suggested}</p>
-          {finalLevel ? (
-            <p className="verdict__level">{LEVEL[finalLevel]}</p>
-          ) : (
-            <p className="verdict__none">
-              {suggestion.missing ? S.review.noLevel(CARD[suggestion.missing]) : '—'}
+                  </button>
+                </li>
+              );
+            })}
+          </ol>
+          {take.fluency.wcpm !== null && take.fluency.reading_time_s !== null && (
+            <p className="t-meta">
+              {S.review.fluency(take.fluency.reading_time_s, take.fluency.wcpm)}. {S.review.fluencyNote}
+              {take.insertions.length > 0 && ` ${S.review.insertions(take.insertions.length)}.`}
             </p>
           )}
-          <div className="verdict__chips">
-            <span className={`chip ${isConfirmed ? 'chip--success' : 'chip--caution'}`}>
-              {isConfirmed ? S.review.confirmedChip : S.review.pendingChip}
+        </section>
+
+        <section className="step step--decide">
+          <h3 className="step__title">
+            <span className={`num${isConfirmed ? ' is-done' : openFlags.length ? '' : ' is-on'}`}>
+              {isConfirmed ? <IconCheck size={12} /> : 3}
             </span>
-            <span className="t-meta">{isConfirmed ? session.suggestion?.confirmed?.rule : suggestion.rule}</span>
+            {S.review.steps.decide}
+          </h3>
+          <div className="verdict">
+            <p className="verdict__label">{isConfirmed ? S.review.level : S.review.suggested}</p>
+            {finalLevel ? (
+              <p className="verdict__level">{LEVEL[finalLevel]}</p>
+            ) : (
+              <p className="verdict__none">
+                {suggestion.missing ? S.review.noLevel(CARD[suggestion.missing]) : '—'}
+              </p>
+            )}
+            <div className="verdict__chips">
+              <span className={`chip ${isConfirmed ? 'chip--success' : 'chip--caution'}`}>
+                {isConfirmed ? S.review.confirmedChip : S.review.pendingChip}
+              </span>
+              <span className="t-meta">{isConfirmed ? session.suggestion?.confirmed?.rule : suggestion.rule}</span>
+            </div>
           </div>
-        </div>
 
-        {!isConfirmed && (
-          <ConfirmArea
-            session={session}
-            unresolved={unresolved}
-            level={suggestion.level}
-            missing={suggestion.missing}
-            keepAudio={Boolean(student?.consents.audio_research)}
-            hasAudio={takes.some((t) => t.audio.stored)}
-          />
-        )}
+          {!isConfirmed && (
+            <ConfirmArea
+              session={session}
+              unresolved={unresolved}
+              level={suggestion.level}
+              missing={suggestion.missing}
+              keepAudio={Boolean(student?.consents.audio_research)}
+              hasAudio={takes.some((t) => t.audio.stored)}
+            />
+          )}
 
-        {isConfirmed && session.simulated && <p className="t-b8">{S.review.simulatedNote}</p>}
-        {isConfirmed && !session.simulated && finalLevel && <Activities level={finalLevel} />}
+          {isConfirmed && session.simulated && <p className="t-b8">{S.review.simulatedNote}</p>}
+          {isConfirmed && !session.simulated && finalLevel && <Activities level={finalLevel} />}
+        </section>
 
         <details className="rules">
           <summary>{S.review.rules}</summary>
