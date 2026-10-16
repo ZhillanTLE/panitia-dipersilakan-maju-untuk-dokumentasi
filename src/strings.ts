@@ -58,7 +58,7 @@ export const CONFIDENCE: Record<Confidence, string> = {
 };
 
 export const SOURCE: Record<Source, string> = {
-  online: 'Suara daring',
+  online: 'Asesmen Suara',
   ondevice: 'Suara di perangkat',
   manual: 'Penanda guru',
   simulated: 'Simulasi',
@@ -332,7 +332,7 @@ export const S = {
 
   // Kelas
   kelas: {
-    title: 'Kelas',
+    title: 'Kelas 2X',
     summary: (students: number, confirmed: number) =>
       `${students} murid, ${confirmed} sudah punya tingkat terkonfirmasi.`,
     progressLabel: 'Kemajuan kelas',
