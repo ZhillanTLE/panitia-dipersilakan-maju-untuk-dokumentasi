@@ -30,3 +30,5 @@ __pycache__/
 # Online planner: server state and keys stay local
 planner/state/
 planner/.env
+
+notes/*

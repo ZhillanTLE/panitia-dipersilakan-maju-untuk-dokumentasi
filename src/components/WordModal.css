@@ -1,0 +1,299 @@
+.word-modal {
+  width: min(480px, calc(100vw - 32px));
+  max-width: 480px;
+  box-sizing: border-box;
+  padding: var(--space-6);
+  border: 0;
+  border-radius: var(--r-24);
+  background: var(--neutral-100);
+  color: var(--ink);
+  box-shadow: var(--ring-card), var(--shadow-lift);
+  margin: auto;
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  animation: modal-pop var(--motion-highlight) var(--ease-highlight);
+}
+
+.word-modal::backdrop {
+  background: rgba(45, 35, 28, 0.45);
+  backdrop-filter: blur(2px);
+}
+
+@keyframes modal-pop {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.word-modal__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-4);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--neutral-200);
+}
+
+.word-modal__badge-group {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.word-modal__tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: var(--r-pill);
+  background: var(--neutral-1000);
+  color: var(--paper);
+  font-size: var(--fs-9);
+  font-weight: var(--fw-s);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.word-modal__class {
+  font-size: var(--fs-8);
+  font-weight: var(--fw-s);
+  color: var(--caution);
+  font-style: italic;
+}
+
+.word-modal__close-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transition: background-color var(--motion-ui), color var(--motion-ui);
+}
+
+.word-modal__close-btn:hover {
+  background: var(--neutral-200);
+  color: var(--ink);
+}
+
+.word-modal__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+/* Big word pronunciation trigger */
+.word-modal__word-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  width: 100%;
+  padding: var(--space-4) var(--space-5);
+  border: 2px solid var(--neutral-300);
+  border-radius: var(--r-16);
+  background: var(--cream);
+  color: var(--ink);
+  cursor: pointer;
+  text-align: left;
+  transition: transform var(--motion-ui), border-color var(--motion-ui), background-color var(--motion-ui), box-shadow var(--motion-ui);
+}
+
+.word-modal__word-btn:hover {
+  background: var(--paper);
+  border-color: var(--stroke);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-hairline);
+}
+
+.word-modal__word-btn:active {
+  transform: translateY(0);
+}
+
+.word-modal__word-btn--playing {
+  border-color: var(--success);
+  background: var(--success-tint);
+  animation: pulse-ring 1.4s infinite ease-in-out;
+}
+
+.word-modal__word-btn--loading {
+  opacity: 0.8;
+  cursor: wait;
+}
+
+@keyframes pulse-ring {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(63, 107, 75, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(63, 107, 75, 0);
+  }
+}
+
+.word-modal__word-text {
+  font-family: var(--font-sans);
+  font-size: var(--fs-3);
+  font-weight: var(--fw-h);
+  line-height: var(--lh-3);
+  color: var(--ink);
+  letter-spacing: -0.5px;
+}
+
+.word-modal__speaker-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 6px 12px;
+  border-radius: var(--r-pill);
+  background: var(--ink);
+  color: var(--paper);
+  font-size: var(--fs-8);
+  font-weight: var(--fw-s);
+  white-space: nowrap;
+}
+
+.word-modal__word-btn--playing .word-modal__speaker-chip {
+  background: var(--success);
+}
+
+.word-modal__speaker-label {
+  user-select: none;
+}
+
+/* Spelling & Syllables */
+.word-modal__spelling-row {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-1);
+}
+
+.word-modal__spelling-label {
+  font-size: var(--fs-8);
+  color: var(--muted);
+  font-weight: var(--fw-s);
+}
+
+.word-modal__spelling-dots {
+  font-family: var(--font-sans);
+  font-size: var(--fs-5);
+  font-weight: var(--fw-s);
+  color: var(--ink);
+  letter-spacing: 0.04em;
+}
+
+.word-modal__lemma-hint {
+  font-size: var(--fs-8);
+  color: var(--muted);
+}
+
+/* Definition */
+.word-modal__definition-card {
+  padding: var(--space-4);
+  border-radius: var(--r-14);
+  background: var(--paper);
+  box-shadow: var(--ring-row);
+}
+
+.word-modal__def-title {
+  margin: 0 0 var(--space-2);
+  font-size: var(--fs-9);
+  font-weight: var(--fw-s);
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.word-modal__meaning {
+  margin: 0;
+  font-size: var(--fs-7);
+  line-height: var(--lh-7);
+  color: var(--neutral-1000);
+}
+
+.word-modal__example {
+  margin: var(--space-2) 0 0;
+  font-size: var(--fs-8);
+  line-height: var(--lh-8);
+  color: var(--muted);
+}
+
+.word-modal__example-lead {
+  font-weight: var(--fw-s);
+  color: var(--ink);
+}
+
+/* Engine Meta */
+.word-modal__engine-info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: 0 var(--space-1);
+}
+
+.word-modal__engine-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.word-modal__dot-online {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--r-pill);
+  background: var(--success);
+}
+
+.word-modal__engine-text {
+  font-size: var(--fs-9);
+  color: var(--muted);
+}
+
+.word-modal__error-msg {
+  margin: 0;
+  font-size: var(--fs-9);
+  color: #b00020;
+}
+
+/* Foot */
+.word-modal__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-top: var(--space-5);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--neutral-200);
+}
+
+.word-modal__tip {
+  font-size: var(--fs-9);
+  color: var(--muted);
+  line-height: var(--lh-9);
+}
+
+@media (max-width: 480px) {
+  .word-modal {
+    padding: var(--space-4);
+  }
+
+  .word-modal__word-btn {
+    padding: var(--space-3) var(--space-4);
+  }
+
+  .word-modal__word-text {
+    font-size: var(--fs-4);
+    line-height: var(--lh-4);
+  }
+}

@@ -112,3 +112,20 @@ export function IconDownload({ size = 16 }: IconProps) {
     </svg>
   );
 }
+
+export function IconVolume({ size = 16 }: IconProps) {
+  return (
+    <svg {...base(size)}>
+      <path d="M2.5 6h2.5l4-3.5v11l-4-3.5H2.5a1 1 0 0 1-1-1v-2a1 1 0 0 1 1-1z" />
+      <path d="M12 5.5a4 4 0 0 1 0 5M13.5 3.5a7 7 0 0 1 0 9" />
+    </svg>
+  );
+}
+
+export function IconClose({ size = 16 }: IconProps) {
+  return (
+    <svg {...base(size)}>
+      <path d="M4 4l8 8M12 4l-8 8" />
+    </svg>
+  );
+}

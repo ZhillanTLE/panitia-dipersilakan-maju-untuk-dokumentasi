@@ -6,6 +6,7 @@ import { ListenButton } from '../components/ListenButton';
 import { SketchStars, Trail } from '../components/Trail';
 import { ReadingText } from '../components/ReadingText';
 import { toast } from '../components/Toast';
+import { WordModal } from '../components/WordModal';
 import { startCapture, type Capture } from '../lib/audio';
 import { cardFor, cardWords } from '../lib/cards';
 import { loadPrefs, savePrefs, type TextSize } from '../lib/prefs';
@@ -115,6 +116,7 @@ export function ReadView({ active }: { active: boolean }) {
   const [elapsed, setElapsed] = useState(0);
   const [notice, setNotice] = useState<string | null>(null);
   const [page, setPage] = useState<{ key: string; no: number; dir: 'forward' | 'back' }>({ key: 'cover', no: 0, dir: 'forward' });
+  const [kbbiWord, setKbbiWord] = useState<string | null>(null);
   const run = useRef<{ session: Session; source: Source } | null>(null);
   const live = useRef<Live>(freshLive('manual'));
   const phaseRef = useRef(phase);
@@ -545,7 +547,13 @@ export function ReadView({ active }: { active: boolean }) {
                 mode="tes"
                 cursor={shownCursor}
                 textSize={textSize}
-                onWordTap={listening && live.current.source !== 'simulated' ? placeAt : undefined}
+                onWordTap={(i) => {
+                  if (listening && live.current.source !== 'simulated') {
+                    placeAt(i);
+                  }
+                  const w = words[i];
+                  if (w) setKbbiWord(w.text);
+                }}
               />
             </div>
             <PageFoot left={card.title} right={page.no} />
@@ -650,6 +658,12 @@ export function ReadView({ active }: { active: boolean }) {
           />
         )}
       </div>
+
+      <WordModal
+        word={kbbiWord}
+        open={Boolean(kbbiWord)}
+        onClose={() => setKbbiWord(null)}
+      />
     </section>
   );
 }
