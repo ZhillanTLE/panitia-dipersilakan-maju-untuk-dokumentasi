@@ -24,6 +24,8 @@ interface ReadingTextProps {
   review?: ReviewMarks;
   onWordTap?: (i: number) => void;
   textSize: TextSize;
+  /** Jejak pasir: footprints under every word read, and room between lines for them. */
+  trail?: boolean;
 }
 
 const SIZES: CSSProperties[] = [
@@ -32,11 +34,18 @@ const SIZES: CSSProperties[] = [
   { '--rs': 'var(--fs-3)' } as CSSProperties,
 ];
 
+/** Story passages run longer, so prose starts a step smaller to keep a whole segment on the page. */
+const PROSE_SIZES: CSSProperties[] = [
+  { '--rs': 'var(--fs-6)' } as CSSProperties,
+  { '--rs': 'var(--fs-5)' } as CSSProperties,
+  { '--rs': 'var(--fs-4)' } as CSSProperties,
+];
+
 /**
  * Card text with the reading highlight. In `tes` the highlight never shows right or
  * wrong (CLAUDE.md rule 5): read words are only dimmed.
  */
-export function ReadingText({ card, words, mode, cursor = 0, playing, review, onWordTap, textSize }: ReadingTextProps) {
+export function ReadingText({ card, words, mode, cursor = 0, playing, review, onWordTap, textSize, trail }: ReadingTextProps) {
   const rootRef = useRef<HTMLDivElement>(null);
   const boxRef = useRef<HTMLSpanElement>(null);
   const target = mode === 'tes' ? (cursor < words.length ? cursor : -1) : (playing ?? -1);
@@ -135,8 +144,8 @@ export function ReadingText({ card, words, mode, cursor = 0, playing, review, on
   return (
     <div
       ref={rootRef}
-      className={`reading reading--${card.layout} reading--${mode}${card.level === 'huruf' || card.level === 'suku_kata' ? ' reading--glyphs' : ''}`}
-      style={SIZES[textSize]}
+      className={`reading reading--${card.layout} reading--${mode}${card.level === 'huruf' || card.level === 'suku_kata' ? ' reading--glyphs' : ''}${trail ? ' reading--trail' : ''}`}
+      style={(card.layout === 'prose' ? PROSE_SIZES : SIZES)[textSize]}
     >
       <span ref={boxRef} className="reading__box" aria-hidden="true" />
       {insertionsAfter(-1)}

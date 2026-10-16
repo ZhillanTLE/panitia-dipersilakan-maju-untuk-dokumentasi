@@ -1,0 +1,64 @@
+/* Jejak pasir: a dotted dune line, the part already walked inked in */
+.trail {
+  position: relative;
+  margin-bottom: var(--space-6);
+}
+
+.trail svg {
+  display: block;
+  overflow: visible;
+}
+
+.trail__path,
+.trail__walked {
+  fill: none;
+  stroke-linecap: round;
+}
+
+.trail__path {
+  stroke: var(--neutral-400);
+  stroke-width: 1.5;
+  stroke-dasharray: 2 7;
+}
+
+.trail__walked {
+  stroke: var(--ink);
+  stroke-width: 2;
+  transition: stroke-dashoffset 420ms var(--ease-highlight);
+}
+
+.trail__stop circle {
+  fill: var(--neutral-100);
+  stroke: var(--stroke);
+  stroke-width: 1.5;
+  transition:
+    fill var(--motion-ui) ease,
+    stroke var(--motion-ui) ease;
+}
+
+.trail__stop[data-on] circle {
+  fill: var(--ink);
+  stroke: var(--ink);
+}
+
+.trail__stop text {
+  fill: var(--muted);
+  font-family: var(--font-sans);
+  font-size: var(--fs-9);
+}
+
+.trail__stop[data-on] text {
+  fill: var(--ink);
+  font-weight: var(--fw-s);
+}
+
+.trail__end {
+  fill: var(--neutral-400);
+}
+
+.trail__walker {
+  fill: var(--ink);
+  stroke: var(--neutral-100);
+  stroke-width: 2;
+  transition: transform 420ms var(--ease-highlight);
+}

@@ -27,6 +27,8 @@ export interface Card {
   blocks: string[];
   /** Syllable split per word, for cards that highlight by syllable ("ma-kan"). */
   syllables?: Record<string, string>;
+  /** Jejak pasir: a short name for each block, shown as stops on the trail above the text. */
+  stops?: string[];
 }
 
 export interface CardWord {

@@ -3,6 +3,7 @@ import { Book, PageFoot } from '../components/Book';
 import { IconCheck, IconLeft, IconMic, IconStop, IconTextSize } from '../components/Icons';
 import { Ladder } from '../components/Ladder';
 import { ListenButton } from '../components/ListenButton';
+import { Trail } from '../components/Trail';
 import { ReadingText } from '../components/ReadingText';
 import { toast } from '../components/Toast';
 import { startCapture, type Capture } from '../lib/audio';
@@ -478,9 +479,6 @@ export function ReadView({ active }: { active: boolean }) {
     savePrefs({ textSize: next });
   };
 
-  // Pages fanned behind the front page: the cards still to come, or the book's thickness.
-  const remaining = level ? CARD_ORDER.length - CARD_ORDER.indexOf(level) - 1 : 3;
-  const behind = Math.min(2, Math.max(1, remaining));
 
   const thanksTake = phase.kind === 'thanks' ? app.takes[phase.takeId] : undefined;
   const readLevels = new Set<CardLevel>(
@@ -531,11 +529,17 @@ export function ReadView({ active }: { active: boolean }) {
         </div>
       </header>
 
-      <Book pageKey={page.key} direction={page.dir} behind={behind} className="book--stage">
+      <Book pageKey={page.key} direction={page.dir} behind={0} className="book--stage">
         {phase.kind === 'card' && card && (
           <>
             <div className="page__body">
+              <Trail
+                stops={card.stops ?? []}
+                progress={words.length ? Math.min(shownCursor, words.length) / words.length : 0}
+                block={words[Math.min(shownCursor, words.length - 1)]?.block ?? 0}
+              />
               <ReadingText
+                trail
                 card={card}
                 words={words}
                 mode="tes"

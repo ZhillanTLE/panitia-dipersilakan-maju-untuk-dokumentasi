@@ -227,3 +227,27 @@ button.w {
 .reading--glyphs .w__heard {
   font-size: 12px;
 }
+
+/* Jejak pasir: footprints under every word read. They mark reading, never right or wrong. */
+.reading--trail:not(.reading--grid) {
+  line-height: 2.1;
+}
+
+.reading--trail .w[data-state='read']::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: -0.16em;
+  width: 10px;
+  height: 4px;
+  margin-left: -5px;
+  background: radial-gradient(circle at 2px 2px, var(--neutral-400) 1.6px, transparent 2px) 0 0 / 6px 4px repeat-x;
+  animation: step-in 320ms var(--ease-highlight);
+}
+
+@keyframes step-in {
+  from {
+    opacity: 0;
+    transform: translateY(3px);
+  }
+}
