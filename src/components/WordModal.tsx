@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useId, useRef, useState } from 'react';
+import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState, type CSSProperties } from 'react';
 import { lookupKbbi, type KbbiEntry } from '../lib/kbbi';
 import { getGoogleTtsApiKey, playIndonesianSpeech, stopSpeech, type TtsSource } from '../lib/tts';
 import { IconClose, IconVolume } from './Icons';
@@ -6,12 +6,15 @@ import './WordModal.css';
 
 export interface WordModalProps {
   word: string | null;
+  anchor?: HTMLElement | null;
   open: boolean;
   onClose: () => void;
+  onMouseEnter?: () => void;
+  onMouseLeave?: () => void;
 }
 
-export function WordModal({ word, open, onClose }: WordModalProps) {
-  const dialogRef = useRef<HTMLDialogElement>(null);
+export function WordModal({ word, anchor, open, onClose, onMouseEnter, onMouseLeave }: WordModalProps) {
+  const modalRef = useRef<HTMLDivElement>(null);
   const [playing, setPlaying] = useState(false);
   const [loading, setLoading] = useState(false);
   const [usedSource, setUsedSource] = useState<TtsSource | null>(null);
@@ -21,22 +24,85 @@ export function WordModal({ word, open, onClose }: WordModalProps) {
   const entry: KbbiEntry | null = word ? lookupKbbi(word) : null;
   const hasApiKey = Boolean(getGoogleTtsApiKey());
 
-  // Handle open/close with native <dialog>
+  // Reset states when word changes or modal closes
   useEffect(() => {
-    const dialog = dialogRef.current;
-    if (!dialog) return;
-
-    if (open && !dialog.open) {
-      setErrorMsg(null);
-      setUsedSource(null);
-      dialog.showModal();
-    } else if (!open && dialog.open) {
+    if (!open) {
       stopSpeech();
       setPlaying(false);
       setLoading(false);
-      dialog.close();
+      setErrorMsg(null);
+      setUsedSource(null);
     }
-  }, [open]);
+  }, [open, word]);
+
+  // Position the modal directly above the anchor word ("di atas katanya")
+  useLayoutEffect(() => {
+    if (!open || !anchor || !modalRef.current) return;
+    const modal = modalRef.current;
+
+    const place = () => {
+      const a = anchor.getBoundingClientRect();
+      const width = modal.offsetWidth;
+      const height = modal.offsetHeight;
+
+      // Center horizontally on anchor word, clamp inside viewport margins
+      let left = a.left + a.width / 2 - width / 2;
+      left = Math.min(Math.max(left, 16), window.innerWidth - width - 16);
+
+      // Arrow position relative to modal left edge
+      const arrowX = Math.min(Math.max(a.left + a.width / 2 - left, 16), width - 16);
+
+      // Default: placement ABOVE the word
+      let top = a.top - height - 12;
+      let placement: 'top' | 'bottom' = 'top';
+
+      // If not enough room above, flip below the word
+      if (top < 12) {
+        top = a.bottom + 12;
+        placement = 'bottom';
+      }
+
+      modal.style.left = `${left}px`;
+      modal.style.top = `${top}px`;
+      modal.style.setProperty('--arrow', `${arrowX}px`);
+      modal.dataset.placement = placement;
+    };
+
+    place();
+    window.addEventListener('resize', place);
+    window.addEventListener('scroll', place, true);
+    return () => {
+      window.removeEventListener('resize', place);
+      window.removeEventListener('scroll', place, true);
+    };
+  }, [open, anchor, word]);
+
+  // Handle escape key and pointerdown outside
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.stopPropagation();
+        onClose();
+      }
+    };
+    const onDown = (e: PointerEvent) => {
+      const target = e.target as HTMLElement;
+      if (
+        modalRef.current &&
+        !modalRef.current.contains(target) &&
+        (!anchor || !anchor.contains(target))
+      ) {
+        onClose();
+      }
+    };
+    document.addEventListener('keydown', onKey);
+    document.addEventListener('pointerdown', onDown);
+    return () => {
+      document.removeEventListener('keydown', onKey);
+      document.removeEventListener('pointerdown', onDown);
+    };
+  }, [open, anchor, onClose]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -64,15 +130,18 @@ export function WordModal({ word, open, onClose }: WordModalProps) {
     }
   }, [word, loading]);
 
-  if (!entry) return null;
+  if (!open || !entry) return null;
 
   return (
-    <dialog
-      ref={dialogRef}
+    <div
+      ref={modalRef}
       className="word-modal"
-      onClose={onClose}
-      onCancel={onClose}
+      role="dialog"
+      aria-modal="false"
       aria-labelledby={titleId}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
+      style={{ '--arrow': '50%' } as CSSProperties}
     >
       <header className="word-modal__head">
         <div className="word-modal__badge-group">
@@ -87,7 +156,7 @@ export function WordModal({ word, open, onClose }: WordModalProps) {
           onClick={onClose}
           aria-label="Tutup jendela pop-up"
         >
-          <IconClose size={20} />
+          <IconClose size={18} />
         </button>
       </header>
 
@@ -145,11 +214,11 @@ export function WordModal({ word, open, onClose }: WordModalProps) {
       </section>
 
       <footer className="word-modal__foot">
-        <span className="word-modal__tip">Ketuk kata untuk mendengarkan suara pelafalan</span>
-        <button type="button" className="btn btn--action" onClick={onClose}>
-          Selesai
+        <span className="word-modal__tip">Ketuk tombol untuk mendengarkan lafal</span>
+        <button type="button" className="word-modal__done-btn" onClick={onClose}>
+          Tutup
         </button>
       </footer>
-    </dialog>
+    </div>
   );
 }

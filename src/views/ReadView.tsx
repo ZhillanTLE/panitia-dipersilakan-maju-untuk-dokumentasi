@@ -116,7 +116,9 @@ export function ReadView({ active }: { active: boolean }) {
   const [elapsed, setElapsed] = useState(0);
   const [notice, setNotice] = useState<string | null>(null);
   const [page, setPage] = useState<{ key: string; no: number; dir: 'forward' | 'back' }>({ key: 'cover', no: 0, dir: 'forward' });
-  const [kbbiWord, setKbbiWord] = useState<string | null>(null);
+  const [kbbiTarget, setKbbiTarget] = useState<{ word: string; anchor: HTMLElement } | null>(null);
+  const enterTimer = useRef<number | null>(null);
+  const leaveTimer = useRef<number | null>(null);
   const run = useRef<{ session: Session; source: Source } | null>(null);
   const live = useRef<Live>(freshLive('manual'));
   const phaseRef = useRef(phase);
@@ -547,12 +549,46 @@ export function ReadView({ active }: { active: boolean }) {
                 mode="tes"
                 cursor={shownCursor}
                 textSize={textSize}
-                onWordTap={(i) => {
+                onWordHover={(i, el) => {
+                  if (leaveTimer.current !== null) {
+                    window.clearTimeout(leaveTimer.current);
+                    leaveTimer.current = null;
+                  }
+                  if (enterTimer.current !== null) {
+                    window.clearTimeout(enterTimer.current);
+                    enterTimer.current = null;
+                  }
+
+                  if (i === null || el === null) {
+                    leaveTimer.current = window.setTimeout(() => {
+                      setKbbiTarget(null);
+                      leaveTimer.current = null;
+                    }, 240);
+                    return;
+                  }
+
+                  const w = words[i];
+                  if (!w) return;
+                  const delay = kbbiTarget ? 40 : 80;
+                  enterTimer.current = window.setTimeout(() => {
+                    setKbbiTarget({ word: w.text, anchor: el });
+                    enterTimer.current = null;
+                  }, delay);
+                }}
+                onWordTap={(i, el) => {
                   if (listening && live.current.source !== 'simulated') {
                     placeAt(i);
                   }
+                  if (leaveTimer.current !== null) {
+                    window.clearTimeout(leaveTimer.current);
+                    leaveTimer.current = null;
+                  }
+                  if (enterTimer.current !== null) {
+                    window.clearTimeout(enterTimer.current);
+                    enterTimer.current = null;
+                  }
                   const w = words[i];
-                  if (w) setKbbiWord(w.text);
+                  if (w && el) setKbbiTarget({ word: w.text, anchor: el });
                 }}
               />
             </div>
@@ -660,9 +696,35 @@ export function ReadView({ active }: { active: boolean }) {
       </div>
 
       <WordModal
-        word={kbbiWord}
-        open={Boolean(kbbiWord)}
-        onClose={() => setKbbiWord(null)}
+        word={kbbiTarget?.word ?? null}
+        anchor={kbbiTarget?.anchor ?? null}
+        open={Boolean(kbbiTarget)}
+        onClose={() => {
+          if (enterTimer.current !== null) {
+            window.clearTimeout(enterTimer.current);
+            enterTimer.current = null;
+          }
+          if (leaveTimer.current !== null) {
+            window.clearTimeout(leaveTimer.current);
+            leaveTimer.current = null;
+          }
+          setKbbiTarget(null);
+        }}
+        onMouseEnter={() => {
+          if (leaveTimer.current !== null) {
+            window.clearTimeout(leaveTimer.current);
+            leaveTimer.current = null;
+          }
+        }}
+        onMouseLeave={() => {
+          if (leaveTimer.current !== null) {
+            window.clearTimeout(leaveTimer.current);
+          }
+          leaveTimer.current = window.setTimeout(() => {
+            setKbbiTarget(null);
+            leaveTimer.current = null;
+          }, 240);
+        }}
       />
     </section>
   );

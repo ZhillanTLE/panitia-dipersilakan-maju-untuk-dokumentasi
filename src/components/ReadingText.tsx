@@ -22,7 +22,8 @@ interface ReadingTextProps {
   /** review: word to box during playback. */
   playing?: number;
   review?: ReviewMarks;
-  onWordTap?: (i: number) => void;
+  onWordTap?: (i: number, el?: HTMLElement) => void;
+  onWordHover?: (i: number | null, el: HTMLElement | null) => void;
   textSize: TextSize;
   /** Jejak pasir: footprints under every word read, and room between lines for them. */
   trail?: boolean;
@@ -45,7 +46,7 @@ const PROSE_SIZES: CSSProperties[] = [
  * Card text with the reading highlight. In `tes` the highlight never shows right or
  * wrong (CLAUDE.md rule 5): read words are only dimmed.
  */
-export function ReadingText({ card, words, mode, cursor = 0, playing, review, onWordTap, textSize, trail }: ReadingTextProps) {
+export function ReadingText({ card, words, mode, cursor = 0, playing, review, onWordTap, onWordHover, textSize, trail }: ReadingTextProps) {
   const rootRef = useRef<HTMLDivElement>(null);
   const boxRef = useRef<HTMLSpanElement>(null);
   const target = mode === 'tes' ? (cursor < words.length ? cursor : -1) : (playing ?? -1);
@@ -114,7 +115,7 @@ export function ReadingText({ card, words, mode, cursor = 0, playing, review, on
       'data-edited': review?.edited(w.i) ? '' : undefined,
       className: 'w',
     };
-    if (!onWordTap) return <span {...common}>{body}</span>;
+    if (!onWordTap && !onWordHover) return <span {...common}>{body}</span>;
     const label =
       mode === 'review' ? `${w.text}: ${STATUS[state as WordStatus]}${heard ? `, terdengar ${heard}` : ''}` : undefined;
     return (
@@ -123,7 +124,9 @@ export function ReadingText({ card, words, mode, cursor = 0, playing, review, on
         {...common}
         aria-label={label}
         aria-pressed={mode === 'review' ? review?.selected === w.i : undefined}
-        onClick={() => onWordTap(w.i)}
+        onClick={(e) => onWordTap?.(w.i, e.currentTarget)}
+        onMouseEnter={(e) => onWordHover?.(w.i, e.currentTarget)}
+        onMouseLeave={() => onWordHover?.(null, null)}
       >
         {body}
       </button>
