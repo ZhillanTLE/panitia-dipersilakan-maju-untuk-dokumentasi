@@ -1,9 +1,10 @@
-import { useId, useMemo, useState, type FormEvent } from 'react';
+import { useId, useMemo, useState, type CSSProperties, type FormEvent } from 'react';
 import { ConfirmDialog } from '../components/ConfirmDialog';
-import { IconMinus, IconPlus } from '../components/Icons';
+import { IconDownload, IconMic } from '../components/Icons';
 import { toast } from '../components/Toast';
 import { activitiesFor } from '../lib/activities';
 import { formatDate } from '../lib/format';
+import { classProgress, nextToRead, stageOf, type Stage } from '../lib/progress';
 import { href } from '../lib/route';
 import { LEVEL_ORDER } from '../lib/rubric';
 import { addStudent, removeStudent, resetAll, setConsent, useApp } from '../lib/store';
@@ -15,91 +16,112 @@ const CONSENT_KEYS: (keyof Consents)[] = ['assessment', 'audio_research', 'camer
 
 export function ClassView() {
   const app = useApp();
-  const [open, setOpen] = useState<ChildLevel | null>(null);
   const [confirm, setConfirm] = useState<{ message: string; label: string; run: () => void } | null>(null);
 
-  // Students with a real, unconfirmed reading waiting in Tinjau.
-  const pendingRefs = useMemo(
-    () =>
-      new Set(
-        app.sessions
-          .filter((s) => !s.simulated && s.take_ids.length && s.suggestion?.status !== 'confirmed')
-          .map((s) => s.student_ref),
-      ),
-    [app.sessions],
+  const stages = useMemo(
+    () => new Map(app.students.map((s) => [s.student_ref, stageOf(s, app.sessions)])),
+    [app.students, app.sessions],
   );
+  const progress = classProgress(app.students, app.sessions);
+  const upNext = nextToRead(app.students, app.sessions);
+  const firstPending = app.students.map((s) => stages.get(s.student_ref)).find((st) => st?.kind === 'pending');
 
   // Groups by confirmed level only (CLAUDE.md rule 3). Students stay in code order.
   const groups = useMemo(() => {
     const map = new Map<ChildLevel, Student[]>(LEVEL_ORDER.map((l) => [l, []]));
     for (const s of app.students) if (s.level) map.get(s.level.value)?.push(s);
-    return map;
+    return [...map].filter(([, list]) => list.length);
   }, [app.students]);
-  const unplaced = app.students.filter((s) => !s.level);
-  const confirmedCount = app.students.length - unplaced.length;
+  const confirmedCount = app.students.filter((s) => s.level).length;
 
   return (
     <section className="kelas" aria-labelledby="kelas-title">
       <header className="kelas__head">
-        <h1 className="kelas__title" id="kelas-title">
-          {S.kelas.title}
-        </h1>
-        <p className="t-b8">{S.kelas.summary(app.students.length, confirmedCount)}</p>
+        <div className="kelas__intro">
+          <h1 className="kelas__title" id="kelas-title">
+            {S.kelas.title}
+          </h1>
+          <p className="t-b8">{S.kelas.summary(app.students.length, confirmedCount)}</p>
+        </div>
+        <div className="kelas__next">
+          {firstPending?.kind === 'pending' && (
+            <a className="btn btn--ghost kelas__btn" href={href('tinjau', firstPending.session_id)}>
+              {S.kelas.reviewNext}
+            </a>
+          )}
+          {upNext ? (
+            <a className="btn btn--cta" href={href('bacaan', undefined, { student: upNext.student_ref })}>
+              <IconMic />
+              {S.kelas.readNext(upNext.student_ref)}
+            </a>
+          ) : (
+            app.students.length > 0 && <p className="t-meta">{S.kelas.allPlaced}</p>
+          )}
+        </div>
       </header>
 
-      <section className="kelas__section" aria-labelledby="groups-title">
-        <div className="kelas__section-head">
-          <h2 className="t-s6" id="groups-title">
-            {S.kelas.groups}
-          </h2>
-          <p className="t-meta">{S.kelas.groupsNote}</p>
-        </div>
-        <div className="shell">
-          {LEVEL_ORDER.map((level) => (
-            <GroupRow
-              key={level}
-              level={level}
-              students={groups.get(level) ?? []}
-              open={open === level}
-              onToggle={() => setOpen((cur) => (cur === level ? null : level))}
-            />
-          ))}
-          <div className="shell__row shell__row--static">
-            <div className="shell__head">
-              <span className="shell__name">{S.kelas.unplaced}</span>
-              <Pills students={unplaced} pending={pendingRefs} />
-            </div>
-          </div>
-        </div>
-      </section>
+      {progress.total > 0 && <ProgressBar placed={progress.placed} pending={progress.pending} fresh={progress.fresh} />}
 
       <section className="kelas__section" aria-labelledby="students-title">
-        <div className="kelas__section-head">
-          <h2 className="t-s6" id="students-title">
+        <div className="head">
+          <h2 className="head__title" id="students-title">
             {S.kelas.students}
           </h2>
           <p className="t-meta">{S.kelas.studentsNote}</p>
         </div>
-        <Roster
-          students={app.students}
-          pending={pendingRefs}
-          onRemove={(ref) =>
-            setConfirm({
-              message: S.kelas.removeConfirm(ref),
-              label: S.kelas.remove,
-              run: () => {
-                removeStudent(ref);
-                toast(S.kelas.removed(ref));
-              },
-            })
-          }
-        />
-        <AddStudent existing={app.students} />
+        <div className="sheet">
+          <ul className="roster">
+            {app.students.map((s) => (
+              <StudentRow
+                key={s.student_ref}
+                student={s}
+                stage={stages.get(s.student_ref) ?? { kind: 'new' }}
+                onRemove={() =>
+                  setConfirm({
+                    message: S.kelas.removeConfirm(s.student_ref),
+                    label: S.kelas.remove,
+                    run: () => {
+                      removeStudent(s.student_ref);
+                      toast(S.kelas.removed(s.student_ref));
+                    },
+                  })
+                }
+              />
+            ))}
+          </ul>
+          <AddStudent existing={app.students} />
+        </div>
+      </section>
+
+      <section className="kelas__section" aria-labelledby="groups-title">
+        <div className="head">
+          <h2 className="head__title" id="groups-title">
+            {S.kelas.groups}
+          </h2>
+          <p className="t-meta">{S.kelas.groupsNote}</p>
+        </div>
+        {groups.length ? (
+          <div className="groups">
+            {groups.map(([level, students]) => (
+              <Group key={level} level={level} students={students} />
+            ))}
+          </div>
+        ) : (
+          <div className="groups__empty">
+            <ol className="ladder" aria-hidden="true">
+              {LEVEL_ORDER.map((l) => (
+                <li key={l}>{LEVEL[l]}</li>
+              ))}
+            </ol>
+            <p className="t-b8">{S.kelas.groupsEmpty}</p>
+          </div>
+        )}
       </section>
 
       <footer className="kelas__foot">
         <div className="kelas__export">
           <button type="button" className="btn btn--ghost" onClick={() => exportCsv(app.students)} disabled={!confirmedCount}>
+            <IconDownload size={14} />
             {S.kelas.export}
           </button>
           <p className="t-meta">{S.kelas.exportNote}</p>
@@ -130,134 +152,120 @@ export function ClassView() {
   );
 }
 
-function Pills({ students, pending }: { students: Student[]; pending?: Set<string> }) {
-  if (!students.length) return <span className="shell__empty">{S.kelas.noGroupStudents}</span>;
+/** One bar for the whole class: placed, waiting for review, not read yet. */
+function ProgressBar({ placed, pending, fresh }: { placed: number; pending: number; fresh: number }) {
+  const total = placed + pending + fresh;
+  const parts = [
+    { key: 'placed', n: placed, label: S.kelas.progress.placed(placed) },
+    { key: 'pending', n: pending, label: S.kelas.progress.pending(pending) },
+    { key: 'fresh', n: fresh, label: S.kelas.progress.fresh(fresh) },
+  ];
   return (
-    <span className="shell__pills">
-      {students.map((s) => (
-        <span key={s.student_ref} className={`chip ${pending?.has(s.student_ref) ? 'chip--caution' : 'chip--neutral'}`}>
-          {s.student_ref}
-        </span>
-      ))}
-    </span>
-  );
-}
-
-function GroupRow({
-  level,
-  students,
-  open,
-  onToggle,
-}: {
-  level: ChildLevel;
-  students: Student[];
-  open: boolean;
-  onToggle: () => void;
-}) {
-  const panelId = useId();
-  const activities = activitiesFor(level);
-  return (
-    <div className="shell__row">
-      <button type="button" className="shell__head" aria-expanded={open} aria-controls={panelId} onClick={onToggle}>
-        <span className="shell__name">{LEVEL[level]}</span>
-        <Pills students={students} />
-        <span className={`btn btn--round shell__toggle${open ? ' is-on' : ''}`} aria-hidden="true">
-          {open ? <IconMinus size={14} /> : <IconPlus size={14} />}
-        </span>
-      </button>
-      <div className="shell__panel" id={panelId} hidden={!open}>
-        <ul className="acts-bank">
-          {activities.map((a) => (
-            <li key={a.id} className="acts-bank__item">
-              <div className="acts-bank__head">
-                <p className="t-s7">{a.title}</p>
-                <span className="chip chip--caution">{S.kelas.activityDraft}</span>
-              </div>
-              <p className="t-meta">
-                {S.kelas.minutes(a.minutes)}. {S.kelas.materials}: {a.materials}.
-              </p>
-              <ol className="acts-bank__steps">
-                {a.steps.map((step, k) => (
-                  <li key={k}>{step}</li>
-                ))}
-              </ol>
-            </li>
-          ))}
-        </ul>
+    <div className="progress" role="group" aria-label={S.kelas.progressLabel}>
+      <div className="progress__bar" aria-hidden="true">
+        {parts.map(
+          (p) =>
+            p.n > 0 && <span key={p.key} className={`progress__part progress__part--${p.key}`} style={{ '--w': p.n / total } as CSSProperties} />,
+        )}
       </div>
+      <ul className="progress__legend">
+        {parts.map((p) => (
+          <li key={p.key} className={`progress__item progress__item--${p.key}`}>
+            {p.label}
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
 
-function Roster({
-  students,
-  pending,
-  onRemove,
-}: {
-  students: Student[];
-  pending: Set<string>;
-  onRemove: (ref: string) => void;
-}) {
+function StudentRow({ student: s, stage, onRemove }: { student: Student; stage: Stage; onRemove: () => void }) {
   return (
-    <table className="roster">
-      <thead>
-        <tr>
-          <th scope="col">{S.kelas.addLabel}</th>
-          <th scope="col">{S.kelas.consent}</th>
-          <th scope="col">{S.kelas.level}</th>
-          <th scope="col">
-            <span className="visually-hidden">{S.kelas.assess}</span>
-          </th>
-        </tr>
-      </thead>
-      <tbody>
-        {students.map((s) => (
-          <tr key={s.student_ref}>
-            <th scope="row" className="roster__ref">
-              {s.student_ref}
-            </th>
-            <td>
-              <div className="consents">
-                {CONSENT_KEYS.map((key) => (
-                  <button
-                    key={key}
-                    type="button"
-                    className="consent"
-                    aria-pressed={s.consents[key]}
-                    disabled={key === 'camera_mode_b'}
-                    title={key === 'camera_mode_b' ? S.kelas.cameraNote : undefined}
-                    onClick={() => setConsent(s.student_ref, key, !s.consents[key])}
-                  >
-                    <span className="consent__dot" aria-hidden="true" />
-                    {CONSENT[key]}
-                  </button>
-                ))}
-              </div>
-            </td>
-            <td>
-              {s.level ? (
-                <span className="roster__level">
-                  <span className="chip chip--success">{LEVEL[s.level.value]}</span>
-                  <span className="t-meta">{formatDate(s.level.confirmed_at)}</span>
-                </span>
-              ) : pending.has(s.student_ref) ? (
-                <span className="chip chip--caution">{S.kelas.pending}</span>
-              ) : (
-                <span className="t-meta">{S.kelas.none}</span>
-              )}
-            </td>
-            <td className="roster__actions">
-              <a className="btn btn--action" href={href('bacaan', undefined, { student: s.student_ref })}>
-                {S.kelas.assess}
-              </a>
-              <button type="button" className="btn btn--text" onClick={() => onRemove(s.student_ref)}>
-                {S.kelas.remove}
-              </button>
-            </td>
-          </tr>
+    <li className="student">
+      <div className="student__who">
+        <span className="student__ref">{s.student_ref}</span>
+        <span className="student__stage" data-stage={stage.kind}>
+          {stage.kind === 'new'
+            ? S.ready.stage.new
+            : stage.kind === 'pending'
+              ? S.ready.stage.pending
+              : `${LEVEL[stage.level]}, ${formatDate(s.level?.confirmed_at ?? 0)}`}
+        </span>
+      </div>
+      <div className="student__consents" role="group" aria-label={`${S.kelas.consent} ${s.student_ref}`}>
+        {CONSENT_KEYS.map((key) => (
+          <button
+            key={key}
+            type="button"
+            role="switch"
+            className="switch"
+            aria-checked={s.consents[key]}
+            disabled={key === 'camera_mode_b'}
+            title={key === 'camera_mode_b' ? S.kelas.cameraNote : undefined}
+            onClick={() => setConsent(s.student_ref, key, !s.consents[key])}
+          >
+            <span className="switch__track" aria-hidden="true" />
+            {CONSENT[key]}
+          </button>
         ))}
-      </tbody>
-    </table>
+      </div>
+      <div className="student__actions">
+        {stage.kind === 'pending' ? (
+          <a className="btn btn--action" href={href('tinjau', stage.session_id)}>
+            {S.kelas.review}
+          </a>
+        ) : (
+          <a
+            className="btn btn--ghost"
+            href={href('bacaan', undefined, { student: s.student_ref })}
+          >
+            {stage.kind === 'new' ? S.kelas.assess : S.kelas.reread}
+          </a>
+        )}
+        <button type="button" className="btn btn--text" onClick={onRemove}>
+          {S.kelas.remove}
+        </button>
+      </div>
+    </li>
+  );
+}
+
+function Group({ level, students }: { level: ChildLevel; students: Student[] }) {
+  const [open, setOpen] = useState(false);
+  const panelId = useId();
+  const activities = activitiesFor(level);
+  return (
+    <article className="group">
+      <header className="group__head">
+        <h3 className="group__name">{LEVEL[level]}</h3>
+        <span className="t-meta">{S.kelas.groupCount(students.length)}</span>
+      </header>
+      <p className="group__pills">
+        {students.map((s) => (
+          <span key={s.student_ref} className="chip chip--neutral">
+            {s.student_ref}
+          </span>
+        ))}
+      </p>
+      <button type="button" className="btn btn--text group__toggle" aria-expanded={open} aria-controls={panelId} onClick={() => setOpen(!open)}>
+        {open ? S.kelas.hideActivities : S.kelas.showActivities}
+      </button>
+      <ul className="acts-bank" id={panelId} hidden={!open}>
+        {activities.map((a) => (
+          <li key={a.id} className="acts-bank__item">
+            <p className="t-s7">{a.title}</p>
+            <p className="t-meta">
+              {S.kelas.minutes(a.minutes)}. {S.kelas.materials}: {a.materials}. {S.kelas.activityDraft}.
+            </p>
+            <ol className="acts-bank__steps">
+              {a.steps.map((step, k) => (
+                <li key={k}>{step}</li>
+              ))}
+            </ol>
+          </li>
+        ))}
+      </ul>
+    </article>
   );
 }
 
@@ -290,7 +298,7 @@ function AddStudent({ existing }: { existing: Student[] }) {
 
   return (
     <form className="add" onSubmit={submit}>
-      <label className="add__label" htmlFor={inputId}>
+      <label className="visually-hidden" htmlFor={inputId}>
         {S.kelas.addLabel}
       </label>
       <div className="add__row">
@@ -309,7 +317,7 @@ function AddStudent({ existing }: { existing: Student[] }) {
           aria-describedby={error ? `${inputId}-error` : undefined}
           aria-invalid={error ? true : undefined}
         />
-        <button type="submit" className="btn btn--action">
+        <button type="submit" className="btn btn--ghost">
           {S.kelas.add}
         </button>
       </div>
