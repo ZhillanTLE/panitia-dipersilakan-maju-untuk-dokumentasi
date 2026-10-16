@@ -1,0 +1,5 @@
+{
+  "note": "Shared by the Checker and scripts/scope_check.py. Diagnosis words and ranking words are banned in every agent output and in all planner copy.",
+  "diagnosis": ["disleksia", "dyslexia", "diagnosis", "diagnosa", "gangguan", "risiko", "kelainan", "penyakit"],
+  "ranking": ["peringkat", "ranking", "juara", "terendah", "tertinggi", "terburuk", "terbaik", "paling lemah", "paling pintar", "lowest", "highest", "worst", "best performer"]
+}

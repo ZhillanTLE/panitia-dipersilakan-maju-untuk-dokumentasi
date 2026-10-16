@@ -1,0 +1,852 @@
+{
+ "mode": {
+  "inference": "mock",
+  "data": "synced"
+ },
+ "trace": [
+  {
+   "stage": "intake",
+   "status": "done",
+   "startedAt": "2026-10-16T10:27:39.408+00:00",
+   "ms": 1,
+   "summary": "6 kelompok, 14 anak",
+   "groups": [
+    {
+     "level": "pemula",
+     "size": 1
+    },
+    {
+     "level": "huruf",
+     "size": 3
+    },
+    {
+     "level": "suku_kata",
+     "size": 3
+    },
+    {
+     "level": "kata",
+     "size": 3
+    },
+    {
+     "level": "kalimat",
+     "size": 2
+    },
+    {
+     "level": "paragraf",
+     "size": 2
+    }
+   ]
+  },
+  {
+   "stage": "evidence",
+   "status": "done",
+   "startedAt": "2026-10-16T10:27:39.410+00:00",
+   "ms": 3,
+   "summary": "16 baris bukti",
+   "lines": {
+    "pemula": [
+     "Kelompok Pemula: 1 anak.",
+     "Belum ada sesi latihan yang tercatat untuk kelompok ini."
+    ],
+    "huruf": [
+     "Kelompok Huruf: 3 anak, tengah 3 sesi latihan.",
+     "Kata benar per menit dari bacaan pertama ke ketiga naik 1 kata (3 anak).",
+     "Kata yang sering dibaca ulang: ba, bu."
+    ],
+    "suku_kata": [
+     "Kelompok Suku Kata: 3 anak, tengah 6 sesi latihan.",
+     "Kata benar per menit dari bacaan pertama ke ketiga naik 7 kata (3 anak)."
+    ],
+    "kata": [
+     "Kelompok Kata: 3 anak, tengah 4 sesi latihan.",
+     "Kata benar per menit dari bacaan pertama ke ketiga tetap (3 anak).",
+     "Kata yang sering dibaca ulang: buku, meja, rumah."
+    ],
+    "kalimat": [
+     "Kelompok Kalimat: 2 anak, tengah 5,5 sesi latihan.",
+     "Kata benar per menit dari bacaan pertama ke ketiga naik 5 kata (2 anak).",
+     "Kata yang sering dibaca ulang: ibu."
+    ],
+    "paragraf": [
+     "Kelompok Paragraf: 2 anak, tengah 6,5 sesi latihan.",
+     "Kata benar per menit dari bacaan pertama ke ketiga naik 7,5 kata (2 anak).",
+     "Kata yang sering dibaca ulang: bintang, rubah, mawar."
+    ]
+   },
+   "discarded": [],
+   "writtenBy": "mock"
+  },
+  {
+   "stage": "planner",
+   "status": "done",
+   "startedAt": "2026-10-16T10:27:39.413+00:00",
+   "ms": 1,
+   "summary": "18 sesi untuk 6 kelompok",
+   "attempts": 1,
+   "plannedBy": "mock (rencana dasar)",
+   "discarded": []
+  },
+  {
+   "stage": "checker",
+   "status": "done",
+   "startedAt": "2026-10-16T10:27:39.413+00:00",
+   "ms": 6,
+   "summary": "18 sesi lolos pemeriksaan",
+   "failures": [],
+   "fallbackUsed": false,
+   "fallbackReason": null
+  },
+  {
+   "stage": "scheduler",
+   "status": "done",
+   "startedAt": "2026-10-16T10:27:39.419+00:00",
+   "ms": 0,
+   "summary": "18 sesi terjadwal, 0 belum muat",
+   "unscheduled": []
+  }
+ ],
+ "plan": {
+  "id": "plan-K2-2026-10-19",
+  "classCode": "K2",
+  "startDate": "2026-10-19",
+  "cycleWeeks": 2,
+  "weeksPlanned": [
+   1,
+   2
+  ],
+  "groups": [
+   {
+    "level": "pemula",
+    "name": "Pemula",
+    "size": 1,
+    "students": [
+     "K2-01"
+    ],
+    "evidence": [
+     "Kelompok Pemula: 1 anak.",
+     "Belum ada sesi latihan yang tercatat untuk kelompok ini."
+    ],
+    "sessions": [
+     {
+      "id": "pemula-w1-p1",
+      "week": 1,
+      "kind": "practice",
+      "activityId": "ACT-PEM-01",
+      "passageIds": [],
+      "minutes": 10,
+      "focus": "Kartu huruf bersuara"
+     },
+     {
+      "id": "pemula-w1-p2",
+      "week": 1,
+      "kind": "practice",
+      "activityId": "ACT-PEM-02",
+      "passageIds": [],
+      "minutes": 10,
+      "focus": "Huruf di sekitar kelas"
+     },
+     {
+      "id": "pemula-w2-p3",
+      "week": 2,
+      "kind": "practice",
+      "activityId": "ACT-PEM-01",
+      "passageIds": [],
+      "minutes": 10,
+      "focus": "Kartu huruf bersuara"
+     },
+     {
+      "id": "pemula-w2-r1",
+      "week": 2,
+      "kind": "replacement",
+      "activityId": null,
+      "passageIds": [],
+      "minutes": 10,
+      "focus": "Penempatan ulang",
+      "students": [
+       "K2-01"
+      ]
+     }
+    ]
+   },
+   {
+    "level": "huruf",
+    "name": "Huruf",
+    "size": 3,
+    "students": [
+     "K2-02",
+     "K2-03",
+     "K2-14"
+    ],
+    "evidence": [
+     "Kelompok Huruf: 3 anak, tengah 3 sesi latihan.",
+     "Kata benar per menit dari bacaan pertama ke ketiga naik 1 kata (3 anak).",
+     "Kata yang sering dibaca ulang: ba, bu."
+    ],
+    "sessions": [
+     {
+      "id": "huruf-w1-p1",
+      "week": 1,
+      "kind": "practice",
+      "activityId": "ACT-HUR-01",
+      "passageIds": [
+       "HUR-01"
+      ],
+      "minutes": 15,
+      "focus": "Gabung bunyi"
+     },
+     {
+      "id": "huruf-w1-p2",
+      "week": 1,
+      "kind": "practice",
+      "activityId": "ACT-HUR-02",
+      "passageIds": [
+       "HUR-01"
+      ],
+      "minutes": 10,
+      "focus": "Tebak bunyi awal"
+     },
+     {
+      "id": "huruf-w2-p3",
+      "week": 2,
+      "kind": "practice",
+      "activityId": "ACT-HUR-02",
+      "passageIds": [
+       "HUR-01"
+      ],
+      "minutes": 10,
+      "focus": "Tebak bunyi awal"
+     },
+     {
+      "id": "huruf-w2-r1",
+      "week": 2,
+      "kind": "replacement",
+      "activityId": null,
+      "passageIds": [],
+      "minutes": 10,
+      "focus": "Penempatan ulang",
+      "students": [
+       "K2-02",
+       "K2-03",
+       "K2-14"
+      ]
+     }
+    ]
+   },
+   {
+    "level": "suku_kata",
+    "name": "Suku Kata",
+    "size": 3,
+    "students": [
+     "K2-04",
+     "K2-05",
+     "K2-06"
+    ],
+    "evidence": [
+     "Kelompok Suku Kata: 3 anak, tengah 6 sesi latihan.",
+     "Kata benar per menit dari bacaan pertama ke ketiga naik 7 kata (3 anak)."
+    ],
+    "sessions": [
+     {
+      "id": "suku_kata-w1-p1",
+      "week": 1,
+      "kind": "practice",
+      "activityId": "ACT-SUK-01",
+      "passageIds": [
+       "SUK-01",
+       "SUK-02"
+      ],
+      "minutes": 15,
+      "focus": "Rantai suku kata"
+     },
+     {
+      "id": "suku_kata-w1-p2",
+      "week": 1,
+      "kind": "practice",
+      "activityId": "ACT-SUK-02",
+      "passageIds": [
+       "SUK-02",
+       "SUK-01"
+      ],
+      "minutes": 10,
+      "focus": "Tepuk suku kata"
+     },
+     {
+      "id": "suku_kata-w2-p3",
+      "week": 2,
+      "kind": "practice",
+      "activityId": "ACT-SUK-02",
+      "passageIds": [
+       "SUK-01",
+       "SUK-02"
+      ],
+      "minutes": 10,
+      "focus": "Tepuk suku kata"
+     },
+     {
+      "id": "suku_kata-w2-r1",
+      "week": 2,
+      "kind": "replacement",
+      "activityId": null,
+      "passageIds": [],
+      "minutes": 10,
+      "focus": "Penempatan ulang",
+      "students": [
+       "K2-04",
+       "K2-05",
+       "K2-06"
+      ]
+     }
+    ]
+   },
+   {
+    "level": "kata",
+    "name": "Kata",
+    "size": 3,
+    "students": [
+     "K2-07",
+     "K2-08",
+     "K2-09"
+    ],
+    "evidence": [
+     "Kelompok Kata: 3 anak, tengah 4 sesi latihan.",
+     "Kata benar per menit dari bacaan pertama ke ketiga tetap (3 anak).",
+     "Kata yang sering dibaca ulang: buku, meja, rumah."
+    ],
+    "sessions": [
+     {
+      "id": "kata-w1-p1",
+      "week": 1,
+      "kind": "practice",
+      "activityId": "ACT-KAT-01",
+      "passageIds": [
+       "KAT-01",
+       "KAT-02"
+      ],
+      "minutes": 15,
+      "focus": "Kata jadi kalimat"
+     },
+     {
+      "id": "kata-w2-r1",
+      "week": 2,
+      "kind": "replacement",
+      "activityId": null,
+      "passageIds": [],
+      "minutes": 10,
+      "focus": "Penempatan ulang",
+      "students": [
+       "K2-07",
+       "K2-08",
+       "K2-09"
+      ]
+     }
+    ]
+   },
+   {
+    "level": "kalimat",
+    "name": "Kalimat",
+    "size": 2,
+    "students": [
+     "K2-10",
+     "K2-11"
+    ],
+    "evidence": [
+     "Kelompok Kalimat: 2 anak, tengah 5,5 sesi latihan.",
+     "Kata benar per menit dari bacaan pertama ke ketiga naik 5 kata (2 anak).",
+     "Kata yang sering dibaca ulang: ibu."
+    ],
+    "sessions": [
+     {
+      "id": "kalimat-w1-p1",
+      "week": 1,
+      "kind": "practice",
+      "activityId": "ACT-KAL-01",
+      "passageIds": [
+       "KAL-01",
+       "KAL-02"
+      ],
+      "minutes": 15,
+      "focus": "Baca bergantian"
+     },
+     {
+      "id": "kalimat-w2-r1",
+      "week": 2,
+      "kind": "replacement",
+      "activityId": null,
+      "passageIds": [],
+      "minutes": 10,
+      "focus": "Penempatan ulang",
+      "students": [
+       "K2-10",
+       "K2-11"
+      ]
+     }
+    ]
+   },
+   {
+    "level": "paragraf",
+    "name": "Paragraf",
+    "size": 2,
+    "students": [
+     "K2-12",
+     "K2-13"
+    ],
+    "evidence": [
+     "Kelompok Paragraf: 2 anak, tengah 6,5 sesi latihan.",
+     "Kata benar per menit dari bacaan pertama ke ketiga naik 7,5 kata (2 anak).",
+     "Kata yang sering dibaca ulang: bintang, rubah, mawar."
+    ],
+    "sessions": [
+     {
+      "id": "paragraf-w1-p1",
+      "week": 1,
+      "kind": "practice",
+      "activityId": "ACT-PAR-01",
+      "passageIds": [
+       "PAR-01",
+       "PAR-02"
+      ],
+      "minutes": 20,
+      "focus": "Baca lalu ceritakan"
+     },
+     {
+      "id": "paragraf-w2-r1",
+      "week": 2,
+      "kind": "replacement",
+      "activityId": null,
+      "passageIds": [],
+      "minutes": 10,
+      "focus": "Penempatan ulang",
+      "students": [
+       "K2-12",
+       "K2-13"
+      ]
+     }
+    ]
+   }
+  ],
+  "levelsAtStart": {
+   "K2-01": "pemula",
+   "K2-02": "huruf",
+   "K2-03": "huruf",
+   "K2-04": "suku_kata",
+   "K2-05": "suku_kata",
+   "K2-06": "suku_kata",
+   "K2-07": "kata",
+   "K2-08": "kata",
+   "K2-09": "kata",
+   "K2-10": "kalimat",
+   "K2-11": "kalimat",
+   "K2-12": "paragraf",
+   "K2-13": "paragraf",
+   "K2-14": "huruf"
+  },
+  "wcpmUnseenStart": {
+   "K2-02": 28,
+   "K2-03": 12,
+   "K2-04": 12,
+   "K2-05": 13,
+   "K2-06": 28,
+   "K2-07": 27,
+   "K2-08": 27,
+   "K2-09": 36,
+   "K2-10": 13,
+   "K2-11": 11,
+   "K2-12": 27,
+   "K2-13": 39,
+   "K2-14": 35
+  },
+  "phones": 1,
+  "timetable": [
+   {
+    "day": "Mon",
+    "start": "08:00",
+    "end": "08:35",
+    "kind": "literacy"
+   },
+   {
+    "day": "Tue",
+    "start": "08:00",
+    "end": "08:35",
+    "kind": "literacy"
+   },
+   {
+    "day": "Wed",
+    "start": "08:00",
+    "end": "08:35",
+    "kind": "literacy"
+   },
+   {
+    "day": "Thu",
+    "start": "08:00",
+    "end": "08:35",
+    "kind": "literacy"
+   },
+   {
+    "day": "Fri",
+    "start": "10:00",
+    "end": "10:35",
+    "kind": "literacy"
+   }
+  ],
+  "holidays": [
+   "2026-10-28"
+  ]
+ },
+ "calendar": {
+  "events": [
+   {
+    "id": "pemula-w1-p1",
+    "planSessionId": "pemula-w1-p1",
+    "groupLevel": "pemula",
+    "kind": "practice",
+    "week": 1,
+    "date": "2026-10-19",
+    "day": "Mon",
+    "start": "08:00",
+    "end": "08:10",
+    "minutes": 10,
+    "lane": 0,
+    "activityId": "ACT-PEM-01",
+    "passageIds": [],
+    "focus": "Kartu huruf bersuara",
+    "students": []
+   },
+   {
+    "id": "huruf-w1-p1",
+    "planSessionId": "huruf-w1-p1",
+    "groupLevel": "huruf",
+    "kind": "practice",
+    "week": 1,
+    "date": "2026-10-19",
+    "day": "Mon",
+    "start": "08:10",
+    "end": "08:25",
+    "minutes": 15,
+    "lane": 0,
+    "activityId": "ACT-HUR-01",
+    "passageIds": [
+     "HUR-01"
+    ],
+    "focus": "Gabung bunyi",
+    "students": []
+   },
+   {
+    "id": "suku_kata-w1-p2",
+    "planSessionId": "suku_kata-w1-p2",
+    "groupLevel": "suku_kata",
+    "kind": "practice",
+    "week": 1,
+    "date": "2026-10-19",
+    "day": "Mon",
+    "start": "08:25",
+    "end": "08:35",
+    "minutes": 10,
+    "lane": 0,
+    "activityId": "ACT-SUK-02",
+    "passageIds": [
+     "SUK-02",
+     "SUK-01"
+    ],
+    "focus": "Tepuk suku kata",
+    "students": []
+   },
+   {
+    "id": "suku_kata-w1-p1",
+    "planSessionId": "suku_kata-w1-p1",
+    "groupLevel": "suku_kata",
+    "kind": "practice",
+    "week": 1,
+    "date": "2026-10-20",
+    "day": "Tue",
+    "start": "08:00",
+    "end": "08:15",
+    "minutes": 15,
+    "lane": 0,
+    "activityId": "ACT-SUK-01",
+    "passageIds": [
+     "SUK-01",
+     "SUK-02"
+    ],
+    "focus": "Rantai suku kata",
+    "students": []
+   },
+   {
+    "id": "kata-w1-p1",
+    "planSessionId": "kata-w1-p1",
+    "groupLevel": "kata",
+    "kind": "practice",
+    "week": 1,
+    "date": "2026-10-20",
+    "day": "Tue",
+    "start": "08:15",
+    "end": "08:30",
+    "minutes": 15,
+    "lane": 0,
+    "activityId": "ACT-KAT-01",
+    "passageIds": [
+     "KAT-01",
+     "KAT-02"
+    ],
+    "focus": "Kata jadi kalimat",
+    "students": []
+   },
+   {
+    "id": "kalimat-w1-p1",
+    "planSessionId": "kalimat-w1-p1",
+    "groupLevel": "kalimat",
+    "kind": "practice",
+    "week": 1,
+    "date": "2026-10-21",
+    "day": "Wed",
+    "start": "08:00",
+    "end": "08:15",
+    "minutes": 15,
+    "lane": 0,
+    "activityId": "ACT-KAL-01",
+    "passageIds": [
+     "KAL-01",
+     "KAL-02"
+    ],
+    "focus": "Baca bergantian",
+    "students": []
+   },
+   {
+    "id": "paragraf-w1-p1",
+    "planSessionId": "paragraf-w1-p1",
+    "groupLevel": "paragraf",
+    "kind": "practice",
+    "week": 1,
+    "date": "2026-10-21",
+    "day": "Wed",
+    "start": "08:15",
+    "end": "08:35",
+    "minutes": 20,
+    "lane": 0,
+    "activityId": "ACT-PAR-01",
+    "passageIds": [
+     "PAR-01",
+     "PAR-02"
+    ],
+    "focus": "Baca lalu ceritakan",
+    "students": []
+   },
+   {
+    "id": "pemula-w1-p2",
+    "planSessionId": "pemula-w1-p2",
+    "groupLevel": "pemula",
+    "kind": "practice",
+    "week": 1,
+    "date": "2026-10-22",
+    "day": "Thu",
+    "start": "08:00",
+    "end": "08:10",
+    "minutes": 10,
+    "lane": 0,
+    "activityId": "ACT-PEM-02",
+    "passageIds": [],
+    "focus": "Huruf di sekitar kelas",
+    "students": []
+   },
+   {
+    "id": "huruf-w1-p2",
+    "planSessionId": "huruf-w1-p2",
+    "groupLevel": "huruf",
+    "kind": "practice",
+    "week": 1,
+    "date": "2026-10-22",
+    "day": "Thu",
+    "start": "08:10",
+    "end": "08:20",
+    "minutes": 10,
+    "lane": 0,
+    "activityId": "ACT-HUR-02",
+    "passageIds": [
+     "HUR-01"
+    ],
+    "focus": "Tebak bunyi awal",
+    "students": []
+   },
+   {
+    "id": "pemula-w2-p3",
+    "planSessionId": "pemula-w2-p3",
+    "groupLevel": "pemula",
+    "kind": "practice",
+    "week": 2,
+    "date": "2026-10-26",
+    "day": "Mon",
+    "start": "08:00",
+    "end": "08:10",
+    "minutes": 10,
+    "lane": 0,
+    "activityId": "ACT-PEM-01",
+    "passageIds": [],
+    "focus": "Kartu huruf bersuara",
+    "students": []
+   },
+   {
+    "id": "huruf-w2-p3",
+    "planSessionId": "huruf-w2-p3",
+    "groupLevel": "huruf",
+    "kind": "practice",
+    "week": 2,
+    "date": "2026-10-26",
+    "day": "Mon",
+    "start": "08:10",
+    "end": "08:20",
+    "minutes": 10,
+    "lane": 0,
+    "activityId": "ACT-HUR-02",
+    "passageIds": [
+     "HUR-01"
+    ],
+    "focus": "Tebak bunyi awal",
+    "students": []
+   },
+   {
+    "id": "suku_kata-w2-p3",
+    "planSessionId": "suku_kata-w2-p3",
+    "groupLevel": "suku_kata",
+    "kind": "practice",
+    "week": 2,
+    "date": "2026-10-26",
+    "day": "Mon",
+    "start": "08:20",
+    "end": "08:30",
+    "minutes": 10,
+    "lane": 0,
+    "activityId": "ACT-SUK-02",
+    "passageIds": [
+     "SUK-01",
+     "SUK-02"
+    ],
+    "focus": "Tepuk suku kata",
+    "students": []
+   },
+   {
+    "id": "paragraf-w2-r1",
+    "planSessionId": "paragraf-w2-r1",
+    "groupLevel": "paragraf",
+    "kind": "replacement",
+    "week": 2,
+    "date": "2026-10-29",
+    "day": "Thu",
+    "start": "08:05",
+    "end": "08:15",
+    "minutes": 10,
+    "lane": 0,
+    "activityId": null,
+    "passageIds": [],
+    "focus": "Penempatan ulang",
+    "students": [
+     "K2-12",
+     "K2-13"
+    ]
+   },
+   {
+    "id": "kalimat-w2-r1",
+    "planSessionId": "kalimat-w2-r1",
+    "groupLevel": "kalimat",
+    "kind": "replacement",
+    "week": 2,
+    "date": "2026-10-29",
+    "day": "Thu",
+    "start": "08:15",
+    "end": "08:25",
+    "minutes": 10,
+    "lane": 0,
+    "activityId": null,
+    "passageIds": [],
+    "focus": "Penempatan ulang",
+    "students": [
+     "K2-10",
+     "K2-11"
+    ]
+   },
+   {
+    "id": "kata-w2-r1",
+    "planSessionId": "kata-w2-r1",
+    "groupLevel": "kata",
+    "kind": "replacement",
+    "week": 2,
+    "date": "2026-10-29",
+    "day": "Thu",
+    "start": "08:25",
+    "end": "08:35",
+    "minutes": 10,
+    "lane": 0,
+    "activityId": null,
+    "passageIds": [],
+    "focus": "Penempatan ulang",
+    "students": [
+     "K2-07",
+     "K2-08",
+     "K2-09"
+    ]
+   },
+   {
+    "id": "suku_kata-w2-r1",
+    "planSessionId": "suku_kata-w2-r1",
+    "groupLevel": "suku_kata",
+    "kind": "replacement",
+    "week": 2,
+    "date": "2026-10-30",
+    "day": "Fri",
+    "start": "10:05",
+    "end": "10:15",
+    "minutes": 10,
+    "lane": 0,
+    "activityId": null,
+    "passageIds": [],
+    "focus": "Penempatan ulang",
+    "students": [
+     "K2-04",
+     "K2-05",
+     "K2-06"
+    ]
+   },
+   {
+    "id": "huruf-w2-r1",
+    "planSessionId": "huruf-w2-r1",
+    "groupLevel": "huruf",
+    "kind": "replacement",
+    "week": 2,
+    "date": "2026-10-30",
+    "day": "Fri",
+    "start": "10:15",
+    "end": "10:25",
+    "minutes": 10,
+    "lane": 0,
+    "activityId": null,
+    "passageIds": [],
+    "focus": "Penempatan ulang",
+    "students": [
+     "K2-02",
+     "K2-03",
+     "K2-14"
+    ]
+   },
+   {
+    "id": "pemula-w2-r1",
+    "planSessionId": "pemula-w2-r1",
+    "groupLevel": "pemula",
+    "kind": "replacement",
+    "week": 2,
+    "date": "2026-10-30",
+    "day": "Fri",
+    "start": "10:25",
+    "end": "10:35",
+    "minutes": 10,
+    "lane": 0,
+    "activityId": null,
+    "passageIds": [],
+    "focus": "Penempatan ulang",
+    "students": [
+     "K2-01"
+    ]
+   }
+  ],
+  "unscheduled": []
+ },
+ "capturedWith": "mock",
+ "note": "Rekaman dari data contoh, bukan kelas sungguhan."
+}

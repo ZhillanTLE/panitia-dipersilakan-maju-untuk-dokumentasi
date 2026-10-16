@@ -1,0 +1,252 @@
+{
+ "_sample": "Data contoh untuk mode rekaman. Bukan murid sungguhan.",
+ "schemaVersion": "1.0",
+ "class": {
+  "code": "K2",
+  "teacherCode": "G-01",
+  "phones": 1,
+  "cycleWeeks": 2,
+  "startDate": "2026-10-19",
+  "holidays": [
+   "2026-10-28"
+  ]
+ },
+ "timetable": [
+  {
+   "day": "Mon",
+   "start": "08:00",
+   "end": "08:35",
+   "kind": "literacy"
+  },
+  {
+   "day": "Tue",
+   "start": "08:00",
+   "end": "08:35",
+   "kind": "literacy"
+  },
+  {
+   "day": "Wed",
+   "start": "08:00",
+   "end": "08:35",
+   "kind": "literacy"
+  },
+  {
+   "day": "Thu",
+   "start": "08:00",
+   "end": "08:35",
+   "kind": "literacy"
+  },
+  {
+   "day": "Fri",
+   "start": "10:00",
+   "end": "10:35",
+   "kind": "literacy"
+  }
+ ],
+ "students": [
+  {
+   "code": "K2-01",
+   "confirmedLevel": "pemula",
+   "confirmedAt": "2026-10-14",
+   "levelHistory": [],
+   "practice": {
+    "sessions": 0,
+    "wordsReadBack": []
+   }
+  },
+  {
+   "code": "K2-02",
+   "confirmedLevel": "huruf",
+   "confirmedAt": "2026-10-14",
+   "levelHistory": [],
+   "practice": {
+    "sessions": 3,
+    "wcpmFirstRead": 10,
+    "wordsReadBack": [],
+    "wcpmThirdRead": 13
+   },
+   "wcpmUnseen": 28
+  },
+  {
+   "code": "K2-03",
+   "confirmedLevel": "huruf",
+   "confirmedAt": "2026-10-14",
+   "levelHistory": [],
+   "practice": {
+    "sessions": 3,
+    "wcpmFirstRead": 24,
+    "wordsReadBack": [
+     "ba"
+    ],
+    "wcpmThirdRead": 22
+   },
+   "wcpmUnseen": 12
+  },
+  {
+   "code": "K2-04",
+   "confirmedLevel": "suku_kata",
+   "confirmedAt": "2026-10-14",
+   "levelHistory": [],
+   "practice": {
+    "sessions": 6,
+    "wcpmFirstRead": 21,
+    "wordsReadBack": [],
+    "wcpmThirdRead": 22
+   },
+   "wcpmUnseen": 12
+  },
+  {
+   "code": "K2-05",
+   "confirmedLevel": "suku_kata",
+   "confirmedAt": "2026-10-14",
+   "levelHistory": [],
+   "practice": {
+    "sessions": 7,
+    "wcpmFirstRead": 21,
+    "wordsReadBack": [],
+    "wcpmThirdRead": 28
+   },
+   "wcpmUnseen": 13
+  },
+  {
+   "code": "K2-06",
+   "confirmedLevel": "suku_kata",
+   "confirmedAt": "2026-10-14",
+   "levelHistory": [],
+   "practice": {
+    "sessions": 4,
+    "wcpmFirstRead": 28,
+    "wordsReadBack": [],
+    "wcpmThirdRead": 35
+   },
+   "wcpmUnseen": 28
+  },
+  {
+   "code": "K2-07",
+   "confirmedLevel": "kata",
+   "confirmedAt": "2026-10-14",
+   "levelHistory": [],
+   "practice": {
+    "sessions": 6,
+    "wcpmFirstRead": 9,
+    "wordsReadBack": [
+     "buku"
+    ],
+    "wcpmThirdRead": 7
+   },
+   "wcpmUnseen": 27
+  },
+  {
+   "code": "K2-08",
+   "confirmedLevel": "kata",
+   "confirmedAt": "2026-10-14",
+   "levelHistory": [],
+   "practice": {
+    "sessions": 4,
+    "wcpmFirstRead": 17,
+    "wordsReadBack": [
+     "buku",
+     "meja",
+     "rumah"
+    ],
+    "wcpmThirdRead": 17
+   },
+   "wcpmUnseen": 27
+  },
+  {
+   "code": "K2-09",
+   "confirmedLevel": "kata",
+   "confirmedAt": "2026-10-14",
+   "levelHistory": [],
+   "practice": {
+    "sessions": 3,
+    "wcpmFirstRead": 26,
+    "wordsReadBack": [
+     "buku",
+     "meja"
+    ],
+    "wcpmThirdRead": 32
+   },
+   "wcpmUnseen": 36
+  },
+  {
+   "code": "K2-10",
+   "confirmedLevel": "kalimat",
+   "confirmedAt": "2026-10-14",
+   "levelHistory": [],
+   "practice": {
+    "sessions": 4,
+    "wcpmFirstRead": 11,
+    "wordsReadBack": [
+     "ibu"
+    ],
+    "wcpmThirdRead": 14
+   },
+   "wcpmUnseen": 13
+  },
+  {
+   "code": "K2-11",
+   "confirmedLevel": "kalimat",
+   "confirmedAt": "2026-10-14",
+   "levelHistory": [],
+   "practice": {
+    "sessions": 7,
+    "wcpmFirstRead": 30,
+    "wordsReadBack": [],
+    "wcpmThirdRead": 37
+   },
+   "wcpmUnseen": 11
+  },
+  {
+   "code": "K2-12",
+   "confirmedLevel": "paragraf",
+   "confirmedAt": "2026-10-14",
+   "levelHistory": [],
+   "practice": {
+    "sessions": 7,
+    "wcpmFirstRead": 14,
+    "wordsReadBack": [
+     "bintang",
+     "rubah",
+     "mawar"
+    ],
+    "wcpmThirdRead": 22
+   },
+   "wcpmUnseen": 27
+  },
+  {
+   "code": "K2-13",
+   "confirmedLevel": "paragraf",
+   "confirmedAt": "2026-10-14",
+   "levelHistory": [],
+   "practice": {
+    "sessions": 6,
+    "wcpmFirstRead": 18,
+    "wordsReadBack": [
+     "bintang",
+     "rubah",
+     "mawar"
+    ],
+    "wcpmThirdRead": 25
+   },
+   "wcpmUnseen": 39
+  },
+  {
+   "code": "K2-14",
+   "confirmedLevel": "huruf",
+   "confirmedAt": "2026-10-14",
+   "levelHistory": [],
+   "practice": {
+    "sessions": 6,
+    "wcpmFirstRead": 19,
+    "wordsReadBack": [
+     "ba",
+     "bu"
+    ],
+    "wcpmThirdRead": 20
+   },
+   "wcpmUnseen": 35
+  }
+ ],
+ "sessionsDone": []
+}

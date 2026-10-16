@@ -2,6 +2,7 @@
 claude.md
 CLAUDE.md
 designsystem.md
+dengarbaca-online-planner.md
 
 # Dependencies and build output
 node_modules/
@@ -25,3 +26,7 @@ harness/data/
 harness/.venv/
 __pycache__/
 *.onnx
+
+# Online planner: server state and keys stay local
+planner/state/
+planner/.env
