@@ -45,7 +45,8 @@ def create_app() -> Flask:
             problems = intake_mod.validate(payload)
             return bad(problems, 422) if problems else jsonify(_replay(payload))
         try:
-            result = pipeline.run(payload)
+            with llm.chosen(request.args.get("inference")):
+                result = pipeline.run(payload)
         except llm.LiveInferenceUnavailable as exc:
             logger.error("[planner] %s", exc)
             return jsonify({"error": str(exc), "reason": "live_inference_unconfigured"}), 503
@@ -80,12 +81,13 @@ def create_app() -> Flask:
             return jsonify({"error": "Belum ada rencana yang disetujui untuk direncanakan ulang."}), 404
         done = [d["planSessionId"] for d in payload.get("sessionsDone") or [] if d.get("done")]
         try:
-            result = pipeline.run(payload, {
-                "fromDate": data.get("fromDate"),
-                "previous": {"plan": previous["plan"], "calendar": previous["calendar"]},
-                "done": done,
-                "replacedGroups": data.get("replacedGroups") or [],
-            })
+            with llm.chosen(request.args.get("inference")):
+                result = pipeline.run(payload, {
+                    "fromDate": data.get("fromDate"),
+                    "previous": {"plan": previous["plan"], "calendar": previous["calendar"]},
+                    "done": done,
+                    "replacedGroups": data.get("replacedGroups") or [],
+                })
         except llm.LiveInferenceUnavailable as exc:
             return jsonify({"error": str(exc), "reason": "live_inference_unconfigured"}), 503
         except PayloadError as exc:

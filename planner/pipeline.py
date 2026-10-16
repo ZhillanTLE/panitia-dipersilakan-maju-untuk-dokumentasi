@@ -7,7 +7,7 @@ from __future__ import annotations
 import datetime as dt
 import time
 
-from . import agents, checker, config, intake as intake_mod, llm, scheduler
+from . import agents, checker, config, intake as intake_mod, library, llm, scheduler
 from .calendar_slots import replacement_minutes, weekly_minutes
 from .timeutil import week_start
 
@@ -27,6 +27,49 @@ class _Stage:
         self.entry["status"] = status
         self.entry["ms"] = round((time.perf_counter() - self.t0) * 1000)
         self.entry.update(fields)
+
+
+def _evidence(groups: list[dict], students: int) -> tuple[dict[str, list[str]], dict]:
+    """
+    Evidence Summarizer, then the Checker's evidence rules on every line. A line that breaks a rule is
+    stripped and logged. A group left with no line is sent back for a repair, at most REPAIR_ATTEMPTS
+    times; after that it gets rule-built lines, and the trace names the group.
+    """
+    facts = {g["level"]: intake_mod.evidence_facts(g) for g in groups}
+    class_facts = {"students": students, "groups": len(groups)}
+    ev = agents.summarize(groups, facts, class_facts)
+    lines, discarded = checker.check_evidence(ev["lines"], facts, class_facts)
+    discarded = ev["discarded"] + discarded
+    checked = sum(len(v) for v in ev["lines"].values())
+    repairs = 0
+    empty = [g for g in groups if not lines.get(g["level"])]
+    while empty and repairs < config.REPAIR_ATTEMPTS and llm.available():
+        repairs += 1
+        wanted = {g["level"] for g in empty}
+        again = agents.summarize(empty, facts, class_facts, repair=[d for d in discarded if d.get("level") in wanted] or [{"reason": "Belum ada kalimat untuk kelompok ini."}])
+        fixed, more = checker.check_evidence({k: v for k, v in again["lines"].items() if k in wanted}, facts, class_facts)
+        discarded += again["discarded"] + more
+        checked += sum(len(v) for k, v in again["lines"].items() if k in wanted)
+        lines.update({k: v for k, v in fixed.items() if v})
+        empty = [g for g in groups if not lines.get(g["level"])]
+    written_by = ev["writtenBy"]
+    for g in empty:
+        # Built from the facts, so they pass; checked anyway so the guarantee is tested, not assumed.
+        kept, broken = checker.check_evidence({g["level"]: agents.rule_evidence(g)}, facts, class_facts)
+        lines[g["level"]] = kept[g["level"]]
+        discarded += broken
+    if empty and written_by == "gemini":
+        written_by = "gemini (sebagian aturan)"
+    entry = {
+        "summary": f"{sum(len(v) for v in lines.values())} baris bukti, {len(discarded)} dibuang",
+        "lines": lines,
+        "discarded": discarded,
+        "writtenBy": written_by,
+        "checked": checked,
+        "repairs": repairs,
+        "ruleBuilt": [g["level"] for g in empty],
+    }
+    return lines, entry
 
 
 def _plan_id(payload: dict) -> str:
@@ -49,7 +92,11 @@ def run(payload: dict, replan: dict | None = None) -> dict:
     st = _Stage(trace, "intake")
     info = intake_mod.intake(payload)  # PayloadError is for the route to report
     groups = info["groups"]
-    st.done(summary=f"{len(groups)} kelompok, {info['students']} anak", groups=[{"level": g["level"], "size": g["size"]} for g in groups])
+    st.done(
+        summary=f"{len(groups)} kelompok, {info['students']} anak",
+        groups=[{"level": g["level"], "size": g["size"]} for g in groups],
+        facts=[intake_mod.evidence_facts(g) for g in groups],
+    )
 
     cycle = cls["cycleWeeks"]
     start = dt.date.fromisoformat(cls["startDate"])
@@ -91,21 +138,16 @@ def run(payload: dict, replan: dict | None = None) -> dict:
             totals[e["week"]] = max(0, totals[e["week"]] - e["minutes"])
     budgets = {g["level"]: {w: totals[w] // len(groups) for w in weeks} for g in groups}
 
-    # Stage 1 -- Evidence Summarizer
+    # Stage 1 -- Evidence Summarizer, its lines checked in code before anything uses them
+    st = _Stage(trace, "evidence")
     if replan:
-        st = _Stage(trace, "evidence")
         st.done(status="reused", summary="Bukti dari rencana sebelumnya dipakai ulang.", lines=prev_evidence, discarded=[], writtenBy="rencana sebelumnya")
         evidence = prev_evidence
+        evidence_check = {"checked": 0, "discarded": 0, "reused": True}
     else:
-        st = _Stage(trace, "evidence")
-        ev = agents.summarize(groups)
-        evidence = ev["lines"]
-        st.done(
-            summary=f"{sum(len(v) for v in evidence.values())} baris bukti",
-            lines=evidence,
-            discarded=ev["discarded"],
-            writtenBy=ev["writtenBy"],
-        )
+        evidence, ev_entry = _evidence(groups, info["students"])
+        st.done(**ev_entry)
+        evidence_check = {"checked": ev_entry["checked"], "discarded": len(ev_entry["discarded"]), "reused": False}
 
     # Stages 2 and 3 -- Planner and Checker, with repair and fallback
     st_plan = _Stage(trace, "planner")
@@ -138,6 +180,7 @@ def run(payload: dict, replan: dict | None = None) -> dict:
         failures=first_failures,
         fallbackUsed=fallback,
         fallbackReason=reason,
+        evidence=evidence_check,
     )
 
     # Plan with stable session ids
@@ -155,12 +198,18 @@ def run(payload: dict, replan: dict | None = None) -> dict:
             item = {
                 "id": sid, "week": s["week"], "kind": s["kind"], "activityId": s["activityId"],
                 "passageIds": s["passageIds"], "minutes": s["minutes"], "focus": s["focus"],
+                "tip": library.tip_for(s, g),
             }
             if s["kind"] == "replacement":
                 item["students"] = g["students"]
             mine.append(item)
             flat.append({**item, "planSessionId": sid, "groupLevel": level})
-        plan_groups.append({"level": level, "name": g["name"], "size": g["size"], "students": g["students"], "evidence": evidence.get(level, []), "sessions": mine})
+        plan_groups.append({
+            "level": level, "name": g["name"], "size": g["size"], "students": g["students"], "unit": g["unit"],
+            "patterns": [{"id": p["id"], "label": p["label"], "children": p["children"], "count": p["count"]} for p in g["patterns"]],
+            "topPatterns": g["topPatterns"],
+            "evidence": evidence.get(level, []), "sessions": mine,
+        })
 
     # Stage 4 -- Scheduler
     st = _Stage(trace, "scheduler")
@@ -171,6 +220,7 @@ def run(payload: dict, replan: dict | None = None) -> dict:
     )
     cal["events"] = sorted(fixed_events + cal["events"], key=lambda e: (e["date"], e["start"], e["lane"]))
 
+    previous = (replan or {}).get("previous", {}).get("plan", {})
     plan = {
         "id": _plan_id(payload),
         "classCode": cls["code"],
@@ -178,8 +228,12 @@ def run(payload: dict, replan: dict | None = None) -> dict:
         "cycleWeeks": cycle,
         "weeksPlanned": weeks,
         "groups": plan_groups,
-        "levelsAtStart": (replan or {}).get("previous", {}).get("plan", {}).get("levelsAtStart") or {s["code"]: s["confirmedLevel"] for s in payload["students"]},
-        "wcpmUnseenStart": (replan or {}).get("previous", {}).get("plan", {}).get("wcpmUnseenStart") or {s["code"]: s["wcpmUnseen"] for s in payload["students"] if s.get("wcpmUnseen") is not None},
+        # The cycle's starting point, kept so the report compares each child only with their own start.
+        "levelsAtStart": previous.get("levelsAtStart") or {s["code"]: s["confirmedLevel"] for s in payload["students"]},
+        "speedAtStart": previous.get("speedAtStart") or {
+            s["code"]: {"value": s["metrics"]["correctUnitsPerMinute"], "unit": s["metrics"]["unit"]} for s in payload["students"]
+        },
+        "patternsAtStart": previous.get("patternsAtStart") or {s["code"]: [h["id"] for h in s["metrics"]["patterns"]] for s in payload["students"]},
         "phones": cls["phones"],
         "timetable": payload["timetable"],
         "holidays": cls.get("holidays") or [],

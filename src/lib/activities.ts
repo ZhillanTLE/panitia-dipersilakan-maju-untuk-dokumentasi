@@ -1,4 +1,5 @@
 import bank from '../content/activities.json';
+import type { PatternId } from './patterns';
 import type { ChildLevel } from '../types';
 
 export interface Activity {
@@ -6,6 +7,8 @@ export interface Activity {
   level: ChildLevel;
   title: string;
   minutes: number;
+  /** Error patterns this activity practises; empty means general practice. */
+  patterns: PatternId[];
   materials: string;
   steps: string[];
 }

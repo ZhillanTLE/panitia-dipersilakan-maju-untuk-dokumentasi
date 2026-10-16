@@ -108,7 +108,8 @@ def schedule(payload: dict, sessions: list[dict], weeks: list[int], fixed_events
             "lane": lane,
             "activityId": session.get("activityId"),
             "passageIds": session.get("passageIds") or [],
-            "focus": session.get("focus") or "",
+            "focus": session.get("focus"),
+            "tip": session.get("tip") or "",
             "students": session.get("students") or [],
         })
 
@@ -121,7 +122,8 @@ def schedule(payload: dict, sessions: list[dict], weeks: list[int], fixed_events
             "minutes": session["minutes"],
             "activityId": session.get("activityId"),
             "passageIds": session.get("passageIds") or [],
-            "focus": session.get("focus") or "",
+            "focus": session.get("focus"),
+            "tip": session.get("tip") or "",
             "students": session.get("students") or [],
             "reason": reason,
         })

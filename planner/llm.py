@@ -17,7 +17,9 @@ import os
 import re
 import urllib.error
 import urllib.request
-from typing import Optional
+from contextlib import contextmanager
+from contextvars import ContextVar
+from typing import Iterator, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -55,10 +57,26 @@ def has_key() -> bool:
     return bool(os.environ.get("GEMINI_API_KEY", "").strip())
 
 
+# The teacher's switch on the website, for one request: "live" or "mock". Replay still wins.
+_chosen: ContextVar[Optional[str]] = ContextVar("planner_inference", default=None)
+
+
+@contextmanager
+def chosen(mode: Optional[str]) -> Iterator[None]:
+    """Runs the block with the inference mode the teacher picked; anything else keeps the server's own mode."""
+    token = _chosen.set(mode if mode in ("live", "mock") else None)
+    try:
+        yield
+    finally:
+        _chosen.reset(token)
+
+
 def inference_mode() -> str:
-    """'replay', 'live' or 'mock'. Replay wins, then an explicit mock, then live, then the mock default."""
+    """'replay', 'live' or 'mock'. Replay wins, then the teacher's switch, then an explicit mock, then live, then the mock default."""
     if _flag("PLANNER_FIXTURES"):
         return "replay"
+    if _chosen.get():
+        return _chosen.get()
     if _flag("MOCK_LLM"):
         return "mock"
     if _flag("PLANNER_LIVE_INFERENCE"):

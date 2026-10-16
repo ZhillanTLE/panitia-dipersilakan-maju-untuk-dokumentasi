@@ -5,7 +5,9 @@ scope_check.py -- mechanical pre-commit gate for the online planner.
 
 Fails on:
   - a diagnosis or ranking word in planner copy (the website's planner files and the replay fixtures)
-  - an audio or name field in the sync schema
+  - an audio or name field in the sync schema (a clip may sync only as a `clipId` pointer)
+  - a metric an agent can write to: an agent's output fields overlapping the payload's fields, or agent
+    code assigning into a metric
   - a model call, or an import of the agents or the model client, inside the deterministic modules
     (scheduler, calendar slots, approval, checker, report, intake, store)
 The word list lives in planner/banned_words.json and is shared with the Checker.
@@ -27,9 +29,17 @@ COPY_FILES = [
     "src/lib/planner.ts",
     "src/plannerStrings.ts",
     "planner/fixtures/K2.golden.json",
+    "src/lib/metrics.ts",
+    "src/lib/patterns.ts",
+    "src/content/patterns.json",
+    "src/content/activities.json",
+    "src/content/cards.json",
 ]
-DETERMINISTIC = ["scheduler.py", "calendar_slots.py", "approval.py", "checker.py", "report.py", "intake.py", "store.py", "library.py", "timeutil.py"]
-SCHEMA_BANNED = {"audio", "name", "nama", "notes", "catatan", "transcript", "recording"}
+DETERMINISTIC = [
+    "scheduler.py", "calendar_slots.py", "approval.py", "checker.py", "report.py", "intake.py", "store.py", "library.py",
+    "timeutil.py", "patterns.py", "wordlist.py",
+]
+SCHEMA_BANNED = {"audio", "name", "nama", "notes", "catatan", "transcript", "recording", "wav", "pcm", "blob", "bytes"}
 
 
 def read(path: str) -> str:
@@ -55,9 +65,30 @@ for rel in COPY_FILES:
 sys.path.insert(0, ROOT)
 from planner import config  # noqa: E402
 
-for field in config.STUDENT_FIELDS:
-    if field.lower() in SCHEMA_BANNED:
-        FAILURES.append(f"planner/config.py: STUDENT_FIELDS allows '{field}'")
+SCHEMA = {
+    "STUDENT_FIELDS": config.STUDENT_FIELDS,
+    "METRIC_FIELDS": config.METRIC_FIELDS,
+    "PRACTICE_FIELDS": config.PRACTICE_FIELDS,
+    "EXAMPLE_FIELDS": config.EXAMPLE_FIELDS,
+}
+for set_name, fields in SCHEMA.items():
+    for field in fields:
+        low = field.lower()
+        if field == "clipId":
+            continue  # the one exception: a pointer to a clip that stays on the phone
+        if any(bad in low for bad in SCHEMA_BANNED) or "clip" in low:
+            FAILURES.append(f"planner/config.py: {set_name} allows '{field}'")
+
+payload_fields = set().union(*SCHEMA.values())
+for agent, fields in config.AGENT_FIELDS.items():
+    overlap = fields & payload_fields
+    if overlap:
+        FAILURES.append(f"planner/config.py: the {agent} agent may write payload fields {sorted(overlap)}")
+
+agent_code = re.sub(r'""".*?"""', "", read(os.path.join(PLANNER, "agents.py")), flags=re.S)
+for field in sorted(config.METRIC_FIELDS | config.STUDENT_FIELDS | config.PRACTICE_FIELDS):
+    if re.search(r"\[\s*[\"']" + re.escape(field) + r"[\"']\s*\]\s*=(?!=)", agent_code):
+        FAILURES.append(f"planner/agents.py: assigns into '{field}'; metrics and levels are never written by an agent")
 
 for name in DETERMINISTIC:
     path = os.path.join(PLANNER, name)
