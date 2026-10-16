@@ -104,7 +104,9 @@ export async function findPack(): Promise<Pack | null> {
     }
   }
   try {
-    return await open({ kind: 'url', base: `./modelpack/${encodeURIComponent(PACK_VERSION)}/` });
+    // Absolute, because the worker resolves relative URLs against its own script.
+    const base = new URL(`./modelpack/${encodeURIComponent(PACK_VERSION)}/`, document.baseURI).href;
+    return await open({ kind: 'url', base });
   } catch {
     return null;
   }
