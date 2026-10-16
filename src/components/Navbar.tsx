@@ -15,15 +15,28 @@ export function Navbar({ view, pending }: NavbarProps) {
   return (
     <header className="nav">
       <a className="nav__brand" href={href('bacaan')}>
+        <span className="nav__mark" aria-hidden="true" />
         {S.brand}
       </a>
       <nav aria-label={S.nav.label}>
         <ul className="nav__links">
-          {LINKS.map((v) => (
+          {LINKS.map((v, k) => (
             <li key={v}>
-              <a className="nav__link" href={href(v)} aria-current={view === v ? 'page' : undefined}>
+              <a
+                className="nav__link"
+                href={href(v)}
+                aria-current={view === v ? 'page' : undefined}
+                title={S.nav.hint[v]}
+              >
+                <span className="nav__step" aria-hidden="true">
+                  {k + 1}
+                </span>
                 {S.nav[v]}
-                {v === 'tinjau' && pending > 0 && <span className="nav__count">{pending}</span>}
+                {v === 'tinjau' && pending > 0 && (
+                  <span className="nav__count" aria-label={S.nav.pending(pending)}>
+                    {pending}
+                  </span>
+                )}
               </a>
             </li>
           ))}
