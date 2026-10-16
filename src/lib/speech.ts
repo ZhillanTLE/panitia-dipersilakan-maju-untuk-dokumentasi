@@ -117,7 +117,13 @@ export interface RecognizerHealth {
 }
 
 /** Errors that will not clear by starting again. */
-const FATAL = new Set(['language-not-supported', 'not-allowed', 'service-not-allowed', 'audio-capture', 'network', 'bad-grammar']);
+const FATAL = new Set(['language-not-supported', 'not-allowed', 'service-not-allowed', 'audio-capture', 'bad-grammar']);
+/**
+ * Online only: the link to the speech server drops now and then on school Wi-Fi and phone
+ * hotspots, and each drop ends the session with `network`. Start again after these pauses;
+ * give up only when the device is offline or the drops keep coming with no words between.
+ */
+const NETWORK_RETRY_MS = [300, 800, 1600, 3000];
 /** A session that ends this fast with nothing heard counts as a failed start. */
 const QUICK_END_MS = 1000;
 const MAX_QUICK_ENDS = 3;
@@ -142,6 +148,8 @@ export class WebSpeechStream implements HeardStream {
   private onEnded: (() => void) | null = null;
   private stats: RecognizerHealth = { starts: 0, results: 0, error: null };
   private quickEnds = 0;
+  private networkDrops = 0;
+  private retry = 0;
   private failed = false;
 
   health(): RecognizerHealth {
@@ -155,6 +163,7 @@ export class WebSpeechStream implements HeardStream {
   }
 
   private listen(onLive: (tokens: HeardToken[]) => void, onError: (code: string) => void): void {
+    this.retry = 0;
     const SR = recognitionClass();
     if (!SR) {
       onError('unsupported');
@@ -171,6 +180,7 @@ export class WebSpeechStream implements HeardStream {
 
     const startedAt = performance.now();
     let heardThisRun = false;
+    let droppedThisRun = false;
     let idle = 0;
     const endSession = () => {
       try {
@@ -184,6 +194,7 @@ export class WebSpeechStream implements HeardStream {
       // A stopping session can send a last, empty result; it must not wipe the words heard.
       if (!event.results.length) return;
       heardThisRun = true;
+      this.networkDrops = 0;
       this.stats.results++;
       const words: string[] = [];
       const segments: TranscriptSegment[] = [];
@@ -216,6 +227,11 @@ export class WebSpeechStream implements HeardStream {
       this.stats.error = event.error;
       if (import.meta.env.DEV) console.debug('[speech] error', event.error);
       if (FATAL.has(event.error)) fail(event.error);
+      else if (event.error === 'network') {
+        droppedThisRun = true;
+        this.networkDrops++;
+        if (!navigator.onLine || this.networkDrops > NETWORK_RETRY_MS.length) fail('network');
+      }
     };
     // Recognition ends on long silences; keep listening until the teacher stops the take,
     // but give up when it keeps ending the moment it starts.
@@ -227,6 +243,12 @@ export class WebSpeechStream implements HeardStream {
       this.currentSegments = [];
       if (!this.active) {
         this.onEnded?.();
+        return;
+      }
+      if (droppedThisRun) {
+        // A dropped link is retried on its own budget, after a pause that grows each time.
+        const wait = NETWORK_RETRY_MS[Math.min(this.networkDrops, NETWORK_RETRY_MS.length) - 1];
+        this.retry = window.setTimeout(() => this.active && this.listen(onLive, onError), wait);
         return;
       }
       const quick = !heardThisRun && performance.now() - startedAt < QUICK_END_MS;
@@ -257,6 +279,12 @@ export class WebSpeechStream implements HeardStream {
 
   stop(): Promise<HeardToken[]> {
     this.active = false;
+    // Between a dropped link and its retry no session is running, so nothing will end.
+    if (this.retry) {
+      window.clearTimeout(this.retry);
+      this.retry = 0;
+      return Promise.resolve(this.tokens());
+    }
     return new Promise((resolve) => {
       const done = () => resolve(this.tokens());
       this.onEnded = done;
@@ -267,6 +295,7 @@ export class WebSpeechStream implements HeardStream {
 
   cancel(): void {
     this.active = false;
+    window.clearTimeout(this.retry);
     this.recognition?.abort();
   }
 }
