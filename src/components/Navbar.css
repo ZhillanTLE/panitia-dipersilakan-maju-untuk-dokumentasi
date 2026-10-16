@@ -97,18 +97,28 @@
   color: var(--neutral-100);
 }
 
+/* Readings waiting for review: a notification badge on the link's corner, so it never reads as a second step number */
+.nav__link {
+  position: relative;
+}
+
 .nav__count {
+  position: absolute;
+  top: -5px;
+  right: -4px;
   display: inline-grid;
   place-items: center;
-  min-width: 20px;
-  height: 20px;
-  padding: 0 6px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
   border-radius: var(--r-pill);
-  background: var(--caution-tint);
-  color: var(--caution);
-  font-size: var(--fs-9);
+  background: var(--caution);
+  box-shadow: 0 0 0 2px var(--page);
+  color: var(--page);
+  font-size: 10px;
   line-height: 1;
-  font-weight: var(--fw-s);
+  font-weight: var(--fw-h);
+  font-variant-numeric: tabular-nums;
 }
 
 .nav__status {
