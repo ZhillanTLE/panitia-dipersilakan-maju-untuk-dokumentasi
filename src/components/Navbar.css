@@ -9,7 +9,7 @@
   align-items: center;
   height: 72px;
   padding: 0 var(--space-8);
-  background: linear-gradient(var(--canvas) 55%, rgba(248, 247, 244, 0));
+  background: linear-gradient(var(--canvas) 55%, rgba(233, 227, 217, 0));
 }
 
 .nav__brand {
@@ -48,7 +48,7 @@
   padding: 4px;
   border-radius: var(--r-pill);
   background: var(--card);
-  box-shadow: var(--ring-row), 0 6px 20px -10px rgba(31, 31, 31, 0.25);
+  box-shadow: var(--ring-row), 0 6px 20px -10px rgba(75, 61, 51, 0.25);
 }
 
 .nav__link {
@@ -133,5 +133,17 @@
 
   .nav__link {
     padding: 0 var(--space-3) 0 6px;
+  }
+}
+
+/* Four links: on a phone the step numbers go, so the pill fits with a 16px gutter */
+@media (max-width: 440px) {
+  .nav__step {
+    display: none;
+  }
+
+  .nav__link {
+    padding: 0 var(--space-3);
+    font-size: var(--fs-9);
   }
 }

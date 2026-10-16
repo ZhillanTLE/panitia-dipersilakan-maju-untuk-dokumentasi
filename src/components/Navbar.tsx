@@ -8,7 +8,7 @@ interface NavbarProps {
   pending: number;
 }
 
-const LINKS: View[] = ['kelas', 'bacaan', 'tinjau'];
+const LINKS: View[] = ['kelas', 'bacaan', 'tinjau', 'rencana'];
 
 export function Navbar({ view, pending }: NavbarProps) {
   const offline = useOfflineReady();

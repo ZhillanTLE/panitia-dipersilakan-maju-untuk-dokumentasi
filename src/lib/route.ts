@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from 'react';
 
-export type View = 'kelas' | 'bacaan' | 'tinjau';
+export type View = 'kelas' | 'bacaan' | 'tinjau' | 'rencana';
 
 export interface Route {
   view: View;
@@ -9,7 +9,7 @@ export interface Route {
   params: URLSearchParams;
 }
 
-const VIEWS: View[] = ['kelas', 'bacaan', 'tinjau'];
+const VIEWS: View[] = ['kelas', 'bacaan', 'tinjau', 'rencana'];
 
 function parse(hash: string): Route {
   const [path, query = ''] = hash.replace(/^#\/?/, '').split('?');

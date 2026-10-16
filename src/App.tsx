@@ -5,6 +5,7 @@ import { useRoute } from './lib/route';
 import { useApp } from './lib/store';
 import { S } from './strings';
 import { ClassView } from './views/ClassView';
+import { PlannerView } from './views/PlannerView';
 import { ReadView } from './views/ReadView';
 import { ReviewView } from './views/ReviewView';
 
@@ -31,6 +32,7 @@ export function App() {
             </div>
             {route.view === 'tinjau' && <ReviewView active sessionId={route.id} />}
             {route.view === 'kelas' && <ClassView />}
+            {route.view === 'rencana' && <PlannerView step={route.params.get('langkah')} />}
           </>
         )}
       </main>

@@ -138,8 +138,9 @@ self.addEventListener('fetch', (event) => {
 export default defineConfig({
   base: './',
   plugins: [react(), offlineShell(), modelpackFolder()],
-  server: { headers: ISOLATION_HEADERS },
-  preview: { headers: ISOLATION_HEADERS },
+  // The planner API (python -m planner.app) is same-origin in dev, so the page keeps connect-src 'self'.
+  server: { headers: ISOLATION_HEADERS, proxy: { '/api/planner': 'http://127.0.0.1:8000' } },
+  preview: { headers: ISOLATION_HEADERS, proxy: { '/api/planner': 'http://127.0.0.1:8000' } },
   // The speech runtime ships its own WebAssembly; pre-bundling it breaks the file references.
   optimizeDeps: { exclude: ['onnxruntime-web'] },
   worker: { format: 'es' },
