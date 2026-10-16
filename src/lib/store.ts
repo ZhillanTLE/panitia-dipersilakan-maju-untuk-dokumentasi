@@ -1,6 +1,7 @@
 import { useSyncExternalStore } from 'react';
 import type { Consents, Session, Student, Take, WordStatus } from '../types';
 import { db } from './db';
+import { DEMO_STUDENTS, LEFT_TO_READ, demoReading } from './demo';
 import { suggestLevel } from './rubric';
 
 export interface AppState {
@@ -48,6 +49,7 @@ export function newId(): string {
 
 const byRef = (a: Student, b: Student) => a.student_ref.localeCompare(b.student_ref, 'id', { numeric: true });
 const SEEDED_KEY = 'dengarbaca.seeded';
+const DEMO_KEY = 'dengarbaca.demo.v1';
 
 // Starter roster, so the prototype opens with a class. Sample first names only; no results are seeded.
 const SEED: [string, string, boolean, boolean][] = [
@@ -85,6 +87,10 @@ export async function initStore(): Promise<void> {
       students = students.map((s) => (!s.name && SEED_NAMES.has(s.student_ref) ? { ...s, name: SEED_NAMES.get(s.student_ref) } : s));
       await Promise.all(students.filter((s) => unnamed.some((u) => u.student_ref === s.student_ref)).map((s) => db.put('students', s)));
     }
+    if (!flag(DEMO_KEY)) {
+      ({ students, sessions, takes } = await seedDemo(students, sessions, takes));
+      setFlag(DEMO_KEY);
+    }
     set({
       ready: true,
       students: students.sort(byRef),
@@ -96,21 +102,61 @@ export async function initStore(): Promise<void> {
   }
 }
 
-function seeded(): boolean {
+/**
+ * Example class, added once: six more students for fourteen in all, and confirmed example
+ * readings for everyone without a reading of their own, except the last two, who are left
+ * for the teacher to read. Real readings already in the browser are never touched.
+ */
+async function seedDemo(students: Student[], sessions: Session[], takes: Take[]) {
+  const added: Student[] = DEMO_STUDENTS.filter(([ref]) => !students.some((s) => s.student_ref === ref)).map(
+    ([student_ref, name, assessment, audio_research]) => ({
+      student_ref,
+      name,
+      created_at: Date.now(),
+      consents: { assessment, audio_research, camera_mode_b: false },
+    }),
+  );
+  let roster = [...students, ...added].sort(byRef);
+  const untouched = roster.filter((s) => !s.level && !sessions.some((x) => x.student_ref === s.student_ref));
+  const toSeed = untouched.slice(0, Math.max(0, untouched.length - LEFT_TO_READ));
+  const newSessions: Session[] = [];
+  const newTakes: Take[] = [];
+  roster = roster.map((s) => {
+    const k = toSeed.indexOf(s);
+    if (k === -1) return s;
+    const reading = demoReading(s, 1 + ((k * 3) % 12));
+    newSessions.push(reading.session);
+    newTakes.push(...reading.takes);
+    const confirmed_at = reading.session.suggestion?.confirmed?.at ?? Date.now();
+    return { ...s, level: { value: reading.level, confirmed_at, session_id: reading.session.session_id, rubric: reading.rule, demo: true } };
+  });
+  const changed = roster.filter((s) => added.includes(s) || toSeed.some((t) => t.student_ref === s.student_ref));
+  await Promise.all([
+    ...changed.map((s) => db.put('students', s)),
+    ...newSessions.map((s) => db.put('sessions', s)),
+    ...newTakes.map((t) => db.put('takes', t)),
+  ]);
+  return { students: roster, sessions: [...sessions, ...newSessions], takes: [...takes, ...newTakes] };
+}
+
+function flag(key: string): boolean {
   try {
-    return localStorage.getItem(SEEDED_KEY) === '1';
+    return localStorage.getItem(key) === '1';
   } catch {
     return false;
   }
 }
 
-function markSeeded(): void {
+function setFlag(key: string): void {
   try {
-    localStorage.setItem(SEEDED_KEY, '1');
+    localStorage.setItem(key, '1');
   } catch {
-    // Seeding again next time is harmless.
+    // Seeding again next time is harmless for the roster; example readings could repeat.
   }
 }
+
+const seeded = () => flag(SEEDED_KEY);
+const markSeeded = () => setFlag(SEEDED_KEY);
 
 // Students
 

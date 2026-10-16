@@ -13,8 +13,6 @@
   align-items: flex-end;
   justify-content: space-between;
   gap: var(--space-6);
-  padding-bottom: var(--space-8);
-  border-bottom: 1px solid var(--ink);
 }
 
 .kelas__intro {
@@ -311,6 +309,22 @@
   box-shadow: none;
 }
 
+.student__demo {
+  padding: 1px 8px;
+  border-radius: var(--r-pill);
+  box-shadow: inset 0 0 0 1px var(--neutral-300);
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 16px;
+}
+
+/* Example placements stand with a dashed outline, so they never pass for real results */
+.person[data-demo] {
+  box-shadow: none;
+  outline: 1px dashed var(--neutral-400);
+  outline-offset: -1px;
+}
+
 .student__error {
   color: var(--caution);
   font-size: var(--fs-9);
@@ -397,10 +411,6 @@
   .kelas {
     gap: var(--space-10);
     padding: var(--space-4) var(--space-4) var(--space-16);
-  }
-
-  .kelas__head {
-    padding-bottom: var(--space-6);
   }
 
   .kelas__title {

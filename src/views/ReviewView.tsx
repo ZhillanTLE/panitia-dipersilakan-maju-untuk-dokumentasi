@@ -90,6 +90,7 @@ function SessionList({
                 <span className="slist__ref">
                   {nameOf(s.student_ref)}
                   {s.simulated && <span className="slist__sim">{S.review.simulated}</span>}
+                  {s.demo && <span className="slist__sim">{S.review.demo}</span>}
                 </span>
                 <span className="slist__meta">
                   {formatDateTime(s.started_at)}, {S.review.cards(sTakes.length).toLowerCase()}
@@ -389,6 +390,7 @@ function SessionReview({ session, active }: { session: Session; active: boolean 
             <h2 className="sreview__ref">{nameOf(session.student_ref, app.students)}</h2>
             <span className="sreview__code">{session.student_ref}</span>
             {session.simulated && <span className="chip chip--ink">{S.review.simulated}</span>}
+            {session.demo && <span className="chip chip--neutral" title={S.kelas.demoNote}>{S.review.demo}</span>}
           </div>
           <p className="t-meta">
             {formatDateTime(session.started_at)}, {SOURCE[take.source].toLowerCase()}

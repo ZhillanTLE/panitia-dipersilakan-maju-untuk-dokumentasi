@@ -80,6 +80,8 @@ export interface Take {
   card: { id: string; version: number; level: CardLevel };
   source: Source;
   simulated: boolean;
+  /** Example data seeded for the prototype. Labelled "contoh", never exported, never a child's result. */
+  demo?: boolean;
   created_at: number;
   quality: Quality;
   /** Engine output. Never overwritten: teacher changes live in `teacher.edits`. */
@@ -107,6 +109,8 @@ export interface Session {
   started_at: number;
   ended_at?: number;
   simulated: boolean;
+  /** Example data seeded for the prototype. Labelled "contoh", never exported, never a child's result. */
+  demo?: boolean;
   take_ids: string[];
   suggestion?: Suggestion;
 }
@@ -124,5 +128,5 @@ export interface Student {
   name?: string;
   created_at: number;
   consents: Consents;
-  level?: { value: ChildLevel; confirmed_at: number; session_id: string; rubric: string };
+  level?: { value: ChildLevel; confirmed_at: number; session_id: string; rubric: string; demo?: boolean };
 }

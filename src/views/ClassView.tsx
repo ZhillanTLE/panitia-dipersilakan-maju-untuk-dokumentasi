@@ -37,6 +37,7 @@ export function ClassView() {
   }, [app.students]);
   const floor = app.students.filter((s) => !s.level);
   const confirmedCount = app.students.length - floor.length;
+  const realConfirmed = app.students.filter((s) => s.level && !s.level.demo).length;
 
   return (
     <section className="kelas" aria-labelledby="kelas-title">
@@ -79,7 +80,7 @@ export function ClassView() {
                 <li key={level} className="stairs__col" style={{ '--k': k } as CSSProperties}>
                   <ul className="stairs__people" aria-label={LEVEL[level]}>
                     {students.map((s) => (
-                      <li key={s.student_ref} className="person">
+                      <li key={s.student_ref} className="person" data-demo={s.level?.demo ? '' : undefined} title={s.level?.demo ? S.kelas.demoNote : undefined}>
                         {label(s)}
                       </li>
                     ))}
@@ -144,7 +145,7 @@ export function ClassView() {
 
       <footer className="kelas__foot">
         <div className="kelas__export">
-          <button type="button" className="btn btn--ghost" onClick={() => exportCsv(app.students)} disabled={!confirmedCount}>
+          <button type="button" className="btn btn--ghost" onClick={() => exportCsv(app.students)} disabled={!realConfirmed}>
             <IconDownload size={14} />
             {S.kelas.export}
           </button>
@@ -248,6 +249,11 @@ function StudentRow({ student: s, stage, onRemove }: { student: Student; stage: 
                 ? S.ready.stage.pending
                 : `${LEVEL[stage.level]}, ${formatDate(s.level?.confirmed_at ?? 0)}`}
           </span>
+          {stage.kind === 'placed' && s.level?.demo && (
+            <span className="student__demo" title={S.kelas.demoNote}>
+              {S.kelas.demo}
+            </span>
+          )}
         </span>
         {error && <span className="student__error">{S.kelas.duplicateName}</span>}
       </div>
@@ -336,11 +342,11 @@ function AddStudent() {
   );
 }
 
-/** CSV of codes and confirmed levels only: no names, no scores, in code order (CLAUDE.md rules 3 and 7). */
+/** CSV of codes and confirmed levels only: no names, no scores, no example data, in code order (CLAUDE.md rules 3 and 7). */
 function exportCsv(students: Student[]): void {
   const rows = [['student_ref', 'level', 'confirmed_at', 'session_id', 'rubric']];
   for (const s of students) {
-    if (s.level) rows.push([s.student_ref, s.level.value, new Date(s.level.confirmed_at).toISOString(), s.level.session_id, s.level.rubric]);
+    if (s.level && !s.level.demo) rows.push([s.student_ref, s.level.value, new Date(s.level.confirmed_at).toISOString(), s.level.session_id, s.level.rubric]);
   }
   const csv = rows.map((r) => r.map((cell) => `"${cell.replace(/"/g, '""')}"`).join(',')).join('\r\n');
   const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
