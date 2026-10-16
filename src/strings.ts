@@ -57,7 +57,7 @@ export const SOURCE: Record<Source, string> = {
 };
 
 export const CONSENT: Record<keyof Consents, string> = {
-  assessment: 'Asesmen',
+  assessment: 'Asesmen dan latihan',
   audio_research: 'Rekaman riset',
   camera_mode_b: 'Kamera Mode B',
 };
@@ -78,6 +78,14 @@ export const S = {
   },
   offlineReady: 'Siap tanpa internet',
   storageOff: 'Penyimpanan peramban mati. Data hilang saat tab ditutup.',
+
+  // Absen: the roll call that opens Bacaan
+  absen: {
+    title: 'Siapa yang membaca?',
+    back: 'Absen',
+    open: (card: string) => `Buka ${card.toLowerCase()}`,
+    armedHint: (name: string) => `Minta ${name} membaca keras-keras, lalu tekan tombolnya.`,
+  },
 
   // Siap membaca (cover)
   ready: {
@@ -284,7 +292,17 @@ export const S = {
       pending: (n: number) => `${n} menunggu tinjauan`,
       fresh: (n: number) => `${n} belum dibaca`,
     },
-    readNext: (ref: string) => `Dengarkan ${ref}`,
+    readNext: (name: string) => `Dengarkan ${name}`,
+    ladder: 'Tangga baca',
+    ladderNote: 'Murid berdiri di tingkat yang sudah dikonfirmasi guru. Ketuk satu anak tangga untuk melihat aktivitasnya.',
+    floor: 'Belum punya tingkat',
+    stepEmpty: 'Belum ada',
+    activitiesFor: (level: string) => `Aktivitas untuk kelompok ${level.toLowerCase()}`,
+    namePlaceholder: 'Nama panggilan, mis. Rina',
+    nameLabel: 'Nama panggilan',
+    nameNote: 'Nama hanya tersimpan di perangkat ini. Rekaman, ekspor, dan laporan memakai kode murid.',
+    rename: (name: string) => `Ubah nama ${name}`,
+    duplicateName: 'Nama itu sudah dipakai di kelas ini.',
     reviewNext: 'Tinjau bacaan',
     allPlaced: 'Semua murid sudah punya tingkat.',
     review: 'Tinjau',
@@ -305,12 +323,12 @@ export const S = {
     none: 'Belum ada',
     assess: 'Mulai bacaan',
     remove: 'Hapus',
-    removeConfirm: (ref: string) => `Hapus ${ref} beserta semua bacaan dan rekamannya?`,
-    removed: (ref: string) => `${ref} dihapus`,
+    removeConfirm: (name: string) => `Hapus ${name} beserta semua bacaan dan rekamannya?`,
+    removed: (name: string) => `${name} dihapus`,
     addLabel: 'Kode murid',
     addPlaceholder: 'mis. K2-09',
     add: 'Tambah murid',
-    added: (ref: string) => `${ref} ditambahkan`,
+    added: (name: string, ref: string) => `${name} ditambahkan dengan kode ${ref}`,
     duplicate: 'Kode itu sudah dipakai.',
     cameraNote: 'Mode B belum tersedia di prototipe ini.',
     activityDraft: 'Draf, belum ditinjau pendidik',

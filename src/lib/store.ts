@@ -49,17 +49,18 @@ export function newId(): string {
 const byRef = (a: Student, b: Student) => a.student_ref.localeCompare(b.student_ref, 'id', { numeric: true });
 const SEEDED_KEY = 'dengarbaca.seeded';
 
-// Pseudonymous starter roster, so the prototype opens with a class. No results are seeded.
-const SEED: [string, boolean, boolean][] = [
-  ['K2-01', true, false],
-  ['K2-02', true, true],
-  ['K2-03', true, false],
-  ['K2-04', true, false],
-  ['K2-05', true, true],
-  ['K2-06', false, false],
-  ['K2-07', true, false],
-  ['K2-08', true, false],
+// Starter roster, so the prototype opens with a class. Sample first names only; no results are seeded.
+const SEED: [string, string, boolean, boolean][] = [
+  ['K2-01', 'Ani', true, false],
+  ['K2-02', 'Bagas', true, true],
+  ['K2-03', 'Citra', true, false],
+  ['K2-04', 'Dimas', true, false],
+  ['K2-05', 'Eka', true, true],
+  ['K2-06', 'Fajar', false, false],
+  ['K2-07', 'Gita', true, false],
+  ['K2-08', 'Hana', true, false],
 ];
+const SEED_NAMES = new Map(SEED.map(([ref, name]) => [ref, name]));
 
 export async function initStore(): Promise<void> {
   try {
@@ -69,13 +70,20 @@ export async function initStore(): Promise<void> {
       db.all<Take>('takes'),
     ]);
     if (!students.length && !seeded()) {
-      students = SEED.map(([student_ref, assessment, audio_research]) => ({
+      students = SEED.map(([student_ref, name, assessment, audio_research]) => ({
         student_ref,
+        name,
         created_at: Date.now(),
         consents: { assessment, audio_research, camera_mode_b: false },
       }));
       await Promise.all(students.map((s) => db.put('students', s)));
       markSeeded();
+    }
+    // Rosters seeded before names existed get the sample names once.
+    const unnamed = students.filter((s) => !s.name && SEED_NAMES.has(s.student_ref));
+    if (unnamed.length) {
+      students = students.map((s) => (!s.name && SEED_NAMES.has(s.student_ref) ? { ...s, name: SEED_NAMES.get(s.student_ref) } : s));
+      await Promise.all(students.filter((s) => unnamed.some((u) => u.student_ref === s.student_ref)).map((s) => db.put('students', s)));
     }
     set({
       ready: true,
@@ -106,17 +114,45 @@ function markSeeded(): void {
 
 // Students
 
-export function addStudent(student_ref: string): boolean {
-  const ref = student_ref.trim().toUpperCase();
-  if (!ref || state.students.some((s) => s.student_ref === ref)) return false;
+/** The next free code in the class's pattern, such as K2-09. */
+export function nextRef(students: Student[] = state.students): string {
+  const numbers = students
+    .map((s) => /^K2-(\d+)$/.exec(s.student_ref)?.[1])
+    .filter((n): n is string => Boolean(n))
+    .map(Number);
+  const next = (numbers.length ? Math.max(...numbers) : 0) + 1;
+  return `K2-${String(next).padStart(2, '0')}`;
+}
+
+/** Adds a student by first name; the code is assigned. Returns the new code, or null for a repeated name. */
+export function addStudent(name: string): string | null {
+  const clean = name.trim().replace(/\s+/g, ' ');
+  if (!clean || state.students.some((s) => s.name?.toLowerCase() === clean.toLowerCase())) return null;
+  const ref = nextRef();
   const student: Student = {
     student_ref: ref,
+    name: clean,
     created_at: Date.now(),
     consents: { assessment: false, audio_research: false, camera_mode_b: false },
   };
   set({ students: [...state.students, student].sort(byRef) });
   persist(db.put('students', student));
+  return ref;
+}
+
+export function renameStudent(student_ref: string, name: string): boolean {
+  const clean = name.trim().replace(/\s+/g, ' ');
+  if (!clean || state.students.some((s) => s.student_ref !== student_ref && s.name?.toLowerCase() === clean.toLowerCase())) return false;
+  const students = state.students.map((s) => (s.student_ref === student_ref ? { ...s, name: clean } : s));
+  set({ students });
+  const updated = students.find((s) => s.student_ref === student_ref);
+  if (updated) persist(db.put('students', updated));
   return true;
+}
+
+/** The name the teacher sees: the first name, or the code when there is none. */
+export function nameOf(student_ref: string, students: Student[] = state.students): string {
+  return students.find((s) => s.student_ref === student_ref)?.name ?? student_ref;
 }
 
 export function setConsent(student_ref: string, key: keyof Consents, value: boolean): void {

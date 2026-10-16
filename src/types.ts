@@ -116,8 +116,10 @@ export interface Consents {
 }
 
 export interface Student {
-  /** Local pseudonym such as "K2-07". No names, addresses or NIK are stored. */
+  /** Local pseudonym such as "K2-07". Every record, export and sync uses this, never the name. */
   student_ref: string;
+  /** First name or nickname the teacher sees on this device. Never exported. No surnames, addresses or NIK. */
+  name?: string;
   created_at: number;
   consents: Consents;
   level?: { value: ChildLevel; confirmed_at: number; session_id: string; rubric: string };

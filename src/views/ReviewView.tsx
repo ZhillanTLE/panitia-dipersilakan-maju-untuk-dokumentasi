@@ -13,7 +13,7 @@ import { href, navigate } from '../lib/route';
 import { CARD_ORDER, RUBRIC, RUBRIC_VERSION, cardOutcome, effectiveStatus, isError, nextCard, suggestLevel } from '../lib/rubric';
 import { ENGINE_VERSION, scoreTake } from '../lib/scoring';
 import { simulateTokens } from '../lib/simulate';
-import { addTake, confirmSession, endSession, getAudio, newId, setWordEdit, takesOf, useApp } from '../lib/store';
+import { addTake, confirmSession, endSession, getAudio, nameOf, newId, setWordEdit, takesOf, useApp } from '../lib/store';
 import { CARD, LEVEL, S, SOURCE, STATUS } from '../strings';
 import type { CardLevel, ChildLevel, Session, Source, Take, WordStatus } from '../types';
 import './ReviewView.css';
@@ -88,7 +88,7 @@ function SessionList({
                 aria-current={s.session_id === selectedId ? 'page' : undefined}
               >
                 <span className="slist__ref">
-                  {s.student_ref}
+                  {nameOf(s.student_ref)}
                   {s.simulated && <span className="slist__sim">{S.review.simulated}</span>}
                 </span>
                 <span className="slist__meta">
@@ -386,7 +386,8 @@ function SessionReview({ session, active }: { session: Session; active: boolean 
       <div className="sreview__panel">
         <header className="sreview__head">
           <div className="sreview__who">
-            <h2 className="sreview__ref">{session.student_ref}</h2>
+            <h2 className="sreview__ref">{nameOf(session.student_ref, app.students)}</h2>
+            <span className="sreview__code">{session.student_ref}</span>
             {session.simulated && <span className="chip chip--ink">{S.review.simulated}</span>}
           </div>
           <p className="t-meta">
@@ -547,7 +548,7 @@ function ConfirmArea({
   const confirm = () => {
     confirmSession(session.session_id);
     if (session.simulated) toast(S.review.simulatedToast);
-    else if (level) toast(S.review.confirmedToast(LEVEL[level], session.student_ref));
+    else if (level) toast(S.review.confirmedToast(LEVEL[level], nameOf(session.student_ref)));
     else toast(S.review.closedToast);
   };
 

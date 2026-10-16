@@ -238,6 +238,12 @@
   gap: var(--space-3);
 }
 
+.sreview__code {
+  color: var(--neutral-400);
+  font-size: var(--fs-9);
+  font-variant-numeric: tabular-nums;
+}
+
 .sreview__ref {
   font-size: var(--fs-5);
   line-height: var(--lh-5);
