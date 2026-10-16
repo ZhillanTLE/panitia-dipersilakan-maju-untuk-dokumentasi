@@ -32,9 +32,9 @@ function take(level: CardLevel, errors: number, edits: Record<number, WordStatus
 }
 
 describe('cardOutcome', () => {
-  it('needs 36 of 39 words on the paragraph card', () => {
-    expect(cardOutcome(take('paragraf', 3))).toMatchObject({ total: 39, needed: 36, correct: 36, passed: true });
-    expect(cardOutcome(take('paragraf', 4))).toMatchObject({ correct: 35, passed: false });
+  it('needs 71 of 78 words on the paragraph card', () => {
+    expect(cardOutcome(take('paragraf', 7))).toMatchObject({ total: 78, needed: 71, correct: 71, passed: true });
+    expect(cardOutcome(take('paragraf', 8))).toMatchObject({ correct: 70, passed: false });
   });
 
   it('needs 8 of 10 on the word card', () => {

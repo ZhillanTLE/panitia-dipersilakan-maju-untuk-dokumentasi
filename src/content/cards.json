@@ -1,8 +1,94 @@
 {
   "bank": "kartu-id",
-  "version": 1,
+  "version": 2,
   "status": "draft",
   "cards": [
+    {
+      "id": "PAR-02",
+      "version": 1,
+      "level": "paragraf",
+      "title": "Pangeran dari Bintang Kecil",
+      "layout": "prose",
+      "blocks": [
+        "Di sebuah bintang yang sangat kecil, tinggal seorang pangeran. Bintangnya hanya sebesar rumah. Setiap pagi ia membersihkan tiga gunung kecil dan menyiram sekuntum mawar.",
+        "Suatu hari pangeran kecil pergi berjalan jauh. Ia singgah di banyak bintang dan bertemu orang dewasa yang aneh. Akhirnya ia sampai di bumi, di tengah gurun pasir yang luas.",
+        "Di gurun itu ia bertemu seekor rubah. Rubah ingin berteman, tetapi berteman butuh waktu. Setiap hari pangeran duduk sedikit lebih dekat. Lama-lama mereka menjadi sahabat."
+      ],
+      "stops": [
+        "Bintang kecil",
+        "Perjalanan",
+        "Gurun dan rubah"
+      ]
+    },
+    {
+      "id": "KAL-02",
+      "version": 1,
+      "level": "kalimat",
+      "title": "Mawar dan Rubah",
+      "layout": "lines",
+      "blocks": [
+        "Pangeran kecil punya sekuntum mawar.",
+        "Rubah itu duduk di bawah pohon.",
+        "Bintang bersinar di langit malam.",
+        "Pilot itu mencari sumur di gurun."
+      ],
+      "stops": [
+        "Mawar",
+        "Rubah",
+        "Bintang",
+        "Sumur"
+      ]
+    },
+    {
+      "id": "KAT-02",
+      "version": 1,
+      "level": "kata",
+      "title": "Kata dari gurun",
+      "layout": "grid",
+      "blocks": [
+        "mawar",
+        "rubah",
+        "domba",
+        "bintang",
+        "gurun",
+        "sumur",
+        "pilot",
+        "raja",
+        "pasir",
+        "lampu"
+      ],
+      "syllables": {
+        "mawar": "ma-war",
+        "rubah": "ru-bah",
+        "domba": "dom-ba",
+        "bintang": "bin-tang",
+        "gurun": "gu-run",
+        "sumur": "su-mur",
+        "pilot": "pi-lot",
+        "raja": "ra-ja",
+        "pasir": "pa-sir",
+        "lampu": "lam-pu"
+      }
+    },
+    {
+      "id": "SUK-02",
+      "version": 1,
+      "level": "suku_kata",
+      "title": "Suku kata",
+      "layout": "grid",
+      "blocks": [
+        "ma",
+        "ru",
+        "ba",
+        "ta",
+        "gu",
+        "su",
+        "pi",
+        "ra",
+        "pa",
+        "lu"
+      ]
+    },
     {
       "id": "PAR-01",
       "version": 1,
@@ -33,7 +119,18 @@
       "level": "kata",
       "title": "Sepuluh kata",
       "layout": "grid",
-      "blocks": ["buku", "meja", "sapi", "rumah", "bola", "kaki", "topi", "jalan", "ikan", "pintu"],
+      "blocks": [
+        "buku",
+        "meja",
+        "sapi",
+        "rumah",
+        "bola",
+        "kaki",
+        "topi",
+        "jalan",
+        "ikan",
+        "pintu"
+      ],
       "syllables": {
         "buku": "bu-ku",
         "meja": "me-ja",
@@ -53,7 +150,18 @@
       "level": "suku_kata",
       "title": "Suku kata",
       "layout": "grid",
-      "blocks": ["ba", "ki", "mu", "de", "so", "la", "pi", "ne", "tu", "ga"]
+      "blocks": [
+        "ba",
+        "ki",
+        "mu",
+        "de",
+        "so",
+        "la",
+        "pi",
+        "ne",
+        "tu",
+        "ga"
+      ]
     },
     {
       "id": "HUR-01",
@@ -61,7 +169,19 @@
       "level": "huruf",
       "title": "Huruf",
       "layout": "grid",
-      "blocks": ["a", "m", "s", "b", "i", "k", "u", "t", "e", "r"]
+      "blocks": [
+        "a",
+        "m",
+        "s",
+        "b",
+        "i",
+        "k",
+        "u",
+        "t",
+        "e",
+        "r"
+      ]
     }
-  ]
+  ],
+  "note": "Version 2: original Indonesian retellings inspired by The Little Prince, written for the prototype. Not a translation of the book. Version 1 cards stay below so older readings still open."
 }
