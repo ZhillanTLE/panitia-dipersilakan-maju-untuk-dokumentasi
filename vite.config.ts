@@ -80,7 +80,7 @@ function offlineShell(): Plugin {
       const files = Object.keys(bundle)
         .filter((file) => !file.endsWith('.map'))
         .sort();
-      const urls = ['./', ...files.map((file) => `./${file}`), './favicon.svg', './manifest.webmanifest'];
+      const urls = ['./', ...files.map((file) => `./${file}`), './logo.png', './icon-192.png', './icon-512.png', './manifest.webmanifest'];
       const version = createHash('sha256').update(files.join('\n')).digest('hex').slice(0, 12);
       this.emitFile({ type: 'asset', fileName: 'sw.js', source: serviceWorker(urls, version) });
     },

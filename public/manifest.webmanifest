@@ -1,6 +1,6 @@
 {
-  "name": "DengarBaca",
-  "short_name": "DengarBaca",
+  "name": "BacainYuk",
+  "short_name": "BacainYuk",
   "description": "Asesmen membaca awal Bahasa Indonesia, luring.",
   "lang": "id",
   "start_url": "./",
@@ -8,5 +8,8 @@
   "display": "standalone",
   "background_color": "#FFFFFF",
   "theme_color": "#FFFFFF",
-  "icons": [{ "src": "favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
 }

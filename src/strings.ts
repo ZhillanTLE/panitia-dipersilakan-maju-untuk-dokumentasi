@@ -71,7 +71,7 @@ export const CONSENT: Record<keyof Consents, string> = {
 };
 
 export const S = {
-  brand: 'DengarBaca',
+  brand: 'BacainYuk',
   nav: {
     kelas: 'Kelas',
     bacaan: 'Bacaan',

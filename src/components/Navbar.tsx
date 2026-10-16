@@ -15,7 +15,7 @@ export function Navbar({ view, pending }: NavbarProps) {
   return (
     <header className="nav">
       <a className="nav__brand" href={href('bacaan')}>
-        <span className="nav__mark" aria-hidden="true" />
+        <img className="nav__logo" src="./logo.png" alt="" width={318} height={330} />
         {S.brand}
       </a>
       <nav aria-label={S.nav.label}>

@@ -24,22 +24,11 @@
 }
 
 /* A closed book seen from the fore-edge: an ink cover over a hairline page */
-.nav__mark {
-  position: relative;
-  width: 16px;
-  height: 20px;
-  border-radius: 1px 4px 4px 1px;
-  background: var(--ink);
-}
-
-.nav__mark::after {
-  content: '';
-  position: absolute;
-  inset: 3px -3px 3px 3px;
-  z-index: -1;
-  border-radius: 0 3px 3px 0;
-  box-shadow: inset 0 0 0 1px var(--ink);
-  background: var(--neutral-100);
+/* The BacainYuk mark: the open book over B and Y, in ink on a transparent ground */
+.nav__logo {
+  display: block;
+  width: auto;
+  height: 28px;
 }
 
 .nav__links {
