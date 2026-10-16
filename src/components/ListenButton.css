@@ -68,7 +68,7 @@
 
 @keyframes listen-idle {
   50% {
-    box-shadow: 0 10px 28px 0 rgba(31, 31, 31, 0.32);
+    box-shadow: 0 10px 28px 0 rgba(75, 61, 51, 0.32);
   }
 }
 

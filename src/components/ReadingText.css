@@ -241,7 +241,7 @@ button.w {
   width: 10px;
   height: 4px;
   margin-left: -5px;
-  background: radial-gradient(circle at 2px 2px, var(--neutral-400) 1.6px, transparent 2px) 0 0 / 6px 4px repeat-x;
+  background: radial-gradient(circle at 2px 2px, var(--stroke) 1.4px, transparent 2px) 0 0 / 6px 4px repeat-x;
   animation: step-in 320ms var(--ease-highlight);
 }
 

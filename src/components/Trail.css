@@ -1,7 +1,7 @@
-/* Jejak pasir: a dotted dune line, the part already walked inked in */
+/* Jejak pasir, sketched: ink lines straight on the paper, no fills */
 .trail {
   position: relative;
-  margin-bottom: var(--space-6);
+  margin-bottom: var(--space-5);
 }
 
 .trail svg {
@@ -9,6 +9,29 @@
   overflow: visible;
 }
 
+.sk {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.sk--faint {
+  stroke: var(--stroke);
+  stroke-width: 1.2;
+}
+
+.sk--leaf {
+  stroke: var(--success);
+}
+
+.sk--dot {
+  fill: var(--ink);
+  stroke: none;
+}
+
+/* The path ahead is a dotted pencil line; the part walked is inked in */
 .trail__path,
 .trail__walked {
   fill: none;
@@ -16,7 +39,7 @@
 }
 
 .trail__path {
-  stroke: var(--neutral-400);
+  stroke: var(--stroke);
   stroke-width: 1.5;
   stroke-dasharray: 2 7;
 }
@@ -27,38 +50,88 @@
   transition: stroke-dashoffset 420ms var(--ease-highlight);
 }
 
-.trail__stop circle {
-  fill: var(--neutral-100);
-  stroke: var(--stroke);
-  stroke-width: 1.5;
+/* Landmarks wait in pencil grey and are inked once the reader gets there */
+.trail__stop .lm {
+  opacity: 0.45;
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
   transition:
-    fill var(--motion-ui) ease,
-    stroke var(--motion-ui) ease;
+    opacity 300ms ease,
+    transform 420ms var(--ease-highlight);
 }
 
-.trail__stop[data-on] circle {
-  fill: var(--ink);
-  stroke: var(--ink);
+.trail__stop[data-on] .lm {
+  opacity: 1;
+  transform: scale(1.08);
 }
 
-.trail__stop text {
+.trail__label {
   fill: var(--muted);
   font-family: var(--font-sans);
   font-size: var(--fs-9);
 }
 
-.trail__stop[data-on] text {
+.trail__label[data-on] {
   fill: var(--ink);
   font-weight: var(--fw-s);
 }
 
-.trail__end {
-  fill: var(--neutral-400);
+.trail__walker {
+  transition: transform 420ms var(--ease-highlight);
 }
 
-.trail__walker {
-  fill: var(--ink);
-  stroke: var(--neutral-100);
-  stroke-width: 2;
-  transition: transform 420ms var(--ease-highlight);
+.walker__body {
+  fill: var(--page);
+  stroke: var(--ink);
+  stroke-width: 1.6;
+}
+
+.walker__hop {
+  animation: walker-hop 900ms ease-in-out infinite;
+}
+
+@keyframes walker-hop {
+  50% {
+    transform: translateY(-3px);
+  }
+}
+
+/* At the end, the walker cheers with a bigger hop */
+.walker__hop--cheer {
+  animation: walker-cheer 700ms ease-in-out infinite;
+}
+
+@keyframes walker-cheer {
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+.sketch-stars {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.sketch-stars__one {
+  stroke-width: 1.5;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: star-pop 520ms var(--ease-highlight) both;
+}
+
+@keyframes star-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.2) rotate(-40deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .walker__hop,
+  .walker__hop--cheer,
+  .sketch-stars__one {
+    animation: none;
+  }
 }

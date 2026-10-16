@@ -28,11 +28,12 @@
   --tracking-display: -1.12px;
   --tracking-section: -0.84px;
 
-  /* Colour: neutral, node 87:20 */
-  --neutral-100: #ffffff;
-  --neutral-200: #e8e8e8;
-  --neutral-300: #d2d2d2;
-  --neutral-400: #bbbbbb;
+  /* Colour: neutral, node 87:20, warmed to the team's paper palette
+     (#FBF5EA, #EFE6D8, #D6C8B6, #A8927B) so the app reads like a printed book. Text stays Ink. */
+  --neutral-100: #f8f5ef;
+  --neutral-200: #e2dace;
+  --neutral-300: #d3c9bb;
+  --neutral-400: #b3a899;
   --neutral-900: #4a4a4a;
   --neutral-1000: #333333;
 
@@ -40,14 +41,14 @@
   /* The palette's blues (Slate #363E4A, Midnight #170F35, Navy text #0F1235) are retired:
      their roles go to Ink, so the product stays neutral with green and amber for status. */
   --ink: #1f1f1f;
-  --paper: #efeeea;
-  --cream: #f8f7f4;
-  --stroke: #818181;
-  --muted: #7f7f7f;
-  --success-tint: #e9f1eb;
-  --success: #3f7d55;
-  --caution-tint: #f1f1e9;
-  --caution: #7d763f;
+  --paper: #e4dccf;
+  --cream: #ece6dc;
+  --stroke: #a99c8b;
+  --muted: #706960;
+  --success-tint: #e2e9dd;
+  --success: #3f6b4b;
+  --caution-tint: #efe4d1;
+  --caution: #7a5c2e;
   --black: #000000;
 
   /* Gradients, nodes 87:110 and 87:115 */
@@ -74,8 +75,8 @@
   --ring-dark: inset 0 0 0 2px var(--neutral-900);
 
   /* Elevation, nodes 87:292, 87:297, 87:302 */
-  --shadow-cta: 0 10px 24px 0 rgba(31, 31, 31, 0.22);
-  --shadow-lift: 0 12px 32px 0 rgba(0, 0, 0, 0.25);
+  --shadow-cta: 0 10px 24px 0 rgba(75, 61, 51, 0.28);
+  --shadow-lift: 0 12px 32px 0 rgba(75, 61, 51, 0.25);
   --shadow-hairline: 0 1px 2px 0 rgba(0, 0, 0, 0.07);
 
   /* TODO(design-system): motion tokens are not in Figma yet (designsystem.md §8.1). */
@@ -99,6 +100,14 @@
   --space-16: 64px;
 
   /* Semantic roles from CLAUDE.md, mapped to tokens (designsystem.md §7) */
+  /* Rencana: one muted hue per reading level, no blue */
+  --grp-pemula: #8b8f7a;
+  --grp-huruf: #9a4a4a;
+  --grp-suku_kata: #b0842c;
+  --grp-kata: #3f6b4b;
+  --grp-kalimat: #6f4b73;
+  --grp-paragraf: #7a5236;
+
   --word-upcoming: var(--ink);
   --word-later: var(--muted); /* TODO(design-system): wireframe role, designsystem.md §8.3 */
   --word-read: var(--neutral-400);
@@ -117,8 +126,12 @@
   --success-on-dark: #8fbf9f;
 
   /* Surfaces: a warm paper desk; the book and cards are white on it */
-  --canvas: var(--cream);
-  --card: var(--neutral-100);
+  /* One warm grey-beige family, darkest to lightest: desk, inset, card, page.
+     Status colours are toned to sit in it (sage, ochre). #FBF5EA read as peach beside the paper. */
+  --canvas: #e9e3d9;
+  --card: #f5f1ea;
+  /* The reading page: the paper colour from the team's palette */
+  --page: #f4f0e8;
 
   /* Reading text: fixed minimum size, wide line spacing (designsystem.md §8.2) */
   --reading-size: var(--fs-5);

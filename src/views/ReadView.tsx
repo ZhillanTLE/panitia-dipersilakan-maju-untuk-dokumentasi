@@ -3,7 +3,7 @@ import { Book, PageFoot } from '../components/Book';
 import { IconCheck, IconLeft, IconMic, IconStop, IconTextSize } from '../components/Icons';
 import { Ladder } from '../components/Ladder';
 import { ListenButton } from '../components/ListenButton';
-import { Trail } from '../components/Trail';
+import { SketchStars, Trail } from '../components/Trail';
 import { ReadingText } from '../components/ReadingText';
 import { toast } from '../components/Toast';
 import { startCapture, type Capture } from '../lib/audio';
@@ -554,8 +554,14 @@ export function ReadView({ active }: { active: boolean }) {
         {phase.kind === 'thanks' && card && (
           <>
             <div className="page__body thanks">
-              <p className="thanks__title">{S.thanks.title}</p>
-              <p className="thanks__body">{S.thanks.body}</p>
+              <Trail stops={card.stops ?? []} progress={1} block={Math.max(0, (card.stops?.length ?? 1) - 1)} cheer />
+              <div className="thanks__center">
+                <div className="thanks__stars">
+                  <SketchStars />
+                </div>
+                <p className="thanks__title">{S.thanks.title}</p>
+                <p className="thanks__body">{S.thanks.body}</p>
+              </div>
             </div>
             <PageFoot left={card.title} right={page.no} />
           </>

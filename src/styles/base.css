@@ -409,7 +409,7 @@ a {
 }
 
 .dialog::backdrop {
-  background: rgba(31, 31, 31, 0.32);
+  background: rgba(75, 61, 51, 0.32);
 }
 
 .dialog__actions {

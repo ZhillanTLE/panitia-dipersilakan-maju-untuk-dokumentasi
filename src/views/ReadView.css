@@ -312,9 +312,9 @@
 
 .book--stage .page {
   box-shadow:
-    var(--ring-row),
-    0 1px 2px rgba(0, 0, 0, 0.07),
-    0 14px 34px -18px rgba(31, 31, 31, 0.28);
+    inset 0 0 0 1px rgba(92, 74, 60, 0.16),
+    0 1px 2px rgba(58, 44, 34, 0.12),
+    0 16px 36px -20px rgba(58, 44, 34, 0.38);
 }
 
 .book--stage .page__body {
@@ -333,7 +333,7 @@
   width: min(880px, 100%);
   margin: var(--space-4) auto 0;
   padding: var(--space-6) 0 var(--space-4);
-  background: linear-gradient(rgba(248, 247, 244, 0), var(--canvas) 34%);
+  background: linear-gradient(rgba(233, 227, 217, 0), var(--canvas) 34%);
 }
 
 .controls__row {
@@ -542,29 +542,48 @@
   background: var(--ink);
 }
 
-/* Terima kasih: the same page for every child */
+/* Terima kasih: the end of the journey, the same page for every child */
 .thanks {
   display: flex;
   flex-direction: column;
+}
+
+.thanks__center {
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
   justify-content: center;
-  gap: var(--space-4);
+  gap: var(--space-3);
+  padding-block: var(--space-6) var(--space-10);
+  text-align: center;
+}
+
+.thanks__stars {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: min(520px, 100%);
+  transform: translate(-50%, -58%);
+  pointer-events: none;
 }
 
 .thanks__title {
+  position: relative;
   font-size: var(--fs-1);
   line-height: var(--lh-1);
   font-weight: var(--fw-s);
   letter-spacing: var(--tracking-display);
-  animation: thanks-in 900ms var(--ease-highlight) 380ms both;
+  animation: thanks-in 900ms var(--ease-highlight) 300ms both;
 }
 
 .thanks__body {
-  padding-top: var(--space-4);
-  border-top: 1px solid var(--ink);
+  position: relative;
   color: var(--neutral-900);
   font-size: var(--fs-6);
   line-height: var(--lh-6);
-  animation: thanks-in 900ms var(--ease-highlight) 520ms both;
+  animation: thanks-in 900ms var(--ease-highlight) 460ms both;
 }
 
 @keyframes thanks-in {
