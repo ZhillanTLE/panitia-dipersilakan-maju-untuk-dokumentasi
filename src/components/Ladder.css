@@ -1,0 +1,102 @@
+/* The reading ladder: five steps rising left to right, each one a card level. */
+.ladder {
+  --step-w: 76px;
+  --rise: 14px;
+  --base: 44px;
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.ladder__step {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  width: var(--step-w);
+  height: calc(var(--base) + var(--k) * var(--rise));
+  padding: 0 0 var(--space-2) var(--space-2);
+  border: 0;
+  border-radius: var(--r-10) var(--r-10) 3px 3px;
+  background: var(--card);
+  box-shadow: var(--ring-row);
+  color: var(--neutral-900);
+  text-align: left;
+  transition:
+    background-color var(--motion-ui) ease,
+    color var(--motion-ui) ease,
+    box-shadow var(--motion-ui) ease,
+    transform var(--motion-ui) var(--ease-highlight);
+}
+
+.ladder__label {
+  font-size: var(--fs-9);
+  line-height: 14px;
+  font-weight: var(--fw-s);
+}
+
+.ladder__step:not(:disabled):hover {
+  box-shadow: var(--ring-card);
+  transform: translateY(-2px);
+}
+
+.ladder__step[data-read] {
+  background: var(--paper);
+}
+
+.ladder__step[data-read]::after {
+  content: '';
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 5px;
+  height: 5px;
+  border-radius: var(--r-pill);
+  background: var(--neutral-400);
+}
+
+.ladder__step[aria-checked='true'] {
+  background: var(--ink);
+  box-shadow: 0 8px 18px -8px rgba(31, 31, 31, 0.5);
+  color: var(--neutral-100);
+}
+
+.ladder__step:disabled {
+  cursor: default;
+}
+
+/* Small: a compact staircase in the reading bar */
+.ladder--small {
+  --step-w: 14px;
+  --rise: 5px;
+  --base: 10px;
+  gap: 3px;
+}
+
+.ladder--small .ladder__step {
+  padding: 0;
+  border-radius: 3px 3px 1px 1px;
+}
+
+.ladder--small .ladder__label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.ladder--small .ladder__step[data-read]::after {
+  display: none;
+}
+
+@media (max-width: 640px) {
+  .ladder--large {
+    --step-w: calc((100vw - 64px - 16px) / 5);
+    --rise: 10px;
+  }
+
+  .ladder--large .ladder__label {
+    font-size: 11px;
+  }
+}

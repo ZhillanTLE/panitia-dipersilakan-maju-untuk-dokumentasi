@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Book, PageFoot } from '../components/Book';
-import { IconCheck, IconMic, IconStop, IconTextSize } from '../components/Icons';
-import { IndexTabs } from '../components/IndexTabs';
-import { MicLine } from '../components/MicLine';
+import { IconCheck, IconLeft, IconMic, IconStop, IconTextSize } from '../components/Icons';
+import { Ladder } from '../components/Ladder';
+import { ListenButton } from '../components/ListenButton';
 import { ReadingText } from '../components/ReadingText';
 import { toast } from '../components/Toast';
 import { startCapture, type Capture } from '../lib/audio';
@@ -23,7 +23,7 @@ import {
   type TranscriptSegment,
 } from '../lib/speech';
 import { NucleusDetector, syllableCount } from '../lib/syllables';
-import { addTake, endSession, newId, useApp } from '../lib/store';
+import { addTake, endSession, nameOf, newId, useApp } from '../lib/store';
 import { CARD, LEVEL, S, SOURCE } from '../strings';
 import type { CardLevel, LiveEvent, Session, Source, Student, Take } from '../types';
 import './ReadView.css';
@@ -480,39 +480,58 @@ export function ReadView({ active }: { active: boolean }) {
 
   // Pages fanned behind the front page: the cards still to come, or the book's thickness.
   const remaining = level ? CARD_ORDER.length - CARD_ORDER.indexOf(level) - 1 : 3;
-  const behind = phase.kind === 'ready' ? 3 : Math.min(3, Math.max(1, remaining));
+  const behind = Math.min(2, Math.max(1, remaining));
 
   const thanksTake = phase.kind === 'thanks' ? app.takes[phase.takeId] : undefined;
   const readLevels = new Set<CardLevel>(
     (run.current?.session.take_ids ?? []).map((id) => app.takes[id]?.card.level).filter((l): l is CardLevel => Boolean(l)),
   );
-  const upNext = nextToRead(app.students, app.sessions, phase.kind === 'thanks' ? thanksTake?.student_ref : undefined);
+  const reader = run.current ? nameOf(run.current.session.student_ref, app.students) : '';
+  const upNext = nextToRead(app.students, app.sessions, run.current?.session.student_ref);
+  const locked = listening || (phase.kind === 'card' && phase.step === 'saving');
 
-  const tabs =
-    phase.kind === 'ready' ? (
-      <IndexTabs current={startLevel} mode="pick" label={S.ready.tabsLabel} onChoose={setStartLevel} />
-    ) : level && !(phase.kind === 'thanks' && phase.ended) ? (
-      <IndexTabs
-        current={level}
-        read={readLevels}
-        mode={listening || (phase.kind === 'card' && phase.step === 'saving') ? 'locked' : 'go'}
-        label={S.reading.tabsLabel}
-        onChoose={openCard}
-      />
-    ) : null;
+  if (phase.kind === 'ready') {
+    return (
+      <section className="read" aria-label={S.nav.bacaan}>
+        <Absen
+          students={app.students}
+          sessions={app.sessions}
+          selected={studentRef}
+          onSelect={(ref) => setStudentRef((cur) => (cur === ref ? null : ref))}
+          startLevel={startLevel}
+          onStartLevel={setStartLevel}
+          source={source}
+          onSource={chooseSource}
+          online={online}
+          onOpen={() => openCard(startLevel)}
+        />
+      </section>
+    );
+  }
 
   return (
-    <section className="read" aria-label={S.nav.bacaan} ref={stageRef}>
-      <Book pageKey={page.key} direction={page.dir} dark={phase.kind === 'ready'} behind={behind} aside={tabs}>
-        {phase.kind === 'ready' && (
-          <Cover
-            students={app.students}
-            sessions={app.sessions}
-            selected={studentRef}
-            onSelect={setStudentRef}
-            startLevel={startLevel}
-          />
-        )}
+    <section className="read read--stage" aria-label={S.nav.bacaan} ref={stageRef}>
+      <header className="stage__bar">
+        <button type="button" className="stage__back" onClick={backToCover} disabled={locked || phase.kind === 'thanks'}>
+          <IconLeft size={14} />
+          {S.absen.back}
+        </button>
+        <div className="stage__who">
+          <p className="stage__name">
+            {reader}
+            {run.current?.session.simulated && <span className="chip chip--ink">{S.reading.simulatedChip}</span>}
+          </p>
+          <p className="stage__card">{level ? CARD[level] : ''}</p>
+        </div>
+        <div className="stage__tools">
+          {level && !(phase.kind === 'thanks' && phase.ended) && (
+            <Ladder size="small" value={level} read={readLevels} onChange={openCard} disabled={locked} label={S.reading.tabsLabel} />
+          )}
+          <TextSizeButton size={textSize} onClick={cycleTextSize} />
+        </div>
+      </header>
+
+      <Book pageKey={page.key} direction={page.dir} behind={behind} className="book--stage">
         {phase.kind === 'card' && card && (
           <>
             <div className="page__body">
@@ -539,89 +558,51 @@ export function ReadView({ active }: { active: boolean }) {
         )}
       </Book>
 
-      <div className={`dock dock--${phase.kind === 'card' ? phase.step : phase.kind}`} aria-label={S.reading.dock}>
-        {phase.kind === 'ready' && (
-          <ReadyDock
-            source={source}
-            onSource={chooseSource}
-            online={online}
-            studentRef={studentRef}
-            startLevel={startLevel}
-            noConsent={Boolean(student && !student.consents.assessment && source !== 'simulated')}
-            onOpen={() => openCard(startLevel)}
-          />
-        )}
-
+      <div className="controls" aria-label={S.reading.dock}>
         {phase.kind === 'card' && (
           <>
             {stall !== null && listening && (
-              <div className="dock__alert dock__alert--stall" role="alert">
-                <span className="dock__alert-text">{S.reading.stalled(words[stall]?.text.replace(/[.,!?]/g, '') ?? '')}</span>
+              <div className="callout callout--stall" role="alert">
+                <span>{S.reading.stalled(words[stall]?.text.replace(/[.,!?]/g, '') ?? '')}</span>
                 <button type="button" className="btn btn--action" onClick={supplyWord}>
                   {S.reading.supplied}
                 </button>
               </div>
             )}
-            {notice && <p className="dock__alert">{notice}</p>}
+            {notice && <p className="callout">{notice}</p>}
 
-            <div className="dock__main">
-              <div className="dock__status">
-                {phase.step === 'armed' && (
-                  <>
-                    <p className="dock__lead">
-                      {run.current?.session.simulated && <span className="chip chip--ink">{S.reading.simulatedChip}</span>}
-                      {S.reading.armedLead(run.current?.session.student_ref ?? '')}
-                    </p>
-                    <p className="dock__hint">{live.current.source === 'manual' ? S.engine.manual : S.reading.armedHint}</p>
-                  </>
-                )}
-                {phase.step === 'listening' && (
-                  <div className="dock__live">
-                    <span className="dock__timer" aria-live="off">
-                      <span className="dock__dot" aria-hidden="true" />
-                      {live.current.source === 'manual' ? S.reading.marking : S.reading.listening}
-                      <span className="dock__clock">{formatClock(elapsed)}</span>
-                    </span>
-                    <MicLine
-                      active={listening}
-                      level={() => live.current.stream?.level?.() ?? live.current.capture?.level() ?? 0}
-                    />
-                  </div>
-                )}
-                {phase.step === 'saving' && <p className="dock__lead">{S.reading.scoring}</p>}
-              </div>
-
-              <div className="dock__actions">
-                <TextSizeButton size={textSize} onClick={cycleTextSize} />
-                {phase.step === 'armed' && (
-                  <>
-                    <button type="button" className="btn btn--ghost" onClick={backToCover}>
-                      {S.reading.back}
-                    </button>
-                    <button type="button" className="btn btn--cta" onClick={() => void startListening()}>
-                      <IconMic />
-                      {S.reading.start}
-                    </button>
-                  </>
-                )}
-                {phase.step === 'listening' && (
-                  <button type="button" className="btn btn--cta" onClick={() => void finish()}>
-                    <IconStop size={14} />
-                    {S.reading.stop}
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {phase.step === 'listening' && (
-              <p className="dock__hint">
-                {live.current.source === 'manual'
-                  ? S.engine.manual
-                  : recognizes(live.current.source)
-                    ? S.reading.tapToFix
-                    : S.engine.simulated}
+            <div className="controls__row">
+              <p className="controls__side controls__side--left">
+                {phase.step === 'listening' ? (
+                  <span className="controls__timer">
+                    <span className="controls__dot" aria-hidden="true" />
+                    {formatClock(elapsed)}
+                  </span>
+                ) : phase.step === 'armed' ? (
+                  live.current.source === 'manual' ? S.engine.manual : S.absen.armedHint(reader)
+                ) : null}
               </p>
-            )}
+              {phase.step === 'saving' ? (
+                <p className="controls__saving">{S.reading.scoring}</p>
+              ) : (
+                <ListenButton
+                  listening={listening}
+                  level={() => live.current.stream?.level?.() ?? live.current.capture?.level() ?? 0}
+                  label={listening ? S.reading.stop : S.reading.start}
+                  icon={listening ? <IconStop size={22} /> : <IconMic size={26} />}
+                  onClick={() => void (listening ? finish() : startListening())}
+                />
+              )}
+              <p className="controls__side controls__side--right">
+                {listening
+                  ? live.current.source === 'manual'
+                    ? S.reading.marking
+                    : recognizes(live.current.source)
+                      ? S.reading.tapToFix
+                      : S.engine.simulated
+                  : null}
+              </p>
+            </div>
 
             {debug && phase.step !== 'armed' && (
               <details className="transcript" open={route.params.get('debug') === '1'}>
@@ -648,10 +629,11 @@ export function ReadView({ active }: { active: boolean }) {
         )}
 
         {phase.kind === 'thanks' && thanksTake && (
-          <NextCardDock
+          <NextCard
             take={thanksTake}
             ended={phase.ended}
-            upNext={upNext?.student_ref ?? null}
+            reader={reader}
+            upNext={upNext}
             onOpen={openCard}
             onEnd={endRun}
             onNextStudent={() => nextStudent(upNext?.student_ref ?? null)}
@@ -680,96 +662,36 @@ function TextSizeButton({ size, onClick }: { size: TextSize; onClick: () => void
   );
 }
 
-interface CoverProps {
+const today = new Intl.DateTimeFormat('id-ID', { weekday: 'long', day: 'numeric', month: 'long' });
+
+interface AbsenProps {
   students: Student[];
   sessions: Session[];
   selected: string | null;
   onSelect: (ref: string) => void;
   startLevel: CardLevel;
-}
-
-/** Siap membaca: the dark cover where the teacher picks who reads. The start card is on the tabs. */
-function Cover({ students, sessions, selected, onSelect, startLevel }: CoverProps) {
-  return (
-    <div className="page__body cover">
-      <div className="cover__head">
-        <p className="cover__brand">{S.brand}</p>
-        <h1 className="cover__title">{S.ready.title}</h1>
-      </div>
-
-      <div className="cover__group">
-        <p className="cover__label" id="pick-student">
-          {S.ready.pick}
-        </p>
-        {students.length ? (
-          <div className="cover__students" role="radiogroup" aria-labelledby="pick-student">
-            {students.map((s) => {
-              const stage = stageOf(s, sessions);
-              return (
-                <button
-                  key={s.student_ref}
-                  type="button"
-                  role="radio"
-                  aria-checked={selected === s.student_ref}
-                  className="cover__student"
-                  data-stage={stage.kind}
-                  onClick={() => onSelect(s.student_ref)}
-                >
-                  <span className="cover__ref">{s.student_ref}</span>
-                  <span className="cover__stage">
-                    {stage.kind === 'new'
-                      ? S.ready.stage.new
-                      : stage.kind === 'pending'
-                        ? S.ready.stage.pending
-                        : S.ready.stage.placed(LEVEL[stage.level])}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        ) : (
-          <p className="cover__empty">
-            {S.ready.noStudents}{' '}
-            <a href="#/kelas" className="cover__link">
-              {S.ready.toKelas}
-            </a>
-          </p>
-        )}
-      </div>
-
-      <div className="cover__start">
-        <p className="cover__label">{S.ready.startLine}</p>
-        <p className="cover__card">
-          {CARD[startLevel]}
-          <span className="cover__card-title">{cardFor(startLevel).title}</span>
-        </p>
-        <p className="cover__note">{S.ready.tabsHint}</p>
-      </div>
-    </div>
-  );
-}
-
-interface ReadyDockProps {
+  onStartLevel: (level: CardLevel) => void;
   source: Source;
   onSource: (s: Source) => void;
   online: OnlineStatus;
-  studentRef: string | null;
-  startLevel: CardLevel;
-  noConsent: boolean;
   onOpen: () => void;
 }
 
-function ReadyDock({ source, onSource, online, studentRef, startLevel, noConsent, onOpen }: ReadyDockProps) {
+/** Absen: the class roll call. Tap a name, choose the first step of the ladder, start. */
+function Absen({ students, sessions, selected, onSelect, startLevel, onStartLevel, source, onSource, online, onOpen }: AbsenProps) {
   const sources: Source[] = ['online', 'manual', 'simulated'];
   const engineNote =
     source === 'online' ? S.engine.online[online] : source === 'manual' ? S.engine.manual : S.engine.simulated;
   const blocked = source === 'online' && online !== 'available';
   return (
-    <>
-      {noConsent && studentRef && <p className="dock__alert">{S.ready.noConsent(studentRef)}</p>}
-      <div className="dock__main">
-        <div className="dock__status">
-          <div className="seg" role="radiogroup" aria-label={S.engine.label}>
+    <div className="absen">
+      <header className="absen__head">
+        <div>
+          <p className="absen__date">{today.format(new Date())}</p>
+          <h1 className="absen__title">{S.absen.title}</h1>
+        </div>
+        <div className="absen__engine">
+          <div className="seg seg--pill" role="radiogroup" aria-label={S.engine.label}>
             {sources.map((s) => (
               <button
                 key={s}
@@ -784,52 +706,91 @@ function ReadyDock({ source, onSource, online, studentRef, startLevel, noConsent
               </button>
             ))}
           </div>
+          <p className="absen__note">{engineNote}</p>
         </div>
-        <div className="dock__actions">
-          <button type="button" className="btn btn--cta" onClick={onOpen} disabled={!studentRef || blocked}>
-            {studentRef ? S.ready.openCard(CARD[startLevel]) : S.ready.pickFirst}
-          </button>
-        </div>
-      </div>
-      <p className="dock__hint">{engineNote}</p>
-    </>
+      </header>
+
+      {students.length ? (
+        <ol className="roll">
+          {students.map((s, k) => {
+            const stage = stageOf(s, sessions);
+            const open = selected === s.student_ref;
+            return (
+              <li key={s.student_ref} className="roll__item" data-open={open ? '' : undefined}>
+                <button type="button" className="roll__row" aria-expanded={open} onClick={() => onSelect(s.student_ref)}>
+                  <span className="roll__no">{String(k + 1).padStart(2, '0')}</span>
+                  <span className="roll__name">{s.name ?? s.student_ref}</span>
+                  <span className="roll__code">{s.student_ref}</span>
+                  <span className="roll__stage" data-stage={stage.kind}>
+                    {stage.kind === 'new'
+                      ? S.ready.stage.new
+                      : stage.kind === 'pending'
+                        ? S.ready.stage.pending
+                        : S.ready.stage.placed(LEVEL[stage.level])}
+                  </span>
+                </button>
+                {open && (
+                  <div className="roll__open">
+                    {!s.consents.assessment && source !== 'simulated' && (
+                      <p className="callout">{S.ready.noConsent(s.name ?? s.student_ref)}</p>
+                    )}
+                    <div className="roll__start">
+                      <div className="roll__ladder">
+                        <p className="roll__label">{S.ready.startLine}</p>
+                        <Ladder value={startLevel} onChange={onStartLevel} label={S.ready.tabsLabel} />
+                      </div>
+                      <button type="button" className="btn btn--cta" onClick={onOpen} disabled={blocked}>
+                        <IconMic />
+                        {S.absen.open(CARD[startLevel])}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </li>
+            );
+          })}
+        </ol>
+      ) : (
+        <p className="absen__empty">
+          {S.ready.noStudents}{' '}
+          <a href="#/kelas">{S.ready.toKelas}</a>
+        </p>
+      )}
+    </div>
   );
 }
 
-interface NextCardDockProps {
+interface NextCardProps {
   take: Take;
   ended: boolean;
-  upNext: string | null;
+  reader: string;
+  upNext: Student | null;
   onOpen: (level: CardLevel) => void;
   onEnd: () => void;
   onNextStudent: () => void;
 }
 
 /** Kartu berikutnya: the teacher's choice after each card. Provisional, from the engine alone. */
-function NextCardDock({ take, ended, upNext, onOpen, onEnd, onNextStudent }: NextCardDockProps) {
+function NextCard({ take, ended, reader, upNext, onOpen, onEnd, onNextStudent }: NextCardProps) {
   if (ended) {
     return (
-      <>
-        <div className="dock__main">
-          <div className="dock__status">
-            <p className="dock__lead">
-              <span className="dock__check" aria-hidden="true">
-                <IconCheck size={14} />
-              </span>
-              {S.done.pending(take.student_ref)}
-            </p>
-            {!upNext && <p className="dock__hint">{S.done.allRead}</p>}
-          </div>
-          <div className="dock__actions">
-            <button type="button" className="btn btn--ghost" onClick={() => navigate('tinjau', take.session_id)}>
-              {S.done.review}
-            </button>
-            <button type="button" className="btn btn--cta" onClick={onNextStudent}>
-              {upNext ? S.done.nextStudentRef(upNext) : S.done.nextStudent}
-            </button>
-          </div>
+      <div className="panel">
+        <p className="panel__lead">
+          <span className="panel__check" aria-hidden="true">
+            <IconCheck size={14} />
+          </span>
+          {S.done.pending(reader)}
+        </p>
+        {!upNext && <p className="panel__hint">{S.done.allRead}</p>}
+        <div className="panel__actions">
+          <button type="button" className="btn btn--ghost btn--tall" onClick={() => navigate('tinjau', take.session_id)}>
+            {S.done.review}
+          </button>
+          <button type="button" className="btn btn--cta" onClick={onNextStudent}>
+            {upNext ? S.done.nextStudentRef(upNext.name ?? upNext.student_ref) : S.done.nextStudent}
+          </button>
         </div>
-      </>
+      </div>
     );
   }
 
@@ -839,41 +800,35 @@ function NextCardDock({ take, ended, upNext, onOpen, onEnd, onNextStudent }: Nex
   const lowSpeech = quality.status === 'retry_suggested' && (quality.speech_ratio ?? 1) < 0.15;
 
   return (
-    <>
+    <div className="panel">
       {quality.status === 'retry_suggested' && (
-        <p className="dock__alert">
-          {lowSpeech ? S.next.quality(Math.round((quality.speech_ratio ?? 0) * 100)) : S.next.clipping}
-        </p>
+        <p className="callout">{lowSpeech ? S.next.quality(Math.round((quality.speech_ratio ?? 0) * 100)) : S.next.clipping}</p>
       )}
-      <div className="dock__main">
-        <div className="dock__status">
-          {outcome ? (
-            <p className="dock__lead">
-              <span className="dock__label">{S.next.suggestion}</span>
-              {suggested ? CARD[suggested] : S.next.stopHere}
-            </p>
-          ) : (
-            <p className="dock__hint">{S.next.pickTab}</p>
-          )}
-        </div>
-        <div className="dock__actions">
-          <button type="button" className="btn btn--ghost" onClick={() => onOpen(take.card.level)}>
-            {S.next.retry}
+      {outcome ? (
+        <p className="panel__lead">
+          <span className="panel__label">{S.next.suggestion}</span>
+          {suggested ? CARD[suggested] : S.next.stopHere}
+        </p>
+      ) : (
+        <p className="panel__hint">{S.next.pickTab}</p>
+      )}
+      <div className="panel__actions">
+        <button type="button" className="btn btn--ghost btn--tall" onClick={() => onOpen(take.card.level)}>
+          {S.next.retry}
+        </button>
+        {suggested ? (
+          <button type="button" className="btn btn--cta" onClick={() => onOpen(suggested)}>
+            {S.next.continueTo(CARD[suggested])}
           </button>
-          {suggested ? (
-            <button type="button" className="btn btn--cta" onClick={() => onOpen(suggested)}>
-              {S.next.continueTo(CARD[suggested])}
-            </button>
-          ) : (
-            <button type="button" className="btn btn--cta" onClick={onEnd}>
-              {S.next.finish(take.student_ref)}
-            </button>
-          )}
-        </div>
+        ) : (
+          <button type="button" className="btn btn--cta" onClick={onEnd}>
+            {S.next.finish(reader)}
+          </button>
+        )}
       </div>
-      <div className="dock__foot">
+      <div className="panel__foot">
         {outcome ? (
-          <details className="dock__why">
+          <details className="panel__why">
             <summary>{S.next.why}</summary>
             <p>{S.next.whyEngine(outcome.correct, outcome.total, outcome.needed, outcome.rule)}</p>
           </details>
@@ -882,10 +837,10 @@ function NextCardDock({ take, ended, upNext, onOpen, onEnd, onNextStudent }: Nex
         )}
         {suggested && (
           <button type="button" className="btn btn--text" onClick={onEnd}>
-            {S.next.finish(take.student_ref)}
+            {S.next.finish(reader)}
           </button>
         )}
       </div>
-    </>
+    </div>
   );
 }

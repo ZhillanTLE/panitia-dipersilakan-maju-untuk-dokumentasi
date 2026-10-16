@@ -1,0 +1,87 @@
+.listen {
+  --lvl: 0;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-5);
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ink);
+}
+
+.listen__core {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 76px;
+  height: 76px;
+  border-radius: var(--r-pill);
+  background: var(--ink);
+  box-shadow: var(--shadow-cta);
+  color: var(--neutral-100);
+  transition:
+    transform var(--motion-ui) var(--ease-highlight),
+    background-color var(--motion-ui) ease;
+}
+
+.listen__core svg {
+  width: 26px;
+  height: 26px;
+}
+
+.listen:not(:disabled):hover .listen__core {
+  transform: scale(1.04);
+  background: var(--neutral-1000);
+}
+
+.listen:not(:disabled):active .listen__core {
+  transform: scale(0.97);
+}
+
+/* The voice ring: a soft paper halo that swells with loudness */
+.listen__ring {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 76px;
+  height: 76px;
+  margin-left: -38px;
+  border-radius: var(--r-pill);
+  background: var(--paper);
+  box-shadow: inset 0 0 0 1px var(--neutral-300);
+  opacity: 0;
+  transform: scale(1);
+  transition: opacity 240ms ease;
+}
+
+.listen.is-listening .listen__ring {
+  opacity: 1;
+  transform: scale(calc(1.1 + var(--lvl) * 0.32));
+}
+
+.listen.is-listening .listen__core {
+  animation: listen-idle 2.4s ease-in-out infinite;
+}
+
+@keyframes listen-idle {
+  50% {
+    box-shadow: 0 10px 28px 0 rgba(31, 31, 31, 0.32);
+  }
+}
+
+.listen__label {
+  position: relative;
+  z-index: 2;
+  font-size: var(--fs-8);
+  line-height: var(--lh-8);
+  font-weight: var(--fw-s);
+  white-space: nowrap;
+}
+
+.listen:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
