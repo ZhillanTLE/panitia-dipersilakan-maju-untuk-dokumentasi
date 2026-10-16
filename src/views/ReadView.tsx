@@ -13,11 +13,10 @@ import { ENGINE_VERSION, liveCursor, manualTake, normalize, scoreTake, type Hear
 import { simulationScript, SimulatedStream } from '../lib/simulate';
 import {
   ManualStream,
-  OnDeviceStream,
-  installOnDevice,
-  onDeviceStatus,
+  WebSpeechStream,
+  onlineStatus,
   type HeardStream,
-  type OnDeviceStatus,
+  type OnlineStatus,
   type RecognizerHealth,
   type TranscriptSegment,
 } from '../lib/speech';
@@ -40,10 +39,14 @@ const SILENT_RECOGNIZER_SYLLABLES = 8;
 const CATCH_UP_MS = 70;
 
 const MODEL: Record<Source, string> = {
+  online: 'webspeech-cloud-id',
   ondevice: 'webspeech-ondevice-id',
   manual: 'manual',
   simulated: 'simulated@1',
 };
+
+/** Sources whose highlight follows recognized words. */
+const recognizes = (s: Source) => s === 'online' || s === 'ondevice';
 
 interface Live {
   stream: HeardStream | null;
@@ -97,8 +100,7 @@ export function ReadView({ active }: { active: boolean }) {
   const initialPrefs = useMemo(loadPrefs, []);
   const [source, setSource] = useState<Source>(initialPrefs.source);
   const [textSize, setTextSize] = useState<TextSize>(initialPrefs.textSize);
-  const [onDevice, setOnDevice] = useState<OnDeviceStatus>('unsupported');
-  const [installing, setInstalling] = useState(false);
+  const [online, setOnline] = useState<OnlineStatus>(onlineStatus);
   const [studentRef, setStudentRef] = useState<string | null>(null);
   const [startLevel, setStartLevel] = useState<CardLevel>(RUBRIC.start);
   const [phase, setPhase] = useState<Phase>({ kind: 'ready' });
@@ -138,13 +140,21 @@ export function ReadView({ active }: { active: boolean }) {
     return () => window.clearTimeout(id);
   }, [cursor, shownCursor]);
 
-  // Recognizer availability, checked once.
+  // The online recognizer needs a browser that has one and a connection.
   useEffect(() => {
-    void onDeviceStatus().then((status) => {
-      setOnDevice(status);
-      if (status !== 'available') setSource((s) => (s === 'ondevice' ? 'manual' : s));
-    });
+    const update = () => setOnline(onlineStatus());
+    window.addEventListener('online', update);
+    window.addEventListener('offline', update);
+    return () => {
+      window.removeEventListener('online', update);
+      window.removeEventListener('offline', update);
+    };
   }, []);
+
+  // The on-device recognizer is parked for the web MVP: Chrome rejects its Bahasa Indonesia pack.
+  useEffect(() => {
+    if (source === 'ondevice') setSource(onlineStatus() === 'unsupported' ? 'manual' : 'online');
+  }, [source]);
 
   // #/bacaan?student=K2-03&card=kata preselects a student and a start card.
   useEffect(() => {
@@ -285,7 +295,7 @@ export function ReadView({ active }: { active: boolean }) {
         l.source = 'manual';
       }
     }
-    if (l.source === 'ondevice') l.stream = new OnDeviceStream();
+    if (recognizes(l.source)) l.stream = new WebSpeechStream(l.source === 'ondevice');
     else if (l.source === 'simulated') {
       const seed = `${r.session.session_id}:${card.id}:${r.session.take_ids.length}`;
       const sim = new SimulatedStream(simulationScript(words, seed));
@@ -299,10 +309,16 @@ export function ReadView({ active }: { active: boolean }) {
     l.t0 = performance.now();
     l.lastAdvance = l.t0;
     l.stream.start(onLive, (code) => {
-      setNotice(code === 'language-not-supported' ? S.reading.recognizerLanguage : S.reading.recognizerFailed(code));
+      setNotice(
+        code === 'language-not-supported'
+          ? S.reading.recognizerLanguage
+          : code === 'network'
+            ? S.reading.recognizerNetwork
+            : S.reading.recognizerFailed(code),
+      );
       live.current.source = 'manual';
       setStall(null);
-      void onDeviceStatus().then(setOnDevice);
+      setOnline(onlineStatus());
     });
     setPhase({ kind: 'card', level: card.level, step: 'listening' });
   }, [card, onFrame, onLive, student, words]);
@@ -378,7 +394,7 @@ export function ReadView({ active }: { active: boolean }) {
       if (l.source === 'manual') return;
       // The microphone hears the reader but the recognizer has produced nothing: say so once,
       // and don't prompt for stalls it cannot see.
-      if (l.source === 'ondevice' && l.asrHeard === 0) {
+      if (recognizes(l.source) && l.asrHeard === 0) {
         if (l.syllables >= SILENT_RECOGNIZER_SYLLABLES && !l.silentWarned) {
           l.silentWarned = true;
           setNotice(S.reading.recognizerSilent);
@@ -459,15 +475,6 @@ export function ReadView({ active }: { active: boolean }) {
     savePrefs({ textSize: next });
   };
 
-  const install = async () => {
-    setInstalling(true);
-    const ok = await installOnDevice();
-    setInstalling(false);
-    const status = await onDeviceStatus();
-    setOnDevice(status);
-    if (ok && status === 'available') chooseSource('ondevice');
-  };
-
   // Pages fanned behind the front page: the cards still to come, or the book's thickness.
   const remaining = level ? CARD_ORDER.length - CARD_ORDER.indexOf(level) - 1 : 3;
   const behind = phase.kind === 'ready' ? 3 : Math.min(3, Math.max(1, remaining));
@@ -517,9 +524,7 @@ export function ReadView({ active }: { active: boolean }) {
           <ReadyDesk
             source={source}
             onSource={chooseSource}
-            onDevice={onDevice}
-            installing={installing}
-            onInstall={install}
+            online={online}
             studentRef={studentRef}
             noConsent={Boolean(student && !student.consents.assessment && source !== 'simulated')}
             onOpen={() => openCard(startLevel)}
@@ -596,7 +601,7 @@ export function ReadView({ active }: { active: boolean }) {
                   ? S.engine.manual
                   : phase.step === 'armed'
                     ? S.reading.armedHint
-                    : live.current.source === 'ondevice'
+                    : recognizes(live.current.source)
                       ? S.reading.tapToFix
                       : null}
               </p>
@@ -711,18 +716,16 @@ function Cover({ students, selected, onSelect, startLevel, onStartLevel }: Cover
 interface ReadyDeskProps {
   source: Source;
   onSource: (s: Source) => void;
-  onDevice: OnDeviceStatus;
-  installing: boolean;
-  onInstall: () => void;
+  online: OnlineStatus;
   studentRef: string | null;
   noConsent: boolean;
   onOpen: () => void;
 }
 
-function ReadyDesk({ source, onSource, onDevice, installing, onInstall, studentRef, noConsent, onOpen }: ReadyDeskProps) {
-  const sources: Source[] = ['ondevice', 'manual', 'simulated'];
+function ReadyDesk({ source, onSource, online, studentRef, noConsent, onOpen }: ReadyDeskProps) {
+  const sources: Source[] = ['online', 'manual', 'simulated'];
   const engineNote =
-    source === 'ondevice' ? S.engine.ondevice[onDevice] : source === 'manual' ? S.engine.manual : S.engine.simulated;
+    source === 'online' ? S.engine.online[online] : source === 'manual' ? S.engine.manual : S.engine.simulated;
   return (
     <>
       <div className="desk__row desk__row--split">
@@ -734,7 +737,7 @@ function ReadyDesk({ source, onSource, onDevice, installing, onInstall, studentR
               role="radio"
               aria-checked={source === s}
               className="seg__opt"
-              disabled={s === 'ondevice' && onDevice !== 'available' && onDevice !== 'downloadable'}
+              disabled={s === 'online' && online === 'unsupported'}
               onClick={() => onSource(s)}
             >
               {SOURCE[s]}
@@ -745,25 +748,12 @@ function ReadyDesk({ source, onSource, onDevice, installing, onInstall, studentR
           type="button"
           className="btn btn--cta"
           onClick={onOpen}
-          disabled={!studentRef || (source === 'ondevice' && onDevice !== 'available')}
+          disabled={!studentRef || (source === 'online' && online !== 'available')}
         >
           {studentRef ? S.ready.open : S.ready.pickFirst}
         </button>
       </div>
-      <p className="desk__hint">
-        {source !== 'ondevice' && onDevice !== 'available' ? (
-          <>
-            {engineNote} <span className="desk__aside">{S.engine.ondevice[onDevice]}</span>
-          </>
-        ) : (
-          engineNote
-        )}
-      </p>
-      {onDevice === 'downloadable' && (
-        <button type="button" className="btn btn--ghost" onClick={onInstall} disabled={installing}>
-          {installing ? S.engine.installing : S.engine.install}
-        </button>
-      )}
+      <p className="desk__hint">{engineNote}</p>
       {noConsent && studentRef && <p className="desk__notice">{S.ready.noConsent(studentRef)}</p>}
     </>
   );

@@ -1,10 +1,13 @@
 import type { HeardToken } from './scoring';
 
-// On-device speech recognition through the Web Speech API. CLAUDE.md rule 7 forbids
-// cloud calls, so a browser that cannot promise local processing is treated as having
-// no recognizer at all. The teacher then marks the reading by hand.
+// Speech recognition through the Web Speech API, online or on the device.
+// The online recognizer is the web MVP's path: Chrome sends the audio to Google while the
+// child reads. It breaks CLAUDE.md rule 7 (offline only), so the teacher chooses it, the
+// desk says so, and every take records it in `source` and `versions.model`. The on-device
+// path stays for when browsers can keep Bahasa Indonesia local.
 
 export type OnDeviceStatus = 'available' | 'downloadable' | 'downloading' | 'unavailable' | 'unsupported';
+export type OnlineStatus = 'available' | 'offline' | 'unsupported';
 
 const LANG = 'id-ID';
 
@@ -52,6 +55,11 @@ function recognitionClass(): RecognitionConstructor | undefined {
     webkitSpeechRecognition?: RecognitionConstructor;
   };
   return w.SpeechRecognition ?? w.webkitSpeechRecognition;
+}
+
+export function onlineStatus(): OnlineStatus {
+  if (!recognitionClass()) return 'unsupported';
+  return navigator.onLine ? 'available' : 'offline';
 }
 
 export async function onDeviceStatus(): Promise<OnDeviceStatus> {
@@ -114,7 +122,10 @@ const FATAL = new Set(['language-not-supported', 'not-allowed', 'service-not-all
 const QUICK_END_MS = 1000;
 const MAX_QUICK_ENDS = 3;
 
-export class OnDeviceStream implements HeardStream {
+export class WebSpeechStream implements HeardStream {
+  /** `local` keeps recognition on the device; otherwise the browser's online service hears the audio. */
+  constructor(private readonly local: boolean) {}
+
   private recognition: Recognition | null = null;
   private committed: string[] = [];
   private current: string[] = [];
@@ -148,8 +159,10 @@ export class OnDeviceStream implements HeardStream {
     rec.lang = LANG;
     rec.continuous = true;
     rec.interimResults = true;
-    if (SR.available) rec.processLocally = true;
-    else rec.mode = 'ondevice-only';
+    if (this.local) {
+      if (SR.available) rec.processLocally = true;
+      else rec.mode = 'ondevice-only';
+    }
 
     const startedAt = performance.now();
     let heardThisRun = false;

@@ -50,6 +50,7 @@ export const CONFIDENCE: Record<Confidence, string> = {
 };
 
 export const SOURCE: Record<Source, string> = {
+  online: 'Suara daring',
   ondevice: 'Suara di perangkat',
   manual: 'Penanda guru',
   simulated: 'Simulasi',
@@ -81,6 +82,11 @@ export const S = {
 
   engine: {
     label: 'Cara mendengar',
+    online: {
+      available: 'Chrome mengenali suara murid lewat internet. Selama membaca, suara dikirim ke layanan Google.',
+      offline: 'Tidak ada internet. Sambungkan dulu, atau gunakan Penanda guru.',
+      unsupported: 'Peramban ini tidak punya pengenal suara. Buka di Chrome, atau gunakan Penanda guru.',
+    },
     ondevice: {
       available: 'Suara dikenali di perangkat ini. Tidak ada yang dikirim ke internet.',
       downloadable: 'Paket suara Bahasa Indonesia belum terpasang di peramban ini.',
@@ -113,6 +119,8 @@ export const S = {
       `Pengenal suara berhenti (${code}). Lanjutkan dengan mengetuk kata yang sedang dibaca, atau tekan Spasi.`,
     recognizerSilent:
       'Mikrofon mendengar suara, tetapi pengenal suara belum mengenali satu kata pun, jadi sorotan tidak bergerak. Ketuk kata yang sedang dibaca, atau tekan Spasi.',
+    recognizerNetwork:
+      'Internet terputus, jadi pengenal suara berhenti. Lanjutkan dengan mengetuk kata yang sedang dibaca, atau tekan Spasi.',
     recognizerLanguage:
       'Chrome menolak paket suara Bahasa Indonesia (language-not-supported) walau melaporkannya siap. Lanjutkan dengan mengetuk kata yang sedang dibaca, atau tekan Spasi.',
     cancelled: 'Bacaan dibatalkan karena halaman ditinggalkan.',

@@ -15,8 +15,8 @@ export type WordStatus =
 
 export type Confidence = 'high' | 'medium' | 'low';
 
-/** Where the words came from: on-device recognition, the teacher's own marks, or a scripted simulation. */
-export type Source = 'ondevice' | 'manual' | 'simulated';
+/** Where the words came from: the browser's online recognizer, on-device recognition, the teacher's own marks, or a scripted simulation. */
+export type Source = 'online' | 'ondevice' | 'manual' | 'simulated';
 
 export interface Card {
   id: string;

@@ -19,7 +19,7 @@ import type { CardLevel, ChildLevel, Session, Source, Take } from '../types';
 import './ReviewView.css';
 
 /** How far word timings trail the voice, per source. Used to seek and to box the word being played. */
-const LEAD_MS: Record<Source, number> = { ondevice: 700, manual: 900, simulated: 0 };
+const LEAD_MS: Record<Source, number> = { online: 700, ondevice: 700, manual: 900, simulated: 0 };
 
 export function ReviewView({ active, sessionId }: { active: boolean; sessionId?: string }) {
   const app = useApp();

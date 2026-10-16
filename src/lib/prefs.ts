@@ -10,7 +10,7 @@ interface Prefs {
 }
 
 const KEY = 'dengarbaca.prefs';
-const DEFAULTS: Prefs = { source: 'manual', textSize: 0 };
+const DEFAULTS: Prefs = { source: 'online', textSize: 0 };
 
 export function loadPrefs(): Prefs {
   try {
