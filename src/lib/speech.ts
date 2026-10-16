@@ -121,6 +121,11 @@ const FATAL = new Set(['language-not-supported', 'not-allowed', 'service-not-all
 /** A session that ends this fast with nothing heard counts as a failed start. */
 const QUICK_END_MS = 1000;
 const MAX_QUICK_ENDS = 3;
+/**
+ * Online only: a session whose guesses stop changing for this long is ended, so its words
+ * are kept and a fresh session listens on. Chrome can leave a phrase interim indefinitely.
+ */
+const IDLE_COMMIT_MS = 1500;
 
 export class WebSpeechStream implements HeardStream {
   /** `local` keeps recognition on the device; otherwise the browser's online service hears the audio. */
@@ -166,8 +171,18 @@ export class WebSpeechStream implements HeardStream {
 
     const startedAt = performance.now();
     let heardThisRun = false;
+    let idle = 0;
+    const endSession = () => {
+      try {
+        rec.stop();
+      } catch {
+        // Already stopping.
+      }
+    };
 
     rec.onresult = (event) => {
+      // A stopping session can send a last, empty result; it must not wipe the words heard.
+      if (!event.results.length) return;
       heardThisRun = true;
       this.stats.results++;
       const words: string[] = [];
@@ -181,6 +196,15 @@ export class WebSpeechStream implements HeardStream {
       this.currentSegments = segments;
       if (import.meta.env.DEV) console.debug('[speech]', segments.map((s) => `${s.final ? '■' : '□'} ${s.text}`).join(' | '));
       onLive(this.tokens());
+      // Chrome's online recognizer stops returning words after its first final phrase, and can
+      // leave a phrase interim for many seconds. End the session once everything is final, or
+      // once the guesses stop changing; `onend` keeps the words and starts a fresh session, so
+      // listening carries on through the whole card.
+      if (!this.local && this.active) {
+        window.clearTimeout(idle);
+        if (segments.every((seg) => seg.final)) endSession();
+        else idle = window.setTimeout(() => this.active && endSession(), IDLE_COMMIT_MS);
+      }
     };
     const fail = (code: string) => {
       if (this.failed) return;
@@ -196,6 +220,7 @@ export class WebSpeechStream implements HeardStream {
     // Recognition ends on long silences; keep listening until the teacher stops the take,
     // but give up when it keeps ending the moment it starts.
     rec.onend = () => {
+      window.clearTimeout(idle);
       this.committed.push(...this.current);
       this.current = [];
       this.committedSegments.push(...this.currentSegments);
