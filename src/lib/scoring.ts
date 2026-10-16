@@ -3,7 +3,7 @@ import type { CardWord, Confidence, Fluency, Insertion, WordResult } from '../ty
 // Deterministic scoring engine for the web prototype: word alignment, text-level
 // substitution check, decision table and fluency (CLAUDE.md slow-path steps 6, 8, 9, 10).
 // No randomness. Changing any output here means bumping ENGINE_VERSION.
-export const ENGINE_VERSION = 'scoring-web@0.2';
+export const ENGINE_VERSION = 'scoring-web@0.3';
 
 export interface HeardToken {
   text: string;
@@ -168,6 +168,28 @@ export function align(expected: string[], heard: string[], free: ReadonlySet<num
 }
 
 /**
+ * Alignment for a reading that may stop early: the card words after the last one the reader
+ * reached cost nothing, so a stray or misheard word is never placed on text the child has not
+ * reached just to fill it. The reach ends at the last card word heard clearly (as the live
+ * cursor does); unclear matches after it are kept as insertions. Unreached words stay `omitted`.
+ */
+export function alignReached(expected: string[], heard: string[], free: ReadonlySet<number> = new Set()): AlignOp[] {
+  const D = costTable(expected, heard, free);
+  const m = heard.length;
+  let end = 0;
+  for (let i = 1; i <= expected.length; i++) if (D[i][m] < D[end][m] - 1e-9) end = i;
+  const ops = traceback(D, expected, heard, free, end, m);
+  const clear = (op: AlignOp) =>
+    op.kind === 'joined' || op.kind === 'split' || (op.kind === 'match' && (similarity(expected[op.e], heard[op.h]) >= NEAR || misreadings(expected[op.e]).has(heard[op.h])));
+  let last = ops.length - 1;
+  while (last >= 0 && !clear(ops[last])) last--;
+  return [
+    ...ops.slice(0, last + 1),
+    ...ops.slice(last + 1).flatMap((op): AlignOp[] => (op.kind === 'match' || op.kind === 'insert' ? [{ kind: 'insert', h: op.h }] : [])),
+  ];
+}
+
+/**
  * Live cursor for the highlight (fast path): the position just after the last card word
  * the recognizer heard clearly (exactly, or within NEAR similarity). A wrong or extra word
  * never moves it; the next clear word brings it back in line. On a tie it keeps the
@@ -222,7 +244,7 @@ export interface ScoreOutput {
 
 export function scoreTake({ words, heard, supplied }: ScoreInput): ScoreOutput {
   const tokens = heard.map((h) => ({ ...h, norm: normalize(h.text) })).filter((h) => h.norm);
-  const ops = align(
+  const ops = alignReached(
     words.map((w) => w.norm),
     tokens.map((t) => t.norm),
     supplied,

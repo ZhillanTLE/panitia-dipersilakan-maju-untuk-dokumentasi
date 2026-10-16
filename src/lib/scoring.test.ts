@@ -159,3 +159,32 @@ describe('liveCursor', () => {
     expect(liveCursor(norms, ['ibu', 'pergi'], new Set([2]))).toBe(3);
   });
 });
+
+describe('scoreTake on a reading that stops early', () => {
+  // Pangeran dari Bintang Kecil: the child read the first sentence only; the recognizer also produced stray words.
+  const paragraph: Card = {
+    id: 'TEST-PAR',
+    version: 1,
+    level: 'paragraf',
+    title: 'Test',
+    layout: 'prose',
+    blocks: [
+      'Di sebuah bintang yang sangat kecil, tinggal seorang pangeran. Bintangnya hanya sebesar rumah. Setiap pagi ia membersihkan tiga gunung kecil dan menyiram sekuntum mawar.',
+      'Suatu hari pangeran kecil pergi berjalan jauh. Ia singgah di banyak bintang dan bertemu orang dewasa yang aneh.',
+      'Setiap hari pangeran duduk sedikit lebih dekat. Lama-lama mereka menjadi sahabat.',
+    ],
+  };
+  const pw = cardWords(paragraph);
+
+  it('never places stray words on text the child has not reached', () => {
+    const result = scoreTake({
+      words: pw,
+      heard: heard('Kedua Di sebuah bintang yang sangat kecil Niga tinggal seorang pangeran Sukaku Azurad Apakah bisa Selesai'),
+      supplied: new Set(),
+    });
+    const st = result.words.map((w) => w.status);
+    expect(st.slice(0, 9)).toEqual(Array(9).fill('correct'));
+    expect(st.slice(9).every((s) => s === 'omitted')).toBe(true);
+    expect(result.insertions.map((i) => i.heard)).toEqual(['Kedua', 'Niga', 'Sukaku', 'Azurad', 'Apakah', 'bisa', 'Selesai']);
+  });
+});
