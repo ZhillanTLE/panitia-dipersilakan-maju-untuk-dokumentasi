@@ -1,0 +1,15 @@
+# Never upload keys, local state, notes or research data
+planner/.env
+.env
+planner/state/
+HANDOFF.md
+claude.md
+CLAUDE.md
+designsystem.md
+dengarbaca-online-planner.md
+notes/
+node_modules/
+dist/
+modelpack/
+harness/
+**/__pycache__/
