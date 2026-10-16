@@ -1,28 +1,31 @@
-import { useId, useMemo, useState, type CSSProperties, type FormEvent } from 'react';
+import { useId, useMemo, useRef, useState, type CSSProperties, type FormEvent } from 'react';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { IconDownload, IconMic } from '../components/Icons';
 import { toast } from '../components/Toast';
 import { activitiesFor } from '../lib/activities';
 import { formatDate } from '../lib/format';
-import { classProgress, nextToRead, stageOf, type Stage } from '../lib/progress';
+import { nextToRead, stageOf, type Stage } from '../lib/progress';
 import { href } from '../lib/route';
 import { LEVEL_ORDER } from '../lib/rubric';
-import { addStudent, removeStudent, resetAll, setConsent, useApp } from '../lib/store';
+import { addStudent, nextRef, removeStudent, renameStudent, resetAll, setConsent, useApp } from '../lib/store';
 import { CONSENT, LEVEL, S } from '../strings';
 import type { ChildLevel, Consents, Student } from '../types';
 import './ClassView.css';
 
-const CONSENT_KEYS: (keyof Consents)[] = ['assessment', 'audio_research', 'camera_mode_b'];
+// Camera consent is dropped with the pivot: no camera feature exists. The field stays in stored records.
+const CONSENT_KEYS: (keyof Consents)[] = ['assessment', 'audio_research'];
+
+const label = (s: Student) => s.name ?? s.student_ref;
 
 export function ClassView() {
   const app = useApp();
+  const [step, setStep] = useState<ChildLevel | null>(null);
   const [confirm, setConfirm] = useState<{ message: string; label: string; run: () => void } | null>(null);
 
   const stages = useMemo(
     () => new Map(app.students.map((s) => [s.student_ref, stageOf(s, app.sessions)])),
     [app.students, app.sessions],
   );
-  const progress = classProgress(app.students, app.sessions);
   const upNext = nextToRead(app.students, app.sessions);
   const firstPending = app.students.map((s) => stages.get(s.student_ref)).find((st) => st?.kind === 'pending');
 
@@ -30,9 +33,10 @@ export function ClassView() {
   const groups = useMemo(() => {
     const map = new Map<ChildLevel, Student[]>(LEVEL_ORDER.map((l) => [l, []]));
     for (const s of app.students) if (s.level) map.get(s.level.value)?.push(s);
-    return [...map].filter(([, list]) => list.length);
+    return map;
   }, [app.students]);
-  const confirmedCount = app.students.filter((s) => s.level).length;
+  const floor = app.students.filter((s) => !s.level);
+  const confirmedCount = app.students.length - floor.length;
 
   return (
     <section className="kelas" aria-labelledby="kelas-title">
@@ -45,14 +49,14 @@ export function ClassView() {
         </div>
         <div className="kelas__next">
           {firstPending?.kind === 'pending' && (
-            <a className="btn btn--ghost kelas__btn" href={href('tinjau', firstPending.session_id)}>
+            <a className="btn btn--ghost btn--tall" href={href('tinjau', firstPending.session_id)}>
               {S.kelas.reviewNext}
             </a>
           )}
           {upNext ? (
             <a className="btn btn--cta" href={href('bacaan', undefined, { student: upNext.student_ref })}>
               <IconMic />
-              {S.kelas.readNext(upNext.student_ref)}
+              {S.kelas.readNext(label(upNext))}
             </a>
           ) : (
             app.students.length > 0 && <p className="t-meta">{S.kelas.allPlaced}</p>
@@ -60,14 +64,59 @@ export function ClassView() {
         </div>
       </header>
 
-      {progress.total > 0 && <ProgressBar placed={progress.placed} pending={progress.pending} fresh={progress.fresh} />}
+      <section className="kelas__section" aria-labelledby="ladder-title">
+        <div className="head">
+          <h2 className="head__title" id="ladder-title">
+            {S.kelas.ladder}
+          </h2>
+          <p className="t-meta">{S.kelas.ladderNote}</p>
+        </div>
+        <div className="stairs">
+          <ol className="stairs__steps">
+            {LEVEL_ORDER.map((level, k) => {
+              const students = groups.get(level) ?? [];
+              return (
+                <li key={level} className="stairs__col" style={{ '--k': k } as CSSProperties}>
+                  <ul className="stairs__people" aria-label={LEVEL[level]}>
+                    {students.map((s) => (
+                      <li key={s.student_ref} className="person">
+                        {label(s)}
+                      </li>
+                    ))}
+                  </ul>
+                  <button
+                    type="button"
+                    className="stairs__step"
+                    aria-pressed={step === level}
+                    onClick={() => setStep((cur) => (cur === level ? null : level))}
+                  >
+                    <span className="stairs__name">{LEVEL[level]}</span>
+                    <span className="stairs__count">{students.length || S.kelas.stepEmpty}</span>
+                  </button>
+                </li>
+              );
+            })}
+          </ol>
+          <div className="stairs__floor">
+            <p className="stairs__floor-label">{S.kelas.floor}</p>
+            <ul className="stairs__people stairs__people--row">
+              {floor.map((s) => (
+                <li key={s.student_ref} className="person" data-stage={stages.get(s.student_ref)?.kind}>
+                  {label(s)}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+        {step && <Activities level={step} />}
+      </section>
 
       <section className="kelas__section" aria-labelledby="students-title">
         <div className="head">
           <h2 className="head__title" id="students-title">
             {S.kelas.students}
           </h2>
-          <p className="t-meta">{S.kelas.studentsNote}</p>
+          <p className="t-meta">{S.kelas.nameNote}</p>
         </div>
         <div className="sheet">
           <ul className="roster">
@@ -78,44 +127,19 @@ export function ClassView() {
                 stage={stages.get(s.student_ref) ?? { kind: 'new' }}
                 onRemove={() =>
                   setConfirm({
-                    message: S.kelas.removeConfirm(s.student_ref),
+                    message: S.kelas.removeConfirm(label(s)),
                     label: S.kelas.remove,
                     run: () => {
                       removeStudent(s.student_ref);
-                      toast(S.kelas.removed(s.student_ref));
+                      toast(S.kelas.removed(label(s)));
                     },
                   })
                 }
               />
             ))}
           </ul>
-          <AddStudent existing={app.students} />
+          <AddStudent />
         </div>
-      </section>
-
-      <section className="kelas__section" aria-labelledby="groups-title">
-        <div className="head">
-          <h2 className="head__title" id="groups-title">
-            {S.kelas.groups}
-          </h2>
-          <p className="t-meta">{S.kelas.groupsNote}</p>
-        </div>
-        {groups.length ? (
-          <div className="groups">
-            {groups.map(([level, students]) => (
-              <Group key={level} level={level} students={students} />
-            ))}
-          </div>
-        ) : (
-          <div className="groups__empty">
-            <ol className="ladder" aria-hidden="true">
-              {LEVEL_ORDER.map((l) => (
-                <li key={l}>{LEVEL[l]}</li>
-              ))}
-            </ol>
-            <p className="t-b8">{S.kelas.groupsEmpty}</p>
-          </div>
-        )}
       </section>
 
       <footer className="kelas__foot">
@@ -152,26 +176,22 @@ export function ClassView() {
   );
 }
 
-/** One bar for the whole class: placed, waiting for review, not read yet. */
-function ProgressBar({ placed, pending, fresh }: { placed: number; pending: number; fresh: number }) {
-  const total = placed + pending + fresh;
-  const parts = [
-    { key: 'placed', n: placed, label: S.kelas.progress.placed(placed) },
-    { key: 'pending', n: pending, label: S.kelas.progress.pending(pending) },
-    { key: 'fresh', n: fresh, label: S.kelas.progress.fresh(fresh) },
-  ];
+function Activities({ level }: { level: ChildLevel }) {
   return (
-    <div className="progress" role="group" aria-label={S.kelas.progressLabel}>
-      <div className="progress__bar" aria-hidden="true">
-        {parts.map(
-          (p) =>
-            p.n > 0 && <span key={p.key} className={`progress__part progress__part--${p.key}`} style={{ '--w': p.n / total } as CSSProperties} />,
-        )}
-      </div>
-      <ul className="progress__legend">
-        {parts.map((p) => (
-          <li key={p.key} className={`progress__item progress__item--${p.key}`}>
-            {p.label}
+    <div className="acts-bank">
+      <p className="acts-bank__title">{S.kelas.activitiesFor(LEVEL[level])}</p>
+      <ul className="acts-bank__list">
+        {activitiesFor(level).map((a) => (
+          <li key={a.id} className="acts-bank__item">
+            <p className="t-s7">{a.title}</p>
+            <p className="t-meta">
+              {S.kelas.minutes(a.minutes)}. {S.kelas.materials}: {a.materials}. {S.kelas.activityDraft}.
+            </p>
+            <ol className="acts-bank__steps">
+              {a.steps.map((stepText, k) => (
+                <li key={k}>{stepText}</li>
+              ))}
+            </ol>
           </li>
         ))}
       </ul>
@@ -180,19 +200,58 @@ function ProgressBar({ placed, pending, fresh }: { placed: number; pending: numb
 }
 
 function StudentRow({ student: s, stage, onRemove }: { student: Student; stage: Stage; onRemove: () => void }) {
+  const [editing, setEditing] = useState(false);
+  const [error, setError] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const save = () => {
+    const value = inputRef.current?.value ?? '';
+    if (!value.trim() || value.trim() === s.name) {
+      setEditing(false);
+      return;
+    }
+    if (renameStudent(s.student_ref, value)) {
+      setEditing(false);
+      setError(false);
+    } else setError(true);
+  };
+
   return (
     <li className="student">
       <div className="student__who">
-        <span className="student__ref">{s.student_ref}</span>
-        <span className="student__stage" data-stage={stage.kind}>
-          {stage.kind === 'new'
-            ? S.ready.stage.new
-            : stage.kind === 'pending'
-              ? S.ready.stage.pending
-              : `${LEVEL[stage.level]}, ${formatDate(s.level?.confirmed_at ?? 0)}`}
+        {editing ? (
+          <input
+            ref={inputRef}
+            className="input student__input"
+            defaultValue={s.name ?? ''}
+            aria-label={S.kelas.nameLabel}
+            aria-invalid={error || undefined}
+            maxLength={24}
+            autoFocus
+            onBlur={save}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') save();
+              if (e.key === 'Escape') setEditing(false);
+            }}
+          />
+        ) : (
+          <button type="button" className="student__name" onClick={() => setEditing(true)} aria-label={S.kelas.rename(label(s))}>
+            {label(s)}
+          </button>
+        )}
+        <span className="student__meta">
+          <span className="student__code">{s.student_ref}</span>
+          <span className="student__stage" data-stage={stage.kind}>
+            {stage.kind === 'new'
+              ? S.ready.stage.new
+              : stage.kind === 'pending'
+                ? S.ready.stage.pending
+                : `${LEVEL[stage.level]}, ${formatDate(s.level?.confirmed_at ?? 0)}`}
+          </span>
         </span>
+        {error && <span className="student__error">{S.kelas.duplicateName}</span>}
       </div>
-      <div className="student__consents" role="group" aria-label={`${S.kelas.consent} ${s.student_ref}`}>
+      <div className="student__consents" role="group" aria-label={`${S.kelas.consent} ${label(s)}`}>
         {CONSENT_KEYS.map((key) => (
           <button
             key={key}
@@ -200,8 +259,6 @@ function StudentRow({ student: s, stage, onRemove }: { student: Student; stage: 
             role="switch"
             className="switch"
             aria-checked={s.consents[key]}
-            disabled={key === 'camera_mode_b'}
-            title={key === 'camera_mode_b' ? S.kelas.cameraNote : undefined}
             onClick={() => setConsent(s.student_ref, key, !s.consents[key])}
           >
             <span className="switch__track" aria-hidden="true" />
@@ -215,10 +272,7 @@ function StudentRow({ student: s, stage, onRemove }: { student: Student; stage: 
             {S.kelas.review}
           </a>
         ) : (
-          <a
-            className="btn btn--ghost"
-            href={href('bacaan', undefined, { student: s.student_ref })}
-          >
+          <a className="btn btn--ghost" href={href('bacaan', undefined, { student: s.student_ref })}>
             {stage.kind === 'new' ? S.kelas.assess : S.kelas.reread}
           </a>
         )}
@@ -230,76 +284,28 @@ function StudentRow({ student: s, stage, onRemove }: { student: Student; stage: 
   );
 }
 
-function Group({ level, students }: { level: ChildLevel; students: Student[] }) {
-  const [open, setOpen] = useState(false);
-  const panelId = useId();
-  const activities = activitiesFor(level);
-  return (
-    <article className="group">
-      <header className="group__head">
-        <h3 className="group__name">{LEVEL[level]}</h3>
-        <span className="t-meta">{S.kelas.groupCount(students.length)}</span>
-      </header>
-      <p className="group__pills">
-        {students.map((s) => (
-          <span key={s.student_ref} className="chip chip--neutral">
-            {s.student_ref}
-          </span>
-        ))}
-      </p>
-      <button type="button" className="btn btn--text group__toggle" aria-expanded={open} aria-controls={panelId} onClick={() => setOpen(!open)}>
-        {open ? S.kelas.hideActivities : S.kelas.showActivities}
-      </button>
-      <ul className="acts-bank" id={panelId} hidden={!open}>
-        {activities.map((a) => (
-          <li key={a.id} className="acts-bank__item">
-            <p className="t-s7">{a.title}</p>
-            <p className="t-meta">
-              {S.kelas.minutes(a.minutes)}. {S.kelas.materials}: {a.materials}. {S.kelas.activityDraft}.
-            </p>
-            <ol className="acts-bank__steps">
-              {a.steps.map((step, k) => (
-                <li key={k}>{step}</li>
-              ))}
-            </ol>
-          </li>
-        ))}
-      </ul>
-    </article>
-  );
-}
-
-function nextRef(students: Student[]): string {
-  const numbers = students
-    .map((s) => /^K2-(\d+)$/.exec(s.student_ref)?.[1])
-    .filter((n): n is string => Boolean(n))
-    .map(Number);
-  const next = (numbers.length ? Math.max(...numbers) : 0) + 1;
-  return `K2-${String(next).padStart(2, '0')}`;
-}
-
-function AddStudent({ existing }: { existing: Student[] }) {
+function AddStudent() {
+  const app = useApp();
   const [value, setValue] = useState('');
   const [error, setError] = useState<string | null>(null);
   const inputId = useId();
-  const suggestion = nextRef(existing);
 
   const submit = (e: FormEvent) => {
     e.preventDefault();
-    const ref = (value || suggestion).trim().toUpperCase();
-    if (!addStudent(ref)) {
-      setError(S.kelas.duplicate);
+    const ref = addStudent(value);
+    if (!ref) {
+      setError(value.trim() ? S.kelas.duplicateName : S.kelas.namePlaceholder);
       return;
     }
+    toast(S.kelas.added(value.trim(), ref));
     setValue('');
     setError(null);
-    toast(S.kelas.added(ref));
   };
 
   return (
     <form className="add" onSubmit={submit}>
       <label className="visually-hidden" htmlFor={inputId}>
-        {S.kelas.addLabel}
+        {S.kelas.nameLabel}
       </label>
       <div className="add__row">
         <input
@@ -310,13 +316,13 @@ function AddStudent({ existing }: { existing: Student[] }) {
             setValue(e.target.value);
             setError(null);
           }}
-          placeholder={suggestion}
+          placeholder={S.kelas.namePlaceholder}
           autoComplete="off"
-          spellCheck={false}
-          maxLength={12}
+          maxLength={24}
           aria-describedby={error ? `${inputId}-error` : undefined}
           aria-invalid={error ? true : undefined}
         />
+        <span className="add__code">{nextRef(app.students)}</span>
         <button type="submit" className="btn btn--ghost">
           {S.kelas.add}
         </button>
@@ -330,7 +336,7 @@ function AddStudent({ existing }: { existing: Student[] }) {
   );
 }
 
-/** CSV of confirmed levels only: no scores, in code order (CLAUDE.md rules 3 and 7). */
+/** CSV of codes and confirmed levels only: no names, no scores, in code order (CLAUDE.md rules 3 and 7). */
 function exportCsv(students: Student[]): void {
   const rows = [['student_ref', 'level', 'confirmed_at', 'session_id', 'rubric']];
   for (const s of students) {
