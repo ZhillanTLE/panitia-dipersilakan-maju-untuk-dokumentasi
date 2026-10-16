@@ -1,9 +1,11 @@
 import { useSyncExternalStore } from 'react';
-import { getApp } from './store';
-import type { ChildLevel } from '../types';
+import { cardMetrics, comprehensionTake, earlierResults, levelTake, patternHits, patternTakes, type Unit } from './metrics';
+import type { PatternId } from './patterns';
+import { getApp, takesOf, type AppState } from './store';
+import type { ChildLevel, Student } from '../types';
 
 // Client of the Flask planner API. No planning logic here: the server groups, plans, checks and
-// schedules. This file builds the sync payload from confirmed levels, holds the screen state and
+// schedules. This file builds the sync payload from confirmed levels and reading metrics, holds the screen state and
 // does the small amount of timetable arithmetic needed to move a session between slots.
 
 export type Day = 'Mon' | 'Tue' | 'Wed' | 'Thu' | 'Fri' | 'Sat' | 'Sun';
@@ -23,6 +25,8 @@ export interface Settings {
   phones: number;
   holidays: string[];
   timetable: Slot[];
+  /** The teacher's switch: run the agents on the Gemini model instead of the rule-built stand-ins. */
+  useModel: boolean;
 }
 
 export interface PlanSession {
@@ -32,8 +36,18 @@ export interface PlanSession {
   activityId: string | null;
   passageIds: string[];
   minutes: number;
-  focus: string;
+  /** The error pattern the session practises; null for re-placement or a group that showed none. */
+  focus: PatternId | null;
+  /** The teacher's one-line instruction: the activity, with example words from this group's own readings. */
+  tip?: string;
   students?: string[];
+}
+
+export interface GroupPattern {
+  id: PatternId;
+  label: string;
+  children: number;
+  count: number;
 }
 
 export interface PlanGroup {
@@ -41,8 +55,33 @@ export interface PlanGroup {
   name: string;
   size: number;
   students: string[];
+  unit?: Unit;
+  patterns?: GroupPattern[];
+  topPatterns?: PatternId[];
   evidence: string[];
   sessions: PlanSession[];
+}
+
+/** Stage-0 facts for one group, as the Evidence Summarizer saw them. */
+export interface GroupFacts {
+  level: ChildLevel;
+  name: string;
+  size: number;
+  unit: Unit;
+  unitName: string;
+  accuracy: { medianCorrect: number; medianAttempted: number };
+  correctUnitsPerMinute: { median: number; children: number } | null;
+  practice: { medianSessions: number; medianChange: number | null; children: number };
+  comprehension: { medianCorrect: number; medianAsked: number; children: number } | null;
+  patterns: (GroupPattern & { examples: string[] })[];
+}
+
+export interface Discard {
+  level?: string | null;
+  line?: string;
+  field?: string;
+  rule?: string;
+  reason: string;
 }
 
 export interface Plan {
@@ -71,7 +110,8 @@ export interface CalEvent {
   lane: number;
   activityId: string | null;
   passageIds: string[];
-  focus: string;
+  focus: PatternId | null;
+  tip?: string;
   students: string[];
 }
 
@@ -83,7 +123,8 @@ export interface Unscheduled {
   minutes: number;
   activityId: string | null;
   passageIds: string[];
-  focus: string;
+  focus: PatternId | null;
+  tip?: string;
   students: string[];
   reason: string;
 }
@@ -94,9 +135,15 @@ export interface TraceEntry {
   startedAt: string;
   ms?: number;
   summary?: string;
+  groups?: { level: ChildLevel; size: number }[];
+  facts?: GroupFacts[];
   lines?: Record<string, string[]>;
-  discarded?: unknown[];
+  discarded?: Discard[];
   writtenBy?: string;
+  checked?: number;
+  repairs?: number;
+  ruleBuilt?: string[];
+  evidence?: { checked: number; discarded: number; reused: boolean };
   plannedBy?: string;
   attempts?: number;
   failures?: { group: string; rule: string; detail: string }[];
@@ -117,6 +164,8 @@ export interface Approved {
   calendar: { events: CalEvent[]; unscheduled: Unscheduled[] };
   approvedAt: string;
   queuedForPhone: boolean;
+  trace?: TraceEntry[];
+  mode?: RunResult['mode'];
   syncedToPhoneAt: string | null;
 }
 
@@ -125,8 +174,11 @@ export interface ReportChild {
   before: ChildLevel;
   after: ChildLevel | null;
   move: 'naik' | 'tetap' | 'turun' | 'belum';
-  wcpmBefore: number | null;
-  wcpmAfter: number | null;
+  unit: Unit | null;
+  speedBefore: number | null;
+  /** Only in the same unit as before. */
+  speedAfter: number | null;
+  unitChanged: boolean;
 }
 
 export interface Report {
@@ -137,6 +189,8 @@ export interface Report {
     size: number;
     moved: { up: number; stayed: number; down: number; notYet: number };
     sessions: { planned: number; done: number };
+    /** Patterns the plan targeted: how many re-placed children hit each one at the start and now. */
+    patterns: { id: PatternId; label: string; children: number; before: number; after: number }[];
     children: ReportChild[];
   }[];
 }
@@ -167,6 +221,7 @@ const DEFAULTS: Settings = {
   startDate: nextMonday(),
   cycleWeeks: 2,
   phones: 1,
+  useModel: false,
   holidays: [],
   timetable: [
     { day: 'Mon', start: '08:00', end: '08:35' },
@@ -184,7 +239,10 @@ interface Saved {
 function load(): Saved {
   try {
     const raw = localStorage.getItem(KEY);
-    if (raw) return { settings: DEFAULTS, done: [], preparedAt: null, ...(JSON.parse(raw) as Partial<Saved>) };
+    if (raw) {
+      const saved = JSON.parse(raw) as Partial<Saved>;
+      return { done: [], preparedAt: null, ...saved, settings: { ...DEFAULTS, ...saved.settings } };
+    }
   } catch {
     // Storage blocked: settings last until the page closes.
   }
@@ -245,8 +303,73 @@ export interface SyncSummary {
   classCode: string;
   included: number;
   excluded: number;
+  /** Confirmed, but the reading behind the level is no longer on this device, so there are no numbers to send. */
+  noReading: number;
   demo: boolean;
   byLevel: Map<ChildLevel, number>;
+}
+
+/** Above this speed the timing went wrong, so the number is sent as unknown. */
+const MAX_SPEED = 400;
+const MAX_WORD = 40;
+
+const syncWord = (text: string) =>
+  text
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}-]/gu, '')
+    .slice(0, MAX_WORD);
+
+/**
+ * One child's record for the planner: code, confirmed level and the rule-computed metrics of the
+ * reading behind it. No name, no audio, no free text. A kept clip goes only as a pointer (take:word)
+ * to the recording on this device, and only when the research consent kept it.
+ */
+function syncStudent(st: Student, app: AppState): Record<string, unknown> | null {
+  const level = st.level!;
+  const session = app.sessions.find((x) => x.session_id === level.session_id);
+  const takes = session ? takesOf(session, app.takes) : [];
+  const take = levelTake(takes, level.value);
+  if (!session || !take) return null;
+  const m = cardMetrics(take);
+  // Comprehension counts for children placed at paragraf: the questions are about a passage they can read.
+  const comp = level.value === 'paragraf' ? comprehensionTake(takes) : null;
+  const answers = comp ? cardMetrics(comp).comprehension : null;
+  return {
+    code: st.student_ref,
+    confirmedLevel: level.value,
+    confirmedAt: iso(new Date(level.confirmed_at)),
+    levelHistory: earlierResults(st.student_ref, app.sessions, app.takes, level.confirmed_at, session.session_id).map((r) => ({
+      level: r.level,
+      confirmedAt: iso(new Date(r.at)),
+    })),
+    metrics: {
+      unit: m.unit,
+      accuracy: m.accuracy,
+      correctUnitsPerMinute: m.correctUnitsPerMinute !== null && m.correctUnitsPerMinute <= MAX_SPEED ? m.correctUnitsPerMinute : null,
+      errorCounts: m.errorCounts,
+      patterns: patternHits(patternTakes(takes, level.value)).map((h) => ({
+        id: h.id,
+        count: h.count,
+        examples: h.examples
+          .filter((e) => syncWord(e.word))
+          .map((e) => ({
+            word: syncWord(e.word),
+            heard: e.heard === null ? null : e.heard.slice(0, MAX_WORD),
+            clipId: app.takes[e.take_id]?.audio.stored && !session.simulated ? `${e.take_id}:${e.i}` : null,
+          })),
+      })),
+      longPauses: m.longPauses.count,
+      selfCorrections: m.selfCorrections,
+      comprehension: answers ? { ...answers, cardUnit: 'paragraf' } : null,
+      confidence: {
+        uncertainWordShare: m.confidence.uncertainWordShare,
+        teacherCorrections: m.confidence.teacherCorrections,
+        audioQuality: m.confidence.audioQuality,
+      },
+    },
+    // Practice mode is not built yet, so there are no practice reads to send.
+    practice: { sessions: 0, wordsReadBack: [] },
+  };
 }
 
 export function buildPayload(): { payload: Record<string, unknown>; summary: SyncSummary } {
@@ -255,27 +378,28 @@ export function buildPayload(): { payload: Record<string, unknown>; summary: Syn
   const classCode = app.students[0]?.student_ref.split('-')[0] ?? 'K1';
   const placed = app.students.filter((st) => st.level);
   const byLevel = new Map<ChildLevel, number>();
-  const students = placed.map((st) => {
-    const level = st.level!;
-    byLevel.set(level.value, (byLevel.get(level.value) ?? 0) + 1);
-    const takes = Object.values(app.takes).filter((t) => t.session_id === level.session_id && t.fluency.wcpm !== null);
-    const wcpm = takes.length ? Math.round(takes[takes.length - 1].fluency.wcpm ?? 0) : undefined;
-    return {
-      code: st.student_ref,
-      confirmedLevel: level.value,
-      confirmedAt: iso(new Date(level.confirmed_at)),
-      ...(wcpm ? { wcpmUnseen: wcpm } : {}),
-    };
-  });
+  const students: Record<string, unknown>[] = [];
+  let noReading = 0;
+  let demo = false;
+  for (const st of placed) {
+    const record = syncStudent(st, app);
+    if (!record) {
+      noReading++;
+      continue;
+    }
+    students.push(record);
+    byLevel.set(st.level!.value, (byLevel.get(st.level!.value) ?? 0) + 1);
+    if (st.level?.demo) demo = true;
+  }
   return {
     payload: {
-      schemaVersion: '1.0',
+      schemaVersion: '2.0',
       class: { code: classCode, teacherCode: s.teacherCode, phones: s.phones, cycleWeeks: s.cycleWeeks, startDate: s.startDate, holidays: s.holidays },
       timetable: s.timetable.map((t) => ({ ...t, kind: 'literacy' })),
       students,
       sessionsDone: state.done,
     },
-    summary: { classCode, included: placed.length, excluded: app.students.length - placed.length, demo: placed.some((st) => st.level?.demo), byLevel },
+    summary: { classCode, included: students.length, excluded: app.students.length - placed.length, noReading, demo, byLevel },
   };
 }
 
@@ -294,7 +418,10 @@ class ApiError extends Error {
 async function call<T>(path: string, body?: unknown): Promise<T> {
   let res: Response;
   try {
-    res = await fetch(`/api/planner/${path}`, body === undefined ? undefined : { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    res = await fetch(
+      `/api/planner/${path}`,
+      body === undefined ? undefined : { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) },
+    );
   } catch {
     throw new ApiError('offline');
   }
@@ -320,13 +447,20 @@ export async function checkHealth(): Promise<void> {
 export async function restore(): Promise<void> {
   const { summary } = buildPayload();
   try {
-    const data = await call<{ draft: RunResult | null; approved: Approved | null }>(`plan/${summary.classCode}`);
-    const patch: Partial<PlannerState> = { approved: data.approved };
-    const source = data.approved ?? data.draft;
+    const data = await call<{ draft: (Partial<RunResult> & Pick<RunResult, 'plan' | 'calendar'>) | null; approved: Approved | null }>(
+      `plan/${summary.classCode}`,
+    );
+    // A draft made after the last approval is the plan being worked on; the approved one stays on the phone until it is replaced.
+    const draftIsNewer = Boolean(data.draft && data.approved && (data.draft as { savedAt?: string }).savedAt! > data.approved.approvedAt);
+    const approved = draftIsNewer ? null : data.approved;
+    const patch: Partial<PlannerState> = { approved };
+    const source = approved ?? data.draft;
     if (source && !state.result) {
       patch.events = source.calendar.events;
       patch.unscheduled = source.calendar.unscheduled;
-      patch.result = { mode: state.health && state.health !== 'offline' ? state.health.mode : { inference: 'mock', data: 'synced' }, trace: [], plan: source.plan, calendar: source.calendar };
+      const fallbackMode: RunResult['mode'] = state.health && state.health !== 'offline' ? state.health.mode : { inference: 'mock', data: 'synced' };
+      // Older saves have no trace; Proses then says there is nothing to show instead of waiting forever.
+      patch.result = { mode: source.mode ?? fallbackMode, trace: source.trace ?? [], plan: source.plan, calendar: source.calendar };
     }
     set(patch);
   } catch {
@@ -339,13 +473,17 @@ export async function runPlan(overrides?: Partial<Settings>): Promise<boolean> {
   const { payload } = buildPayload();
   set({ running: true, error: null, result: null, report: null });
   try {
-    const result = await call<RunResult>('run', payload);
+    const result = await call<RunResult>(`run?inference=${inferenceChoice()}`, payload);
     set({ running: false, result, events: result.calendar.events, unscheduled: result.calendar.unscheduled, approved: null, preparedAt: Date.now() });
     return true;
   } catch (e) {
     set({ running: false, error: failure(e) });
     return false;
   }
+}
+
+function inferenceChoice(): 'live' | 'mock' {
+  return state.settings.useModel ? 'live' : 'mock';
 }
 
 export async function approvePlan(): Promise<boolean> {
@@ -372,7 +510,7 @@ export async function replan(fromDate: string): Promise<boolean> {
   const { payload } = buildPayload();
   set({ running: true, error: null });
   try {
-    const result = await call<RunResult>('replan', { payload, fromDate });
+    const result = await call<RunResult>(`replan?inference=${inferenceChoice()}`, { payload, fromDate });
     set({ running: false, result, events: result.calendar.events, unscheduled: result.calendar.unscheduled, approved: null });
     return true;
   } catch (e) {
@@ -440,17 +578,88 @@ export function slotsOf(plan: Pick<Plan, 'startDate' | 'cycleWeeks' | 'timetable
   return out;
 }
 
-/** Earliest start inside the slot where the session fits: phones respected, a group never overlapping itself. */
+/** Whether a session can start at minute `a` on `date`: phones respected, a group never overlapping itself. */
+export function fitsAt(events: CalEvent[], date: string, a: number, minutes: number, phones: number, level: ChildLevel, ignoreId?: string): boolean {
+  const b = a + minutes;
+  const hit = events.filter((e) => e.date === date && e.id !== ignoreId && toMin(e.start) < b && a < toMin(e.end));
+  if (hit.some((e) => e.groupLevel === level)) return false;
+  const points = [a, ...hit.map((e) => toMin(e.start)).filter((p) => p > a)];
+  return points.every((p) => hit.filter((e) => toMin(e.start) <= p && p < toMin(e.end)).length < phones);
+}
+
+/** Earliest start inside the slot where the session fits. */
 export function fitInSlot(events: CalEvent[], slot: DatedSlot, minutes: number, phones: number, level: ChildLevel, ignoreId?: string): number | null {
-  const others = events.filter((e) => e.date === slot.date && e.id !== ignoreId);
-  for (let a = slot.start; a + minutes <= slot.end; a += 5) {
-    const b = a + minutes;
-    const hit = others.filter((e) => toMin(e.start) < b && a < toMin(e.end));
-    if (hit.some((e) => e.groupLevel === level)) continue;
-    const points = [a, ...hit.map((e) => toMin(e.start)).filter((p) => p > a)];
-    if (points.every((p) => hit.filter((e) => toMin(e.start) <= p && p < toMin(e.end)).length < phones)) return a;
-  }
+  for (let a = slot.start; a + minutes <= slot.end; a += 5) if (fitsAt(events, slot.date, a, minutes, phones, level, ignoreId)) return a;
   return null;
+}
+
+// The school day the calendar shows, widened to the timetable. Same rule as school_day() in planner/approval.py.
+export const SCHOOL_DAY = { from: 7 * 60, to: 14 * 60 };
+export const SCHOOL_DAYS: Day[] = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
+
+export function dayBounds(plan: Pick<Plan, 'timetable'>): { from: number; to: number } {
+  return {
+    from: Math.min(SCHOOL_DAY.from, ...plan.timetable.map((t) => toMin(t.start))),
+    to: Math.max(SCHOOL_DAY.to, ...plan.timetable.map((t) => toMin(t.end))),
+  };
+}
+
+/** Weekdays shown on the calendar: Monday to Friday, plus any other day the timetable uses. */
+export function daysOf(plan: Pick<Plan, 'timetable'>): Day[] {
+  return DAYS.filter((d) => SCHOOL_DAYS.includes(d) || plan.timetable.some((t) => t.day === d));
+}
+
+/** The cycle week a date falls in, or null when it is before the start, after the cycle, a holiday, or not a school day. */
+export function weekOfDate(plan: Pick<Plan, 'startDate' | 'cycleWeeks' | 'holidays' | 'timetable'>, date: string): number | null {
+  const start = parseDate(plan.startDate);
+  const d = parseDate(date);
+  const monday = new Date(start);
+  monday.setDate(start.getDate() - ((start.getDay() + 6) % 7));
+  const week = Math.floor(Math.round((d.getTime() - monday.getTime()) / 86_400_000) / 7) + 1;
+  const day = DAYS[(d.getDay() + 6) % 7];
+  if (d < start || week < 1 || week > plan.cycleWeeks || plan.holidays.includes(date) || !daysOf(plan).includes(day)) return null;
+  return week;
+}
+
+export type MoveResult = 'ok' | 'nofit' | 'lastweek' | 'closed';
+
+/** Puts a session (on the calendar or still unplaced) at `start` minutes on `date`, if the day and the phones allow it. */
+export function moveTo(id: string, date: string, start: number): MoveResult {
+  const plan = state.result?.plan;
+  const e = state.events.find((x) => x.id === id);
+  const u = state.unscheduled.find((x) => x.planSessionId === id);
+  const s = e ?? u;
+  if (!plan || !s) return 'nofit';
+  const week = weekOfDate(plan, date);
+  if (week === null) return 'closed';
+  if (s.kind === 'replacement' && week !== plan.cycleWeeks) return 'lastweek';
+  const { from, to } = dayBounds(plan);
+  const a = Math.min(Math.max(from, Math.round(start / 5) * 5), to - s.minutes);
+  if (!fitsAt(state.events, date, a, s.minutes, plan.phones, s.groupLevel, e?.id)) return 'nofit';
+  const day = DAYS[(parseDate(date).getDay() + 6) % 7];
+  const placed: CalEvent = {
+    id: s.planSessionId,
+    planSessionId: s.planSessionId,
+    groupLevel: s.groupLevel,
+    kind: s.kind,
+    week,
+    date,
+    day,
+    start: toHHMM(a),
+    end: toHHMM(a + s.minutes),
+    minutes: s.minutes,
+    lane: 0,
+    activityId: s.activityId,
+    passageIds: s.passageIds,
+    focus: s.focus,
+    tip: s.tip,
+    students: s.students,
+  };
+  set({
+    events: [...state.events.filter((x) => x.id !== placed.id), placed].sort(byTime),
+    unscheduled: state.unscheduled.filter((x) => x.planSessionId !== id),
+  });
+  return 'ok';
 }
 
 export function moveEvent(id: string, slot: DatedSlot): 'ok' | 'nofit' | 'lastweek' {
@@ -487,6 +696,7 @@ export function placeUnscheduled(id: string, slot: DatedSlot): 'ok' | 'nofit' | 
     activityId: u.activityId,
     passageIds: u.passageIds,
     focus: u.focus,
+    tip: u.tip,
     students: u.students,
   };
   set({ events: [...state.events, placed].sort(byTime), unscheduled: state.unscheduled.filter((x) => x.planSessionId !== id) });
