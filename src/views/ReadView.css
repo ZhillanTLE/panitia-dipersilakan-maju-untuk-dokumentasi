@@ -1,78 +1,149 @@
 .read {
-  padding: var(--space-12) var(--space-4) var(--space-16);
+  --col: min(580px, calc(100vw - 64px));
+  padding: var(--space-10) var(--space-4) var(--space-8);
   overflow-x: clip;
 }
 
-/* Teacher controls under the book, aligned with the page's left edge */
-.desk {
+/* The teacher dock: one cream panel under the book that always holds the next action.
+   It sticks to the bottom of the screen, so the action stays in reach while the book scrolls. */
+.dock {
+  position: sticky;
+  bottom: var(--space-4);
+  z-index: 10;
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: var(--space-4);
-  width: var(--book-w, min(580px, calc(100vw - 64px)));
-  max-width: min(580px, calc(100vw - 64px));
+  gap: var(--space-3);
+  width: var(--col);
   margin: var(--space-8) auto 0;
+  padding: var(--space-4);
+  border-radius: var(--r-24);
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(12px);
+  box-shadow:
+    var(--ring-row),
+    0 12px 32px -12px rgba(31, 31, 31, 0.22);
 }
 
-.desk__row {
+.dock__main {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--space-3);
-}
-
-.desk__row--split {
   justify-content: space-between;
-  width: 100%;
+  gap: var(--space-3) var(--space-4);
 }
 
-.desk__hint {
+.dock__status {
+  display: flex;
+  flex: 1 1 220px;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.dock__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
+.dock__actions .btn--ghost {
+  height: 52px;
+  border-radius: var(--r-14);
+}
+
+.dock__lead {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: var(--space-2);
-  max-width: 52ch;
-  color: var(--neutral-900);
-  font-size: var(--fs-8);
-  line-height: var(--lh-8);
-}
-
-.desk__aside {
-  color: var(--muted);
-}
-
-.desk__lead {
   font-size: var(--fs-7);
   line-height: var(--lh-7);
   font-weight: var(--fw-s);
 }
 
-.desk__label {
+.dock__label {
   color: var(--muted);
   font-weight: var(--fw-b);
 }
 
-.desk__notice {
-  max-width: 52ch;
+.dock__hint {
+  max-width: 60ch;
+  padding: 0 var(--space-1);
+  color: var(--neutral-900);
+  font-size: var(--fs-9);
+  line-height: var(--lh-9);
+}
+
+.dock__status .dock__hint {
+  padding: 0;
+}
+
+.dock__check {
+  display: inline-grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: var(--r-pill);
+  background: var(--success-tint);
+  color: var(--success);
+}
+
+/* Teacher-only messages: amber, never red (CLAUDE.md) */
+.dock__alert {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
   padding: var(--space-3) var(--space-4);
-  border-radius: var(--r-12);
+  border-radius: var(--r-14);
   background: var(--caution-tint);
   color: var(--caution);
   font-size: var(--fs-8);
   line-height: var(--lh-8);
 }
 
-.desk__timer {
+/* Stall: the teacher reads the word aloud, then taps */
+.dock__alert--stall {
+  padding: var(--space-2) var(--space-2) var(--space-2) var(--space-5);
+  background: var(--neutral-100);
+  box-shadow: var(--ring-card);
+  color: var(--stall-prompt-ink);
+  font-size: var(--fs-7);
+  line-height: var(--lh-7);
+  font-weight: var(--fw-s);
+  animation: menu-in var(--motion-ui) var(--ease-highlight);
+}
+
+.dock__alert--stall .btn {
+  height: 40px;
+}
+
+.dock__live {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.dock__timer {
   display: inline-flex;
+  flex: none;
   align-items: center;
   gap: var(--space-2);
-  min-width: 150px;
   font-size: var(--fs-8);
   line-height: var(--lh-8);
+  font-weight: var(--fw-s);
+}
+
+.dock__clock {
+  color: var(--muted);
+  font-weight: var(--fw-b);
   font-variant-numeric: tabular-nums;
 }
 
-.desk__dot {
+.dock__dot {
   width: 8px;
   height: 8px;
   border-radius: var(--r-pill);
@@ -86,29 +157,68 @@
   }
 }
 
-.desk__other .select {
-  height: 36px;
-  border-radius: var(--r-10);
+.dock__foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: 0 var(--space-1);
 }
 
-.desk__why summary {
+.dock__why summary {
   color: var(--neutral-900);
-  font-size: var(--fs-8);
-  line-height: var(--lh-8);
+  font-size: var(--fs-9);
+  line-height: var(--lh-9);
   cursor: pointer;
 }
 
-.desk__why p {
+.dock__why p {
   max-width: 52ch;
-  margin-top: var(--space-2);
+  margin-top: var(--space-1);
   color: var(--neutral-900);
-  font-size: var(--fs-8);
-  line-height: var(--lh-8);
+  font-size: var(--fs-9);
+  line-height: var(--lh-9);
+}
+
+.dock__foot .btn--text {
+  height: 28px;
+  font-size: var(--fs-9);
+}
+
+/* Engine choice: one connected control, like the navigation pill */
+.dock .seg {
+  flex-wrap: nowrap;
+  gap: 2px;
+  padding: 3px;
+  border-radius: var(--r-12);
+  background: var(--cream);
+  box-shadow: var(--ring-row);
+}
+
+.dock .seg__opt {
+  height: 34px;
+  padding: 0 var(--space-3);
+  border-radius: var(--r-10);
+  background: transparent;
+  box-shadow: none;
+  white-space: nowrap;
+}
+
+.dock .seg__opt:not(:disabled):hover {
+  box-shadow: none;
+  color: var(--ink);
+}
+
+.dock .seg__opt[aria-checked='true'] {
+  background: var(--neutral-100);
+  box-shadow: var(--ring-card), var(--shadow-hairline);
 }
 
 .mic-line {
   display: block;
-  width: 100%;
+  flex: 1;
+  min-width: 60px;
   height: 28px;
 }
 
@@ -117,11 +227,14 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
-  width: 100%;
   padding: var(--space-3) var(--space-4);
   border-radius: var(--r-12);
-  background: var(--cream);
+  background: var(--neutral-100);
   box-shadow: var(--ring-row);
+}
+
+.transcript summary {
+  cursor: pointer;
 }
 
 .transcript__label {
@@ -137,23 +250,6 @@
 
 .transcript__text .is-interim {
   color: var(--muted);
-}
-
-/* Stall: teacher-only prompt, outside the page */
-.stall {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-3);
-  padding: var(--space-3) var(--space-3) var(--space-3) var(--space-5);
-  border-radius: var(--r-14);
-  background: var(--stall-prompt-surface);
-  box-shadow: var(--ring-card);
-  color: var(--stall-prompt-ink);
-  font-size: var(--fs-7);
-  line-height: var(--lh-7);
-  font-weight: var(--fw-s);
-  animation: menu-in var(--motion-ui) var(--ease-highlight);
 }
 
 .text-size {
@@ -185,6 +281,12 @@
   color: var(--paper);
 }
 
+.cover__head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
 .cover__brand {
   color: var(--neutral-400);
   font-size: var(--fs-8);
@@ -193,7 +295,6 @@
 }
 
 .cover__title {
-  margin-top: calc(var(--space-4) * -1);
   font-size: var(--fs-2);
   line-height: var(--lh-2);
   font-weight: var(--fw-s);
@@ -213,38 +314,91 @@
 }
 
 .cover__students {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(112px, 1fr));
   gap: var(--space-2);
 }
 
-/* On-dark pill (node 87:329): white when chosen, outlined otherwise */
+/* Student tile: code on top, where the student is in the loop underneath */
 .cover__student {
-  height: 44px;
-  padding: 0 var(--space-5);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  min-height: 60px;
+  padding: var(--space-2) var(--space-3) var(--space-2) var(--space-4);
   border: 0;
-  border-radius: var(--r-pill);
+  border-radius: var(--r-14);
   background: transparent;
   box-shadow: var(--ring-dark);
   color: var(--paper);
-  font-size: var(--fs-8);
-  line-height: var(--lh-8);
-  font-variant-numeric: tabular-nums;
+  text-align: left;
   transition:
     background-color var(--motion-ui) ease,
     color var(--motion-ui) ease,
-    box-shadow var(--motion-ui) ease;
+    box-shadow var(--motion-ui) ease,
+    transform var(--motion-ui) var(--ease-highlight);
 }
 
 .cover__student:hover {
   box-shadow: inset 0 0 0 2px var(--stroke);
 }
 
+.cover__student:active {
+  transform: scale(0.98);
+}
+
+.cover__ref {
+  font-size: var(--fs-7);
+  line-height: var(--lh-7);
+  font-weight: var(--fw-s);
+  font-variant-numeric: tabular-nums;
+}
+
+.cover__stage {
+  display: inline-flex;
+  white-space: nowrap;
+  align-items: center;
+  gap: 6px;
+  color: var(--neutral-400);
+  font-size: 11px;
+  line-height: 16px;
+}
+
+.cover__stage::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: var(--r-pill);
+  box-shadow: inset 0 0 0 1px var(--neutral-400);
+}
+
+.cover__student[data-stage='pending'] .cover__stage::before {
+  background: var(--caution-on-dark);
+  box-shadow: none;
+}
+
+.cover__student[data-stage='placed'] .cover__stage::before {
+  background: var(--success-on-dark);
+  box-shadow: none;
+}
+
 .cover__student[aria-checked='true'] {
   background: var(--neutral-100);
   box-shadow: none;
-  color: var(--navy-text);
-  font-weight: var(--fw-s);
+  color: var(--ink);
+}
+
+.cover__student[aria-checked='true'] .cover__stage {
+  color: var(--neutral-900);
+}
+
+.cover__student[aria-checked='true'][data-stage='pending'] .cover__stage::before {
+  background: var(--caution);
+}
+
+.cover__student[aria-checked='true'][data-stage='placed'] .cover__stage::before {
+  background: var(--success);
 }
 
 .cover__empty {
@@ -255,53 +409,34 @@
   color: var(--paper);
 }
 
-/* Contents: the cards in the order the assessment steps through them */
-.cover__toc {
+.cover__start {
   display: flex;
   flex-direction: column;
-}
-
-.cover__entry {
-  display: flex;
-  align-items: baseline;
-  gap: var(--space-3);
-  width: 100%;
-  padding: var(--space-2) 0;
-  border: 0;
-  background: none;
-  color: var(--neutral-400);
-  font-size: var(--fs-8);
-  line-height: var(--lh-8);
-  text-align: left;
-  transition: color var(--motion-ui) ease;
-}
-
-.cover__entry:hover,
-.cover__entry[aria-checked='true'] {
-  color: var(--paper);
-}
-
-.cover__entry[aria-checked='true'] .cover__name {
-  font-weight: var(--fw-s);
-}
-
-.cover__num {
-  width: 1.2em;
-  font-variant-numeric: tabular-nums;
-}
-
-.cover__leader {
-  flex: 1;
-  min-width: var(--space-4);
-  border-bottom: 1px dotted var(--neutral-900);
-  transform: translateY(-4px);
-}
-
-.cover__entry[aria-checked='true'] .cover__leader {
-  border-bottom-color: var(--stroke);
+  gap: var(--space-1);
+  margin-top: auto;
+  padding-top: var(--space-5);
+  border-top: 1px solid var(--neutral-900);
 }
 
 .cover__card {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-1) var(--space-3);
+  font-size: var(--fs-6);
+  line-height: var(--lh-6);
+  font-weight: var(--fw-s);
+}
+
+.cover__card-title {
+  color: var(--neutral-400);
+  font-size: var(--fs-8);
+  line-height: var(--lh-8);
+  font-weight: var(--fw-b);
+}
+
+.cover__note {
+  color: var(--neutral-400);
   font-size: var(--fs-9);
   line-height: var(--lh-9);
 }
@@ -319,6 +454,7 @@
   line-height: var(--lh-1);
   font-weight: var(--fw-s);
   letter-spacing: var(--tracking-display);
+  animation: thanks-in 900ms var(--ease-highlight) 380ms both;
 }
 
 .thanks__body {
@@ -327,17 +463,62 @@
   color: var(--neutral-900);
   font-size: var(--fs-6);
   line-height: var(--lh-6);
+  animation: thanks-in 900ms var(--ease-highlight) 520ms both;
+}
+
+@keyframes thanks-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
 }
 
 @media (max-width: 640px) {
   .read {
-    padding-top: var(--space-8);
+    --col: calc(100vw - 32px);
+    padding: var(--space-6) var(--space-4) var(--space-4);
   }
 
-  .desk {
-    width: auto;
-    max-width: none;
-    margin-inline: var(--space-4);
+  .dock {
+    bottom: var(--space-2);
+    margin-top: var(--space-6);
+    padding: var(--space-3);
+    border-radius: var(--r-20);
+  }
+
+  .dock__main {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .dock__status {
+    flex-basis: auto;
+  }
+
+  .dock__actions {
+    flex-wrap: nowrap;
+  }
+
+  .dock__actions .btn--cta {
+    flex: 1;
+    padding: 0 var(--space-4);
+  }
+
+  .dock__actions .btn--ghost {
+    flex: none;
+  }
+
+  .dock .seg {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .dock--listening > .dock__hint {
+    display: none;
+  }
+
+  .dock .seg__opt {
+    padding: 0 var(--space-2);
   }
 
   .cover__title {
@@ -345,13 +526,12 @@
     line-height: var(--lh-4);
   }
 
+  .cover__students {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .thanks__title {
     font-size: var(--fs-2);
     line-height: var(--lh-2);
-  }
-
-  .cover__student {
-    height: 40px;
-    padding: 0 var(--space-4);
   }
 }

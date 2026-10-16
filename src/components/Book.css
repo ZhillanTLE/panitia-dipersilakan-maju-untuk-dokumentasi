@@ -168,4 +168,8 @@
   .page__foot {
     padding-inline: var(--space-5);
   }
+
+  .book--tabbed {
+    margin-top: 34px;
+  }
 }

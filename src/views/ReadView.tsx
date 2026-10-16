@@ -1,12 +1,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Book, PageFoot } from '../components/Book';
-import { IconMic, IconStop, IconTextSize } from '../components/Icons';
+import { IconCheck, IconMic, IconStop, IconTextSize } from '../components/Icons';
+import { IndexTabs } from '../components/IndexTabs';
 import { MicLine } from '../components/MicLine';
 import { ReadingText } from '../components/ReadingText';
 import { toast } from '../components/Toast';
 import { startCapture, type Capture } from '../lib/audio';
 import { cardFor, cardWords } from '../lib/cards';
 import { loadPrefs, savePrefs, type TextSize } from '../lib/prefs';
+import { nextToRead, stageOf } from '../lib/progress';
 import { navigate, useRoute } from '../lib/route';
 import { CARD_ORDER, RUBRIC, RUBRIC_VERSION, cardOutcome, nextCard } from '../lib/rubric';
 import { ENGINE_VERSION, liveCursor, manualTake, normalize, scoreTake, type HeardToken } from '../lib/scoring';
@@ -22,8 +24,8 @@ import {
 } from '../lib/speech';
 import { NucleusDetector, syllableCount } from '../lib/syllables';
 import { addTake, endSession, newId, useApp } from '../lib/store';
-import { CARD, S, SOURCE } from '../strings';
-import type { CardLevel, LiveEvent, Session, Source, Take } from '../types';
+import { CARD, LEVEL, S, SOURCE } from '../strings';
+import type { CardLevel, LiveEvent, Session, Source, Student, Take } from '../types';
 import './ReadView.css';
 
 type Phase =
@@ -449,9 +451,10 @@ export function ReadView({ active }: { active: boolean }) {
     setPhase({ ...phase, ended: true });
   };
 
-  const nextStudent = () => {
+  /** Back to the cover with the next student who has not read yet already chosen. */
+  const nextStudent = (ref: string | null) => {
     run.current = null;
-    setStudentRef(null);
+    setStudentRef(ref);
     setStartLevel(RUBRIC.start);
     setPhase({ kind: 'ready' });
     setNotice(null);
@@ -480,17 +483,34 @@ export function ReadView({ active }: { active: boolean }) {
   const behind = phase.kind === 'ready' ? 3 : Math.min(3, Math.max(1, remaining));
 
   const thanksTake = phase.kind === 'thanks' ? app.takes[phase.takeId] : undefined;
+  const readLevels = new Set<CardLevel>(
+    (run.current?.session.take_ids ?? []).map((id) => app.takes[id]?.card.level).filter((l): l is CardLevel => Boolean(l)),
+  );
+  const upNext = nextToRead(app.students, app.sessions, phase.kind === 'thanks' ? thanksTake?.student_ref : undefined);
+
+  const tabs =
+    phase.kind === 'ready' ? (
+      <IndexTabs current={startLevel} mode="pick" label={S.ready.tabsLabel} onChoose={setStartLevel} />
+    ) : level && !(phase.kind === 'thanks' && phase.ended) ? (
+      <IndexTabs
+        current={level}
+        read={readLevels}
+        mode={listening || (phase.kind === 'card' && phase.step === 'saving') ? 'locked' : 'go'}
+        label={S.reading.tabsLabel}
+        onChoose={openCard}
+      />
+    ) : null;
 
   return (
     <section className="read" aria-label={S.nav.bacaan} ref={stageRef}>
-      <Book pageKey={page.key} direction={page.dir} dark={phase.kind === 'ready'} behind={behind}>
+      <Book pageKey={page.key} direction={page.dir} dark={phase.kind === 'ready'} behind={behind} aside={tabs}>
         {phase.kind === 'ready' && (
           <Cover
-            students={app.students.map((s) => s.student_ref)}
+            students={app.students}
+            sessions={app.sessions}
             selected={studentRef}
             onSelect={setStudentRef}
             startLevel={startLevel}
-            onStartLevel={setStartLevel}
           />
         )}
         {phase.kind === 'card' && card && (
@@ -519,13 +539,14 @@ export function ReadView({ active }: { active: boolean }) {
         )}
       </Book>
 
-      <div className="desk">
+      <div className={`dock dock--${phase.kind === 'card' ? phase.step : phase.kind}`} aria-label={S.reading.dock}>
         {phase.kind === 'ready' && (
-          <ReadyDesk
+          <ReadyDock
             source={source}
             onSource={chooseSource}
             online={online}
             studentRef={studentRef}
+            startLevel={startLevel}
             noConsent={Boolean(student && !student.consents.assessment && source !== 'simulated')}
             onOpen={() => openCard(startLevel)}
           />
@@ -533,49 +554,78 @@ export function ReadView({ active }: { active: boolean }) {
 
         {phase.kind === 'card' && (
           <>
-            <MicLine
-              active={listening}
-              level={() => live.current.stream?.level?.() ?? live.current.capture?.level() ?? 0}
-            />
-            {phase.step === 'armed' && (
-              <div className="desk__row">
-                <button type="button" className="btn btn--cta" onClick={() => void startListening()}>
-                  <IconMic />
-                  {S.reading.start}
-                </button>
-                <button type="button" className="btn btn--ghost" onClick={backToCover}>
-                  {S.reading.back}
-                </button>
-                <TextSizeButton size={textSize} onClick={cycleTextSize} />
-              </div>
-            )}
-            {phase.step === 'listening' && (
-              <div className="desk__row">
-                <span className="desk__timer" aria-live="off">
-                  <span className="desk__dot" aria-hidden="true" />
-                  {live.current.source === 'manual' ? S.reading.marking : S.reading.listening}{' '}
-                  {formatClock(elapsed)}
-                </span>
-                <button type="button" className="btn btn--action" onClick={() => void finish()}>
-                  <IconStop size={14} />
-                  {S.reading.stop}
-                </button>
-                <TextSizeButton size={textSize} onClick={cycleTextSize} />
-              </div>
-            )}
-            {phase.step === 'saving' && <p className="desk__hint">{S.reading.scoring}</p>}
             {stall !== null && listening && (
-              <div className="stall" role="alert">
-                <span>{S.reading.stalled(words[stall]?.text.replace(/[.,!?]/g, '') ?? '')}</span>
+              <div className="dock__alert dock__alert--stall" role="alert">
+                <span className="dock__alert-text">{S.reading.stalled(words[stall]?.text.replace(/[.,!?]/g, '') ?? '')}</span>
                 <button type="button" className="btn btn--action" onClick={supplyWord}>
                   {S.reading.supplied}
                 </button>
               </div>
             )}
-            {notice && <p className="desk__notice">{notice}</p>}
+            {notice && <p className="dock__alert">{notice}</p>}
+
+            <div className="dock__main">
+              <div className="dock__status">
+                {phase.step === 'armed' && (
+                  <>
+                    <p className="dock__lead">
+                      {run.current?.session.simulated && <span className="chip chip--ink">{S.reading.simulatedChip}</span>}
+                      {S.reading.armedLead(run.current?.session.student_ref ?? '')}
+                    </p>
+                    <p className="dock__hint">{live.current.source === 'manual' ? S.engine.manual : S.reading.armedHint}</p>
+                  </>
+                )}
+                {phase.step === 'listening' && (
+                  <div className="dock__live">
+                    <span className="dock__timer" aria-live="off">
+                      <span className="dock__dot" aria-hidden="true" />
+                      {live.current.source === 'manual' ? S.reading.marking : S.reading.listening}
+                      <span className="dock__clock">{formatClock(elapsed)}</span>
+                    </span>
+                    <MicLine
+                      active={listening}
+                      level={() => live.current.stream?.level?.() ?? live.current.capture?.level() ?? 0}
+                    />
+                  </div>
+                )}
+                {phase.step === 'saving' && <p className="dock__lead">{S.reading.scoring}</p>}
+              </div>
+
+              <div className="dock__actions">
+                <TextSizeButton size={textSize} onClick={cycleTextSize} />
+                {phase.step === 'armed' && (
+                  <>
+                    <button type="button" className="btn btn--ghost" onClick={backToCover}>
+                      {S.reading.back}
+                    </button>
+                    <button type="button" className="btn btn--cta" onClick={() => void startListening()}>
+                      <IconMic />
+                      {S.reading.start}
+                    </button>
+                  </>
+                )}
+                {phase.step === 'listening' && (
+                  <button type="button" className="btn btn--cta" onClick={() => void finish()}>
+                    <IconStop size={14} />
+                    {S.reading.stop}
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {phase.step === 'listening' && (
+              <p className="dock__hint">
+                {live.current.source === 'manual'
+                  ? S.engine.manual
+                  : recognizes(live.current.source)
+                    ? S.reading.tapToFix
+                    : S.engine.simulated}
+              </p>
+            )}
+
             {debug && phase.step !== 'armed' && (
-              <div className="transcript">
-                <p className="transcript__label">{S.reading.transcript}</p>
+              <details className="transcript" open={route.params.get('debug') === '1'}>
+                <summary className="transcript__label">{S.reading.transcript}</summary>
                 {tracking && (
                   <p className="transcript__label">
                     {live.current.detector ? S.reading.voiceLine(tracking.syllables, totalSyllables) : S.reading.noVoice}{' '}
@@ -592,31 +642,19 @@ export function ReadView({ active }: { active: boolean }) {
                   </p>
                 )}
                 <p className="transcript__label">{S.reading.transcriptPosition(cursor, words.length)}</p>
-              </div>
-            )}
-            {phase.step !== 'saving' && (
-              <p className="desk__hint">
-                {run.current?.session.simulated && <span className="chip chip--ink">{S.reading.simulatedChip}</span>}
-                {live.current.source === 'manual'
-                  ? S.engine.manual
-                  : phase.step === 'armed'
-                    ? S.reading.armedHint
-                    : recognizes(live.current.source)
-                      ? S.reading.tapToFix
-                      : null}
-              </p>
+              </details>
             )}
           </>
         )}
 
         {phase.kind === 'thanks' && thanksTake && (
-          <NextCardDesk
+          <NextCardDock
             take={thanksTake}
             ended={phase.ended}
-            studentRef={thanksTake.student_ref}
+            upNext={upNext?.student_ref ?? null}
             onOpen={openCard}
             onEnd={endRun}
-            onNextStudent={nextStudent}
+            onNextStudent={() => nextStudent(upNext?.student_ref ?? null)}
           />
         )}
       </div>
@@ -643,19 +681,21 @@ function TextSizeButton({ size, onClick }: { size: TextSize; onClick: () => void
 }
 
 interface CoverProps {
-  students: string[];
+  students: Student[];
+  sessions: Session[];
   selected: string | null;
   onSelect: (ref: string) => void;
   startLevel: CardLevel;
-  onStartLevel: (level: CardLevel) => void;
 }
 
-/** Siap membaca: the dark cover where the teacher picks the reader and the first card. */
-function Cover({ students, selected, onSelect, startLevel, onStartLevel }: CoverProps) {
+/** Siap membaca: the dark cover where the teacher picks who reads. The start card is on the tabs. */
+function Cover({ students, sessions, selected, onSelect, startLevel }: CoverProps) {
   return (
     <div className="page__body cover">
-      <p className="cover__brand">{S.brand}</p>
-      <h1 className="cover__title">{S.ready.title}</h1>
+      <div className="cover__head">
+        <p className="cover__brand">{S.brand}</p>
+        <h1 className="cover__title">{S.ready.title}</h1>
+      </div>
 
       <div className="cover__group">
         <p className="cover__label" id="pick-student">
@@ -663,18 +703,29 @@ function Cover({ students, selected, onSelect, startLevel, onStartLevel }: Cover
         </p>
         {students.length ? (
           <div className="cover__students" role="radiogroup" aria-labelledby="pick-student">
-            {students.map((ref) => (
-              <button
-                key={ref}
-                type="button"
-                role="radio"
-                aria-checked={selected === ref}
-                className="cover__student"
-                onClick={() => onSelect(ref)}
-              >
-                {ref}
-              </button>
-            ))}
+            {students.map((s) => {
+              const stage = stageOf(s, sessions);
+              return (
+                <button
+                  key={s.student_ref}
+                  type="button"
+                  role="radio"
+                  aria-checked={selected === s.student_ref}
+                  className="cover__student"
+                  data-stage={stage.kind}
+                  onClick={() => onSelect(s.student_ref)}
+                >
+                  <span className="cover__ref">{s.student_ref}</span>
+                  <span className="cover__stage">
+                    {stage.kind === 'new'
+                      ? S.ready.stage.new
+                      : stage.kind === 'pending'
+                        ? S.ready.stage.pending
+                        : S.ready.stage.placed(LEVEL[stage.level])}
+                  </span>
+                </button>
+              );
+            })}
           </div>
         ) : (
           <p className="cover__empty">
@@ -686,101 +737,97 @@ function Cover({ students, selected, onSelect, startLevel, onStartLevel }: Cover
         )}
       </div>
 
-      <div className="cover__group">
-        <p className="cover__label" id="pick-card">
-          {S.ready.startFrom}
+      <div className="cover__start">
+        <p className="cover__label">{S.ready.startLine}</p>
+        <p className="cover__card">
+          {CARD[startLevel]}
+          <span className="cover__card-title">{cardFor(startLevel).title}</span>
         </p>
-        <ol className="cover__toc" role="radiogroup" aria-labelledby="pick-card">
-          {CARD_ORDER.map((lvl, k) => (
-            <li key={lvl}>
-              <button
-                type="button"
-                role="radio"
-                aria-checked={startLevel === lvl}
-                className="cover__entry"
-                onClick={() => onStartLevel(lvl)}
-              >
-                <span className="cover__num">{k + 1}</span>
-                <span className="cover__name">{CARD[lvl]}</span>
-                <span className="cover__leader" aria-hidden="true" />
-                <span className="cover__card">{cardFor(lvl).title}</span>
-              </button>
-            </li>
-          ))}
-        </ol>
+        <p className="cover__note">{S.ready.tabsHint}</p>
       </div>
     </div>
   );
 }
 
-interface ReadyDeskProps {
+interface ReadyDockProps {
   source: Source;
   onSource: (s: Source) => void;
   online: OnlineStatus;
   studentRef: string | null;
+  startLevel: CardLevel;
   noConsent: boolean;
   onOpen: () => void;
 }
 
-function ReadyDesk({ source, onSource, online, studentRef, noConsent, onOpen }: ReadyDeskProps) {
+function ReadyDock({ source, onSource, online, studentRef, startLevel, noConsent, onOpen }: ReadyDockProps) {
   const sources: Source[] = ['online', 'manual', 'simulated'];
   const engineNote =
     source === 'online' ? S.engine.online[online] : source === 'manual' ? S.engine.manual : S.engine.simulated;
+  const blocked = source === 'online' && online !== 'available';
   return (
     <>
-      <div className="desk__row desk__row--split">
-        <div className="seg" role="radiogroup" aria-label={S.engine.label}>
-          {sources.map((s) => (
-            <button
-              key={s}
-              type="button"
-              role="radio"
-              aria-checked={source === s}
-              className="seg__opt"
-              disabled={s === 'online' && online === 'unsupported'}
-              onClick={() => onSource(s)}
-            >
-              {SOURCE[s]}
-            </button>
-          ))}
+      {noConsent && studentRef && <p className="dock__alert">{S.ready.noConsent(studentRef)}</p>}
+      <div className="dock__main">
+        <div className="dock__status">
+          <div className="seg" role="radiogroup" aria-label={S.engine.label}>
+            {sources.map((s) => (
+              <button
+                key={s}
+                type="button"
+                role="radio"
+                aria-checked={source === s}
+                className="seg__opt"
+                disabled={s === 'online' && online === 'unsupported'}
+                onClick={() => onSource(s)}
+              >
+                {SOURCE[s]}
+              </button>
+            ))}
+          </div>
         </div>
-        <button
-          type="button"
-          className="btn btn--cta"
-          onClick={onOpen}
-          disabled={!studentRef || (source === 'online' && online !== 'available')}
-        >
-          {studentRef ? S.ready.open : S.ready.pickFirst}
-        </button>
+        <div className="dock__actions">
+          <button type="button" className="btn btn--cta" onClick={onOpen} disabled={!studentRef || blocked}>
+            {studentRef ? S.ready.openCard(CARD[startLevel]) : S.ready.pickFirst}
+          </button>
+        </div>
       </div>
-      <p className="desk__hint">{engineNote}</p>
-      {noConsent && studentRef && <p className="desk__notice">{S.ready.noConsent(studentRef)}</p>}
+      <p className="dock__hint">{engineNote}</p>
     </>
   );
 }
 
-interface NextCardDeskProps {
+interface NextCardDockProps {
   take: Take;
   ended: boolean;
-  studentRef: string;
+  upNext: string | null;
   onOpen: (level: CardLevel) => void;
   onEnd: () => void;
   onNextStudent: () => void;
 }
 
 /** Kartu berikutnya: the teacher's choice after each card. Provisional, from the engine alone. */
-function NextCardDesk({ take, ended, studentRef, onOpen, onEnd, onNextStudent }: NextCardDeskProps) {
+function NextCardDock({ take, ended, upNext, onOpen, onEnd, onNextStudent }: NextCardDockProps) {
   if (ended) {
     return (
       <>
-        <p className="desk__lead">{S.done.pending(studentRef)}</p>
-        <div className="desk__row">
-          <button type="button" className="btn btn--cta" onClick={onNextStudent}>
-            {S.done.nextStudent}
-          </button>
-          <button type="button" className="btn btn--ghost" onClick={() => navigate('tinjau', take.session_id)}>
-            {S.done.review}
-          </button>
+        <div className="dock__main">
+          <div className="dock__status">
+            <p className="dock__lead">
+              <span className="dock__check" aria-hidden="true">
+                <IconCheck size={14} />
+              </span>
+              {S.done.pending(take.student_ref)}
+            </p>
+            {!upNext && <p className="dock__hint">{S.done.allRead}</p>}
+          </div>
+          <div className="dock__actions">
+            <button type="button" className="btn btn--ghost" onClick={() => navigate('tinjau', take.session_id)}>
+              {S.done.review}
+            </button>
+            <button type="button" className="btn btn--cta" onClick={onNextStudent}>
+              {upNext ? S.done.nextStudentRef(upNext) : S.done.nextStudent}
+            </button>
+          </div>
         </div>
       </>
     );
@@ -790,56 +837,55 @@ function NextCardDesk({ take, ended, studentRef, onOpen, onEnd, onNextStudent }:
   const suggested = outcome ? nextCard(take.card.level, outcome.passed) : null;
   const quality = take.quality;
   const lowSpeech = quality.status === 'retry_suggested' && (quality.speech_ratio ?? 1) < 0.15;
-  const others = CARD_ORDER.filter((l) => l !== take.card.level && l !== suggested);
 
   return (
     <>
       {quality.status === 'retry_suggested' && (
-        <p className="desk__notice">
+        <p className="dock__alert">
           {lowSpeech ? S.next.quality(Math.round((quality.speech_ratio ?? 0) * 100)) : S.next.clipping}
         </p>
       )}
-      {outcome && (
-        <p className="desk__lead">
-          <span className="desk__label">{S.next.suggestion}</span>{' '}
-          {suggested ? CARD[suggested] : S.next.stopHere}
-        </p>
-      )}
-      {!outcome && <p className="desk__hint">{S.next.whyManual}</p>}
-      <div className="desk__row">
+      <div className="dock__main">
+        <div className="dock__status">
+          {outcome ? (
+            <p className="dock__lead">
+              <span className="dock__label">{S.next.suggestion}</span>
+              {suggested ? CARD[suggested] : S.next.stopHere}
+            </p>
+          ) : (
+            <p className="dock__hint">{S.next.pickTab}</p>
+          )}
+        </div>
+        <div className="dock__actions">
+          <button type="button" className="btn btn--ghost" onClick={() => onOpen(take.card.level)}>
+            {S.next.retry}
+          </button>
+          {suggested ? (
+            <button type="button" className="btn btn--cta" onClick={() => onOpen(suggested)}>
+              {S.next.continueTo(CARD[suggested])}
+            </button>
+          ) : (
+            <button type="button" className="btn btn--cta" onClick={onEnd}>
+              {S.next.finish(take.student_ref)}
+            </button>
+          )}
+        </div>
+      </div>
+      <div className="dock__foot">
+        {outcome ? (
+          <details className="dock__why">
+            <summary>{S.next.why}</summary>
+            <p>{S.next.whyEngine(outcome.correct, outcome.total, outcome.needed, outcome.rule)}</p>
+          </details>
+        ) : (
+          <span />
+        )}
         {suggested && (
-          <button type="button" className="btn btn--cta" onClick={() => onOpen(suggested)}>
-            {S.next.continueTo(CARD[suggested])}
+          <button type="button" className="btn btn--text" onClick={onEnd}>
+            {S.next.finish(take.student_ref)}
           </button>
         )}
-        <button type="button" className={outcome && !suggested ? 'btn btn--cta' : 'btn btn--ghost'} onClick={onEnd}>
-          {S.next.finish(studentRef)}
-        </button>
-        <button type="button" className="btn btn--ghost" onClick={() => onOpen(take.card.level)}>
-          {S.next.retry}
-        </button>
-        <label className="desk__other">
-          <span className="visually-hidden">{S.next.otherCard}</span>
-          <select
-            className="select"
-            value=""
-            onChange={(e) => e.target.value && onOpen(e.target.value as CardLevel)}
-          >
-            <option value="">{outcome ? S.next.otherCard : S.next.manualPick}</option>
-            {(outcome ? others : CARD_ORDER.filter((l) => l !== take.card.level)).map((l) => (
-              <option key={l} value={l}>
-                {CARD[l]}
-              </option>
-            ))}
-          </select>
-        </label>
       </div>
-      {outcome && (
-        <details className="desk__why">
-          <summary>{S.next.why}</summary>
-          <p>{S.next.whyEngine(outcome.correct, outcome.total, outcome.needed, outcome.rule)}</p>
-        </details>
-      )}
     </>
   );
 }

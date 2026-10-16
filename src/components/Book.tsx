@@ -12,6 +12,8 @@ interface BookProps {
   onPrev?: () => void;
   nextLabel?: string;
   className?: string;
+  /** Rendered beside the page and never turned with it, such as index tabs. */
+  aside?: ReactNode;
   children: ReactNode;
 }
 
@@ -21,7 +23,7 @@ const SWIPE_PX = 56;
  * A single-page book. The page that leaves is a static snapshot of its last frame,
  * so the leaf that turns always shows exactly what was on screen.
  */
-export function Book({ pageKey, direction = 'forward', dark, behind = 2, onNext, onPrev, nextLabel, className, children }: BookProps) {
+export function Book({ pageKey, direction = 'forward', dark, behind = 2, onNext, onPrev, nextLabel, className, aside, children }: BookProps) {
   const pageRef = useRef<HTMLDivElement>(null);
   const layerRef = useRef<HTMLDivElement>(null);
   const snapshot = useRef<{ key: string; node: HTMLElement; dark: boolean } | null>(null);
@@ -52,7 +54,7 @@ export function Book({ pageKey, direction = 'forward', dark, behind = 2, onNext,
 
   return (
     <div
-      className={`book${className ? ` ${className}` : ''}`}
+      className={`book${aside ? ' book--tabbed' : ''}${className ? ` ${className}` : ''}`}
       onPointerDown={onPointerDown}
       onPointerUp={onPointerUp}
       onPointerCancel={() => (swipe.current = null)}
@@ -67,6 +69,7 @@ export function Book({ pageKey, direction = 'forward', dark, behind = 2, onNext,
         <button type="button" className="book__edge" onClick={onNext} aria-label={nextLabel} tabIndex={-1} />
       )}
       <div ref={layerRef} className="book__layer" aria-hidden="true" inert />
+      {aside}
     </div>
   );
 }
