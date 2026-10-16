@@ -88,3 +88,27 @@ export function IconMinus({ size = 16 }: IconProps) {
     </svg>
   );
 }
+
+export function IconCheck({ size = 16 }: IconProps) {
+  return (
+    <svg {...base(size)}>
+      <path d="M3.5 8.5l3 3 6-7" />
+    </svg>
+  );
+}
+
+export function IconFlag({ size = 16 }: IconProps) {
+  return (
+    <svg {...base(size)}>
+      <path d="M4 14.5V2.5M4 3h7.5l-1.75 3 1.75 3H4" />
+    </svg>
+  );
+}
+
+export function IconDownload({ size = 16 }: IconProps) {
+  return (
+    <svg {...base(size)}>
+      <path d="M8 2.5v8M4.5 7.5L8 11l3.5-3.5M3 13.5h10" />
+    </svg>
+  );
+}

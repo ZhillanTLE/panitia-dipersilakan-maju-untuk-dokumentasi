@@ -37,10 +37,9 @@
   --neutral-1000: #333333;
 
   /* Colour: surfaces, ink and accents, node 87:47 */
+  /* The palette's blues (Slate #363E4A, Midnight #170F35, Navy text #0F1235) are retired:
+     their roles go to Ink, so the product stays neutral with green and amber for status. */
   --ink: #1f1f1f;
-  --slate: #363e4a;
-  --midnight: #170f35;
-  --navy-text: #0f1235;
   --paper: #efeeea;
   --cream: #f8f7f4;
   --stroke: #818181;
@@ -52,7 +51,7 @@
   --black: #000000;
 
   /* Gradients, nodes 87:110 and 87:115 */
-  --grad-hero: linear-gradient(180deg, rgba(217, 217, 217, 0) 0%, #363e4a 100%);
+  --grad-hero: linear-gradient(180deg, rgba(217, 217, 217, 0) 0%, #1f1f1f 100%);
   --grad-footer: linear-gradient(180deg, rgba(217, 217, 217, 0) 0%, #1f1f1f 100%);
 
   /* Radius, node 87:235 */
@@ -75,7 +74,7 @@
   --ring-dark: inset 0 0 0 2px var(--neutral-900);
 
   /* Elevation, nodes 87:292, 87:297, 87:302 */
-  --shadow-cta: 0 10px 24px 0 rgba(15, 18, 53, 0.25);
+  --shadow-cta: 0 10px 24px 0 rgba(31, 31, 31, 0.22);
   --shadow-lift: 0 12px 32px 0 rgba(0, 0, 0, 0.25);
   --shadow-hairline: 0 1px 2px 0 rgba(0, 0, 0, 0.07);
 
@@ -106,13 +105,20 @@
   --word-current-box: var(--paper);
   --word-current-line: var(--ink);
   --syllable-current: var(--paper);
-  --stall-prompt-ink: var(--slate);
+  --stall-prompt-ink: var(--ink);
   --stall-prompt-surface: var(--cream);
   --needs-review: var(--caution);
   --level-pending-bg: var(--caution-tint);
   --level-pending-ink: var(--caution);
   --level-confirmed-bg: var(--success-tint);
   --level-confirmed-ink: var(--success);
+  /* TODO(design-system): status dots on the dark cover. Lightened Caution and Success, not in Figma. */
+  --caution-on-dark: #c9c08a;
+  --success-on-dark: #8fbf9f;
+
+  /* Surfaces: a warm paper desk; the book and cards are white on it */
+  --canvas: var(--cream);
+  --card: var(--neutral-100);
 
   /* Reading text: fixed minimum size, wide line spacing (designsystem.md §8.2) */
   --reading-size: var(--fs-5);
